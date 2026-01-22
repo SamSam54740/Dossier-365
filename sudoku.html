@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mission 04 : SUDOKU</title>
+    <style>
+        :root {
+            --bg-app: #f4f7f6;
+            --cell-bg: #ffffff;
+            --primary: #0a66c2;
+            --border-thick: 4px solid #333;
+            --border-thin: 1px solid #ccc;
+            --text-color: #333;
+            --fixed-color: #000; /* Chiffres de départ plus foncés */
+            --user-color: #0a66c2; /* Chiffres ajoutés par l'utilisateur */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-color);
+            margin: 0; height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            touch-action: none; overflow: hidden;
+        }
+
+        body {
+            /* Change justify-content: center par flex-start */
+            justify-content: flex-start; 
+            padding-top: 5vh; /* Pousse un peu vers le bas mais reste haut */
+            /* ... garde le reste (font-family, colors...) */
+        }
+
+        /* 2. STYLE DU TIMER (Ajouter) */
+        #timer-display {
+            font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;
+            background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 15px;
+            color: inherit; /* S'adapte au thème */
+            border: 1px solid currentColor;
+        }
+
+        /* 3. ECRAN DE FIN PERSONNALISÉ (Modifier #win-modal .code-box) */
+        .code-box {
+            background: #fff; border: 2px dashed currentColor; /* Cadre pointillé joli */
+            padding: 20px; font-size: 2rem; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: rotate(-2deg); /* Petit effet style sticker */
+            margin: 30px 0;
+        }
+        #win-modal h2 { text-transform: uppercase; letter-spacing: 2px; }
+
+        h1 { margin-bottom: 5px; font-size: 1.5rem; color: var(--primary); letter-spacing: -0.5px; }
+        p { margin-top: 0; font-size: 0.9rem; color: #7f8c8d; max-width: 340px; text-align: center; margin-bottom: 15px;}
+        p2 { margin-top: 0; font-size: 0.9rem; color: #ffffff; max-width: 340px; text-align: center; margin-bottom: 15px;}
+
+        /* GRILLE */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 0;
+            background-color: #333;
+            border: var(--border-thick);
+            width: 90vw; max-width: 360px; aspect-ratio: 1/1;
+            user-select: none;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .cell {
+            background-color: var(--cell-bg);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-right: var(--border-thin);
+            border-bottom: var(--border-thin);
+            position: relative;
+            color: var(--user-color);
+        }
+
+        /* BORDURES ÉPAISSES (Pour les blocs 2x3) */
+        /* Barre verticale au milieu (après la colonne 2) */
+        .cell:nth-child(6n+3) { border-right: var(--border-thick); }
+        .cell:nth-child(n+7):nth-child(-n+12) ,/* Ligne 2 (border top visuelle via ligne 1 bottom) */
+        .cell:nth-child(n+19):nth-child(-n+24) , /* Ligne 4 */
+        
+        /* Approche plus simple : classes JS */
+        .thick-bottom { border-bottom: var(--border-thick) !important; }
+        .thick-right { border-right: var(--border-thick) !important; }
+
+        /* États des cellules */
+        .cell.fixed {
+            color: var(--fixed-color);
+            font-weight: 700;
+            background-color: #e9ecef;
+            cursor: default;
+        }
+
+        .cell.selected {
+            background-color: #dbeafe;
+            box-shadow: inset 0 0 0 2px var(--primary);
+        }
+
+        .cell.error {
+            background-color: #ffcdd2 !important;
+            color: #c62828;
+        }
+
+        /* CLAVIER NUMÉRIQUE */
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr); /* 1-6 + Effacer */
+            gap: 8px;
+            margin-top: 20px;
+            width: 90vw; max-width: 360px;
+        }
+
+        .num-btn {
+            background: white; border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px 0;
+            font-size: 1.2rem; font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .num-btn:active { background: #eee; transform: translateY(1px); }
+        .num-btn.clear { color: #e74c3c; font-size: 1rem; display: flex; align-items: center; justify-content: center;}
+
+        /* MODALE */
+        #win-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; flex-direction: column; color: white; text-align: center; z-index: 100; animation: fadeIn 0.5s; }
+        .code-box { background: white; color: var(--primary); padding: 15px 30px; margin: 20px; font-family: monospace; font-size: 1.5rem; letter-spacing: 2px; font-weight: bold; border-radius: 10px; }
+        button.reset { margin-top: 15px; padding: 10px 20px; background: #e0e0e0; border: none; border-radius: 20px; color: #555; font-weight: bold; cursor: pointer; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <h1>MISSION SUDOKU</h1>
+    <p>Remplis la grille avec les chiffres 1 à 6.<br>Un seul chiffre par ligne, colonne et bloc.</p>
+    <div id="timer-display">⏱️ 00:00</div>
+
+    <div class="game-board" id="grid"></div>
+
+    <div class="numpad">
+        <button class="num-btn" onclick="fillNumber(1)">1</button>
+        <button class="num-btn" onclick="fillNumber(2)">2</button>
+        <button class="num-btn" onclick="fillNumber(3)">3</button>
+        <button class="num-btn" onclick="fillNumber(4)">4</button>
+        <button class="num-btn" onclick="fillNumber(5)">5</button>
+        <button class="num-btn" onclick="fillNumber(6)">6</button>
+        <button class="num-btn clear" onclick="fillNumber(0)">⌫</button>
+    </div>
+
+    <button class="reset" onclick="initGame()">Réinitialiser</button>
+
+    <div id="win-modal">
+        <div style="font-size: 4rem;">🔢</div>
+        <h2>CALCUL TERMINÉ</h2>
+        <p2>Comment tu fais pour être aussi rapide ?!</p2>
+        <div class="code-box">SUDOKU-PIPI</div>
+        <a href="index.html" style="color: white; font-weight: bold; text-decoration: none; border-bottom: 1px solid white;">Retour au QG</a>
+    </div>
+
+    <script>
+        // --- CONFIGURATION DU NIVEAU (Basé sur ton image) ---
+        // Grille 6x6. Blocs 2x3 (2 lignes, 3 colonnes).
+        // Indices : { index: valeur }
+        const startingCells = {
+            5:  1, // R0 C5
+            7:  1, // R1 C1
+            9:  2, // R1 C3
+            14: 2, // R2 C2
+            16: 3, // R2 C4
+            19: 3, // R3 C1
+            21: 4, // R3 C3
+            26: 4, // R4 C2
+            29: 5, // R4 C5
+            30: 5, // R5 C0
+            34: 6  // R5 C4
+        };
+
+        let gameStartTime;
+        let timerInterval;
+
+        function startTimer() {
+            gameStartTime = Date.now();
+            timerInterval = setInterval(() => {
+                const delta = Math.floor((Date.now() - gameStartTime) / 1000);
+                const m = Math.floor(delta / 60).toString().padStart(2, '0');
+                const s = (delta % 60).toString().padStart(2, '0');
+                document.getElementById('timer-display').innerText = `⏱️ ${m}:${s}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        // --- MOTEUR DU JEU ---
+        const gridSize = 6;
+        let gridState = new Array(36).fill(0);
+        let selectedCellIndex = null;
+        const gridEl = document.getElementById('grid');
+
+        function initGame() {
+            gridEl.innerHTML = '';
+            gridState.fill(0);
+            selectedCellIndex = null;
+            startTimer();
+
+            // Remplissage initial
+            for(let idx in startingCells) {
+                gridState[idx] = startingCells[idx];
+            }
+
+            for (let i = 0; i < 36; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+
+                // Ajout des bordures épaisses pour les blocs 2x3
+                const col = i % 6;
+                const row = Math.floor(i / 6);
+                
+                // Bordure droite après col 2 (sauf dernière)
+                if (col === 2) cell.classList.add('thick-right');
+                // Bordure bas après row 1 et row 3
+                if (row === 1 || row === 3) cell.classList.add('thick-bottom');
+
+                // Valeur fixe ou vide
+                if (startingCells[i]) {
+                    cell.textContent = startingCells[i];
+                    cell.classList.add('fixed');
+                } else {
+                    cell.onclick = () => selectCell(i);
+                }
+
+                gridEl.appendChild(cell);
+            }
+        }
+
+        function selectCell(index) {
+            // Si c'est une case fixe, on ne fait rien
+            if (startingCells[index]) return;
+
+            // Gestion visuelle de la sélection
+            if (selectedCellIndex !== null) {
+                gridEl.children[selectedCellIndex].classList.remove('selected');
+            }
+            selectedCellIndex = index;
+            gridEl.children[index].classList.add('selected');
+        }
+
+        function fillNumber(num) {
+            if (selectedCellIndex === null) return;
+
+            const cell = gridEl.children[selectedCellIndex];
+            
+            if (num === 0) {
+                // Effacer
+                gridState[selectedCellIndex] = 0;
+                cell.textContent = '';
+            } else {
+                // Remplir
+                gridState[selectedCellIndex] = num;
+                cell.textContent = num;
+            }
+
+            // Vérification instantanée des erreurs
+            validateGrid();
+        }
+
+        function validateGrid() {
+            let isValid = true;
+            let errors = new Set();
+            let isFull = !gridState.includes(0);
+
+            // 1. Lignes
+            for (let r = 0; r < gridSize; r++) {
+                checkUnique(getErrorIndices(r, 'row'), errors);
+            }
+
+            // 2. Colonnes
+            for (let c = 0; c < gridSize; c++) {
+                checkUnique(getErrorIndices(c, 'col'), errors);
+            }
+
+            // 3. Blocs 2x3
+            // Les blocs commencent à : (0,0), (0,3), (2,0), (2,3), (4,0), (4,3)
+            const blockStarts = [0, 3, 12, 15, 24, 27];
+            for (let start of blockStarts) {
+                let indices = [];
+                // Un bloc fait 2 lignes de 3 colonnes
+                // Ligne 1 du bloc
+                indices.push(start, start+1, start+2);
+                // Ligne 2 du bloc (ligne suivante = +6)
+                indices.push(start+6, start+7, start+8);
+                
+                checkUnique(indices, errors);
+            }
+
+            // Mise à jour visuelle
+            for (let i = 0; i < 36; i++) {
+                const cell = gridEl.children[i];
+                if (errors.has(i)) {
+                    cell.classList.add('error');
+                    isValid = false;
+                } else {
+                    cell.classList.remove('error');
+                }
+            }
+
+            // Victoire ?
+            if (isValid && isFull) {
+                stopTimer();
+                setTimeout(() => {
+                    document.getElementById('win-modal').style.display = 'flex';
+                }, 300);
+            }
+        }
+
+        // Helper pour vérifier l'unicité dans un groupe d'indices
+        function checkUnique(indices, errorSet) {
+            let seen = {};
+            for (let idx of indices) {
+                let val = gridState[idx];
+                if (val !== 0) {
+                    if (seen[val]) {
+                        // Doublon trouvé !
+                        errorSet.add(idx);
+                        errorSet.add(seen[val]); // Ajoute aussi le premier trouvé
+                    } else {
+                        seen[val] = idx;
+                    }
+                }
+            }
+        }
+
+        // Helper pour récupérer les indices d'une ligne ou colonne
+        function getErrorIndices(id, type) {
+            let indices = [];
+            for (let k = 0; k < gridSize; k++) {
+                if (type === 'row') indices.push(id * 6 + k);
+                if (type === 'col') indices.push(k * 6 + id);
+            }
+            return indices;
+        }
+
+        initGame();
+    </script>
+</body>
+</html>

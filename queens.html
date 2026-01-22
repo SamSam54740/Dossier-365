@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mission 02 : QUEENS</title>
+    <style>
+        :root {
+            --bg-app: #fdf6e3; /* Fond crème doux */
+            --x-color: #555;
+            --beer-color: #f59e0b;
+            --border-thick: 3px solid #222; /* Bordure épaisse noire */
+            --border-thin: 1px solid #999; /* Bordure fine grise */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-app);
+            color: #333;
+            margin: 0; height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            touch-action: none; overflow: hidden;
+        }
+
+        body {
+            /* Change justify-content: center par flex-start */
+            justify-content: flex-start; 
+            padding-top: 5vh; /* Pousse un peu vers le bas mais reste haut */
+            /* ... garde le reste (font-family, colors...) */
+        }
+
+        /* 2. STYLE DU TIMER (Ajouter) */
+        #timer-display {
+            font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;
+            background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 15px;
+            color: inherit; /* S'adapte au thème */
+            border: 1px solid currentColor;
+        }
+
+        /* 3. ECRAN DE FIN PERSONNALISÉ (Modifier #win-modal .code-box) */
+        .code-box {
+            background: #fff; border: 2px dashed currentColor; /* Cadre pointillé joli */
+            padding: 20px; font-size: 2rem; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: rotate(-2deg); /* Petit effet style sticker */
+            margin: 30px 0;
+        }
+        #win-modal h2 { text-transform: uppercase; letter-spacing: 2px; }
+
+        h1 { margin-bottom: 5px; font-size: 1.4rem; color: #d35400; letter-spacing: -0.5px; }
+        p { margin-top: 0; font-size: 0.85rem; color: #7f8c8d; max-width: 340px; text-align: center; margin-bottom: 10px;}
+        p2 { margin-top: 0; font-size: 0.85rem; color: #ffffff; max-width: 340px; text-align: center; margin-bottom: 10px;}
+
+        /* GRILLE */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(11, 1fr);
+            grid-template-rows: repeat(11, 1fr);
+            gap: 0; /* Plus de gap, on gère les bordures manuellement */
+            background-color: #222;
+            padding: 0;
+            border: 4px solid #222; /* Cadre extérieur épais */
+            border-radius: 4px;
+            width: 95vw; max-width: 400px; aspect-ratio: 1/1;
+            user-select: none; touch-action: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .cell {
+            background-color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; /* Taille adaptée au 11x11 */
+            cursor: pointer;
+            position: relative;
+            box-sizing: border-box; /* Important pour les bordures */
+            border-right: var(--border-thin);
+            border-bottom: var(--border-thin);
+        }
+
+        /* Classes utilitaires pour les bordures épaisses entre régions */
+        .thick-right { border-right: var(--border-thick) !important; }
+        .thick-bottom { border-bottom: var(--border-thick) !important; }
+
+        /* --- ZONES --- */
+        .region-0 { background-color: #DB97BC; } /* Rose/Pink (Haut Gauche) */
+        .region-1 { background-color: #99D2CB; } /* Violet (Haut Milieu) */
+        .region-2 { background-color: #B69DDE; } /* Lilas/Bleu (Haut Droite + Bas Droite) */
+        .region-3 { background-color: #B5EB9F; } /* Orange (La couleur dominante) */
+        .region-4 { background-color: #9BBDFA; } /* Teal (Bande Gauche) */
+        .region-5 { background-color: #E0E0E0; } /* Cyan (Zigzag milieu) */
+        .region-6 { background-color: #E5FD8D; } /* Vert (Droite) */
+        .region-7 { background-color: #F26E61; } /* Gris (Centre + Bas) */
+        .region-8 { background-color: #B8B39F; } /* Jaune (Bas Gauche) */
+        .region-9 { background-color: #60FDE2; } /* Rouge (Bas Droite) */
+        .region-11 { background-color: #F9C794; } /* Jaune (Bas Gauche) */
+
+        /* SYMBOLES (Centrage parfait) */
+        /* Croix (X) */
+        .cell.x::after {
+            content: '×'; 
+            color: var(--x-color);
+            font-family: sans-serif;
+            font-weight: 300; 
+            font-size: 1.6rem; 
+            line-height: 1;
+            display: block;
+        }
+        /* Bière */
+        .cell.beer::after {
+            content: '🍺'; 
+            font-size: 1.1rem;
+            line-height: 1;
+            display: block;
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* ERREURS */
+        .cell.error {
+            background-color: #ffcdd2 !important;
+            box-shadow: inset 0 0 0 2px #c62828;
+            animation: shake 0.3s;
+        }
+
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+
+        /* MODALE */
+        #win-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; flex-direction: column; color: white; text-align: center; z-index: 100; animation: fadeIn 0.5s; }
+        .code-box { background: white; color: #d35400; padding: 15px 30px; margin: 20px; font-family: monospace; font-size: 1.5rem; letter-spacing: 2px; font-weight: bold; border-radius: 10px; }
+        button.reset { margin-top: 25px; padding: 10px 20px; background: #e0e0e0; border: none; border-radius: 20px; color: #555; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>MISSION QUEENS</h1>
+    <p><strong>1 Bière</strong> par ligne, colonne et couleur.<br>Interdit de se toucher (même en diagonale).</p>
+    <div id="timer-display">⏱️ 00:00</div>
+    <div class="game-board" id="grid"></div>
+
+    <button class="reset" onclick="initGame()">Vider la table</button>
+
+    <div id="win-modal">
+        <div style="font-size: 4rem;">🍺</div>
+        <h2>SANTÉ !</h2>
+        <p2>Les "comme d'hab" sont sécurisées.</p2>
+        <div class="code-box">QUEENS-98</div>
+        <a href="index.html" style="color: white; font-weight: bold; text-decoration: none; border-bottom: 1px solid white;">Retour au QG</a>
+    </div>
+
+    <script>
+        // --- 1. CONFIGURATION DES REGIONS (D'après ton image 7x7) ---
+        const gridSize = 11;
+        let gameStartTime;
+        let timerInterval;
+
+        function startTimer() {
+            gameStartTime = Date.now();
+            timerInterval = setInterval(() => {
+                const delta = Math.floor((Date.now() - gameStartTime) / 1000);
+                const m = Math.floor(delta / 60).toString().padStart(2, '0');
+                const s = (delta % 60).toString().padStart(2, '0');
+                document.getElementById('timer-display').innerText = `⏱️ ${m}:${s}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+        // 0=Violet, 1=Orange, 2=Bleu, 3=Vert, 4=Gris, 5=Rouge, 6=Jaune
+        const regionMap = [
+            0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2,  // Ligne 0
+            0, 11, 11, 11, 11, 11, 11, 11, 2, 11, 11, // Ligne 1
+            0, 0, 0, 11, 9, 9, 9, 11, 2, 11, 3,  // Ligne 0
+            0, 11, 11, 11, 9, 11, 8, 11, 11, 11, 3,  // Ligne 3 (Gris au milieu)
+            1, 11, 9, 9, 9, 11, 8, 8, 3, 3, 3,  // Ligne 0
+            1, 11, 11, 11, 11, 11, 11, 11, 3, 11, 3,  // Ligne 5
+            1, 1, 1, 6, 6, 11, 7, 7, 7, 11, 3,  // Ligne 0
+            1, 11, 1, 11, 6, 11, 11, 11, 7, 11, 3,  // Ligne 1
+            1, 11, 1, 11, 6, 11, 5, 11, 7, 11, 4,  // Ligne 0
+            1, 11, 11, 11, 11, 11, 5, 11, 11, 11, 4,  // Ligne 3 (Gris au milieu)
+            1, 11, 5, 5, 5, 5, 5, 4, 4, 4, 4  // Ligne 4
+        ];
+
+        // --- 2. MOTEUR DU JEU ---
+        // 0 = Vide, 1 = X, 2 = Bière
+        let gridState = new Array(121).fill(0);
+        const gridEl = document.getElementById('grid');
+        let isDragging = false;
+        let dragMode = null; // 'drawX' ou null
+
+        function initGame() {
+            gridEl.innerHTML = '';
+            gridState.fill(0);
+            startTimer();
+            
+            for (let i = 0; i < 121; i++) {
+                let cell = document.createElement('div');
+                cell.className = `cell region-${regionMap[i]}`;
+                cell.dataset.index = i;
+                gridEl.appendChild(cell);
+            }
+
+            // GESTION SOURIS & TACTILE
+            gridEl.addEventListener('mousedown', startDrag);
+            gridEl.addEventListener('touchstart', startDrag, {passive: false});
+            
+            window.addEventListener('mouseup', endDrag);
+            window.addEventListener('touchend', endDrag);
+            
+            window.addEventListener('mousemove', handleDrag);
+            window.addEventListener('touchmove', handleDrag, {passive: false});
+        }
+
+        // --- LOGIQUE D'INTERACTION ---
+
+        function startDrag(e) {
+            e.preventDefault();
+            isDragging = true;
+            
+            const cell = getTargetCell(e);
+            if (!cell) return;
+            const idx = parseInt(cell.dataset.index);
+
+            // LOGIQUE AU CLIC (DÉPART)
+            // Si vide -> Met X. Si X -> Met Bière. Si Bière -> Vide.
+            // MAIS si on commence à glisser, on ne fera que des X.
+            
+            const currentState = gridState[idx];
+            
+            if (currentState === 0) {
+                // Vide -> X
+                setCell(idx, 1);
+                dragMode = 'drawX'; // On passe en mode "Pinceau X"
+            } else if (currentState === 1) {
+                // X -> Bière
+                setCell(idx, 2);
+                dragMode = null; // Pas de drag pour les bières
+            } else {
+                // Bière -> Vide
+                setCell(idx, 0);
+                dragMode = null;
+            }
+        }
+
+        function handleDrag(e) {
+            if (!isDragging || !dragMode) return;
+            e.preventDefault(); // Stop scroll
+
+            const cell = getTargetCell(e);
+            if (!cell) return;
+            const idx = parseInt(cell.dataset.index);
+
+            // En mode glisser, on ne remplit QUE les cases vides avec des X
+            if (gridState[idx] === 0 && dragMode === 'drawX') {
+                setCell(idx, 1);
+            }
+        }
+
+        function endDrag() {
+            isDragging = false;
+            dragMode = null;
+        }
+
+        function getTargetCell(e) {
+            let x = e.touches ? e.touches[0].clientX : e.clientX;
+            let y = e.touches ? e.touches[0].clientY : e.clientY;
+            return document.elementFromPoint(x, y)?.closest('.cell');
+        }
+
+        function setCell(index, value) {
+            gridState[index] = value;
+            updateVisuals();
+            // On vérifie les erreurs en temps réel
+            validateGrid();
+        }
+
+        function updateVisuals() {
+            for (let i = 0; i < 121; i++) {
+                const cell = gridEl.children[i];
+                cell.classList.remove('x', 'beer', 'error');
+                if (gridState[i] === 1) cell.classList.add('x');
+                if (gridState[i] === 2) cell.classList.add('beer');
+            }
+        }
+
+        // --- 3. VALIDATION (Règles du jeu) ---
+
+        function validateGrid() {
+            let isValid = true;
+            let errors = new Set(); // Stocke les index en erreur
+            let beersCount = 0;
+
+            // Récupère toutes les bières
+            let beerIndices = [];
+            gridState.forEach((val, idx) => {
+                if (val === 2) {
+                    beerIndices.push(idx);
+                    beersCount++;
+                }
+            });
+
+            // Vérification Croisée
+            for (let i = 0; i < beerIndices.length; i++) {
+                for (let j = i + 1; j < beerIndices.length; j++) {
+                    const b1 = beerIndices[i];
+                    const b2 = beerIndices[j];
+                    
+                    const r1 = Math.floor(b1 / gridSize);
+                    const c1 = b1 % gridSize;
+                    const r2 = Math.floor(b2 / gridSize);
+                    const c2 = b2 % gridSize;
+
+                    // 1. MÊME LIGNE
+                    if (r1 === r2) { errors.add(b1); errors.add(b2); isValid = false; }
+                    
+                    // 2. MÊME COLONNE
+                    if (c1 === c2) { errors.add(b1); errors.add(b2); isValid = false; }
+                    
+                    // 3. MÊME COULEUR
+                    if (regionMap[b1] === regionMap[b2]) { errors.add(b1); errors.add(b2); isValid = false; }
+
+                    // 4. TOUCHETTE (Diagonale ou Adjacent)
+                    // Mathématiquement : écart de ligne <= 1 ET écart de colonne <= 1
+                    if (Math.abs(r1 - r2) <= 1 && Math.abs(c1 - c2) <= 1) {
+                        errors.add(b1); errors.add(b2); isValid = false;
+                    }
+                }
+            }
+
+            // Appliquer le style rouge aux erreurs
+            errors.forEach(idx => {
+                gridEl.children[idx].classList.add('error');
+            });
+
+            // VICTOIRE ? (7 bières posées + aucune erreur)
+            if (isValid && beersCount === gridSize) {
+                stopTimer();
+                setTimeout(() => {
+                    document.getElementById('win-modal').style.display = 'flex';
+                }, 300);
+                
+            }
+        }
+
+        initGame();
+    </script>
+</body>
+</html>

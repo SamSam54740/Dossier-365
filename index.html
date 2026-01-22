@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dossier 365 | Anthé</title>
+    <style>
+        :root {
+            --bg-color: #f3f2ef;
+            --card-bg: #ffffff;
+            --primary: #3c45e0;
+            --locked: #8e8e8e;
+            --success: #09ff00;
+            --text: #191919;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header { text-align: center; margin-bottom: 30px; padding-top: 20px; }
+        h1 { font-size: 1.8rem; margin-bottom: 5px; color: var(--text); }
+        p.subtitle { color: var(--locked); font-size: 0.9rem; margin-top: 0; letter-spacing: 1px; text-transform: uppercase; }
+
+        .progress-container {
+            width: 100%; max-width: 400px; background-color: #e0e0e0;
+            border-radius: 10px; height: 10px; margin-bottom: 30px; overflow: hidden;
+        }
+        .progress-bar { height: 100%; width: 0%; background-color: var(--primary); transition: width 0.5s ease; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 400px; }
+
+        .card {
+            background-color: var(--card-bg); border-radius: 12px; padding: 20px;
+            text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            cursor: pointer; transition: transform 0.2s; position: relative;
+            opacity: 0.6; pointer-events: none;
+        }
+        
+        .icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+        .card-title { font-weight: 600; font-size: 0.9rem; }
+        .status-icon { position: absolute; top: 10px; right: 10px; font-size: 0.8rem; }
+
+        /* Modal simple pour test */
+        #gameModal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 15px; width: 80%; max-width: 350px; text-align: center;
+        }
+        input { 
+            width: 100%;
+            padding: 10px;
+            margin: 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px !important; /* CRUCIAL pour éviter le zoom */
+            transform: scale(1); /* Astuce anti-zoom */
+        }
+        button { background-color: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button.close { background-color: transparent; color: #333; margin-top: 10px; }
+
+        .card#level1 { background: linear-gradient(135deg, #fff 50%, #e3f2fd 100%); border-left: 5px solid #0a66c2; }
+        .card#level2 { background: linear-gradient(135deg, #fff 50%, #fff3e0 100%); border-left: 5px solid #f59e0b; }
+        .card#level3 { background: linear-gradient(135deg, #fff 50%, #e8f5e9 100%); border-left: 5px solid #4caf50; }
+        .card#level4 { background: linear-gradient(135deg, #fff 50%, #f3e5f5 100%); border-left: 5px solid #9c27b0; }
+        .card#level5 { background: linear-gradient(135deg, #fff 50%, #e0f7fa 100%); border-left: 5px solid #00bcd4; }
+        .card#level6 { background: linear-gradient(135deg, #fff 50%, #ffebee 100%); border-left: 5px solid #e53935; }
+
+        .card.unlocked { opacity: 1; pointer-events: auto; border: 2px solid var(--primary); }
+        .card.completed { opacity: 1; border: 2px solid var(--success); border-left: 5px solid var(--success); background-color: #e6f7ef; }
+        
+                /* 2. PERSONNALISATION DES CARTES & COULEURS DYNAMIQUES */
+        /* On définit une couleur unique pour chaque niveau */
+        #level1 { --theme: #0a66c2; background: linear-gradient(135deg, #fff 50%, #e3f2fd 100%); } /* Bleu Zip */
+        #level2 { --theme: #f59e0b; background: linear-gradient(135deg, #fff 50%, #fff3e0 100%); } /* Jaune Bière */
+        #level3 { --theme: #4caf50; background: linear-gradient(135deg, #fff 50%, #e8f5e9 100%); } /* Vert Tango */
+        #level4 { --theme: #9c27b0; background: linear-gradient(135deg, #fff 50%, #f3f3f3 100%); } /* Noir Sudoku */
+        #level5 { --theme: #00bcd4; background: linear-gradient(135deg, #fff 50%, #f3e5f5 100%); } /* Violet Connect */
+        #level6 { --theme: #e74c3c; background: linear-gradient(135deg, #fff 50%, #ffebee 100%); } /* Rouge Clean */
+
+        /* État par défaut (Grisé) */
+        .card {
+            border-left: 5px solid var(--theme); /* La petite barre à gauche garde la couleur */
+            transition: all 0.3s ease;
+        }
+
+        /* État DÉBLOQUÉ (C'est ici la modif demandée) */
+        .card.unlocked {
+            opacity: 1;
+            pointer-events: auto;
+            border: 3px solid var(--theme); /* LA BORDURE PREND LA COULEUR DU NIVEAU */
+            box-shadow: 0 0 15px var(--theme); /* Petit effet néon de la bonne couleur */
+            transform: scale(1.02);
+        }
+
+        /* État TERMINÉ (Gris, Flou, Archivé) */
+        .card.completed {
+            /* On force le gris pour écraser la couleur du niveau */
+            background: #e0e0e0 !important; 
+            border: 2px solid #999 !important; /* Bordure grise neutre */
+            color: #888; /* Texte grisé */
+            
+            /* L'effet demandé : Noir & Blanc + Léger Flou */
+            filter: grayscale(100%) blur(0.5px);
+            opacity: 0.8; /* On le rend un peu transparent pour qu'il s'efface */
+            
+            transform: scale(0.98); /* On le réduit un peu pour le mettre en retrait */
+            box-shadow: none;
+            pointer-events: none; /* Optionnel : empêche de recliquer dessus (si tu veux) */
+        }
+
+        #successModal, #finalModal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 200;
+            flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; color: white; animation: fadeIn 0.5s;
+        }
+        .success-content {
+            background: white; color: #333; padding: 30px; border-radius: 20px;
+            box-shadow: 0 0 30px rgba(255,255,255,0.5); transform: scale(0.8);
+            animation: popIn 0.3s forwards; max-width: 80%;
+        }
+        @keyframes popIn { to { transform: scale(1); } }
+
+        #finalModal { background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%); }
+        .final-btn {
+            margin-top: 30px; padding: 15px 40px; font-size: 1.2rem;
+            background: white; color: #ff9a9e; border: none; border-radius: 50px;
+            font-weight: bold; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+                /* ECRAN DE SUSPENSE (HACKER STYLE) */
+        #suspense-screen {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 300;
+            flex-direction: column; align-items: center; justify-content: center;
+            color: #00ff41; font-family: 'Courier New', monospace;
+        }
+        .loader-bar {
+            width: 80%; height: 5px; background: #333; margin-top: 20px;
+            position: relative; overflow: hidden;
+        }
+        .loader-progress {
+            width: 0%; height: 100%; background: #00ff41;
+            transition: width 3s linear; /* Ça va prendre 3 secondes à charger */
+        }
+        .hacker-text {
+            font-size: 1.2rem; margin-bottom: 10px; text-transform: uppercase;
+            animation: blink 0.5s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>LE DOSSIER 365</h1>
+        <p class="subtitle">Agent Anthé • Progression</p>
+    </header>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="grid">
+        <div class="card unlocked" id="level1" onclick="openGame(1)">
+            <span class="status-icon">🔓</span>
+            <span class="icon">⚡</span>
+            <div class="card-title">01. Zip</div>
+        </div>
+
+        <div class="card" id="level2" onclick="openGame(2)">
+            <span class="status-icon">🔒</span>
+            <span class="icon">🍺</span>
+            <div class="card-title">02. Queens</div>
+        </div>
+
+        <div class="card" id="level3" onclick="openGame(3)">
+            <span class="status-icon">🔒</span>
+            <span class="icon">🍆</span>
+            <div class="card-title">03. Tango</div>
+        </div>
+
+        <div class="card" id="level4" onclick="openGame(4)">
+            <span class="status-icon">🔒</span>
+            <span class="icon">🔢</span>
+            <div class="card-title">04. Sudoku</div>
+        </div>
+
+        <div class="card" id="level5" onclick="openGame(5)">
+            <span class="status-icon">🔒</span>
+            <span class="icon">🌈</span>
+            <div class="card-title">05. Color Connect</div>
+        </div>
+
+        <div class="card" id="level6" onclick="openGame(6)">
+            <span class="status-icon">🔒</span>
+            <span class="icon">🧹</span>
+            <div class="card-title">06. Le Grand Nettoyage</div>
+        </div>
+    </div>
+
+    <!-- Controle + k + c -->
+    <div style="margin-top: 50px; text-align: center; opacity: 0.5;">
+        <button onclick="resetApp()" style="background: #ccc; font-size: 12px; color: #333; padding: 5px 10px;">
+            [DEV] Réinitialiser tout
+        </button>
+    </div>
+
+    <button onclick="skipAllLevels()" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; background: red; color: white; border: 2px solid white; padding: 10px; font-weight: bold; border-radius: 5px; cursor: pointer;">
+        ADMIN: TOUT DÉBLOQUER
+    </button>
+
+    <script>
+        function skipAllLevels() {
+            // On dit à la mémoire du navigateur qu'on est au niveau 7 (donc fini)
+            localStorage.setItem('antheProgress', 6);
+            // On recharge la page pour voir le résultat
+            location.reload();
+        }
+    </script>
+
+    <div id="gameModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Niveau X</h2>
+            <p>Jeu en construction...</p>
+            <input type="text" id="code-input" placeholder='Tape ici'>
+            <button onclick="checkCode()">Valider</button>
+            <button class="close" onclick="closeModal()">Fermer</button>
+        </div>
+    </div>
+
+    <div id="successModal">
+        <div class="success-content">
+            <div style="font-size: 3rem;">🔓</div>
+            <h2>CODE ACCEPTÉ</h2>
+            <p>Le dossier est déverrouillé.</p>
+            <button onclick="closeSuccess()" style="background: #4caf50; color: white; border:none; padding: 10px 20px; border-radius: 20px; font-weight:bold;">CONTINUER</button>
+        </div>
+    </div>
+
+    <div id="suspense-screen">
+        <div class="hacker-text" id="hacker-text">INITIALISATION...</div>
+        <div class="loader-bar">
+            <div class="loader-progress" id="loader-progress"></div>
+        </div>
+    </div>
+
+    <div id="finalModal">
+        <div style="font-size: 5rem; margin-bottom: 20px;">💖</div>
+        <h1>MISSION ACCOMPLIE</h1>
+        <p style="font-size: 1.2rem; max-width: 300px;">La Phase 1 est terminée.<br>Les souvenirs sont sécurisés.</p>
+        <p>Le protocole suivant nécessite une synchronisation temporelle.</p>
+        
+        <a href="wait.html" class="final-btn" style="text-decoration:none;">INITIALISER LA PHASE 2</a>
+    </div>
+
+    <script>
+        let currentLevel = 1;
+        let selectedLevel = 0; // La variable qui posait problème
+
+        // Chargement de la sauvegarde
+        window.onload = function() {
+            if(localStorage.getItem('antheProgress')) {
+                currentLevel = parseInt(localStorage.getItem('antheProgress'));
+            }
+            updateInterface();
+        };
+
+        // Fonction pour tout effacer (bouton DEV)
+        function resetApp() {
+            if(confirm("Tu es sûr de vouloir remettre à zéro ?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // Mise à jour visuelle des cadenas
+        function updateInterface() {
+            const progress = ((currentLevel - 1) / 6) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+
+            for (let i = 1; i <= 6; i++) {
+                const card = document.getElementById('level' + i);
+                card.classList.remove('unlocked', 'completed');
+                card.querySelector('.status-icon').textContent = '🔒';
+
+                if (i < currentLevel) {
+                    // Niveau terminé
+                    card.classList.add('completed');
+                    card.querySelector('.status-icon').textContent = '✅';
+                } else if (i === currentLevel) {
+                    // Niveau actuel
+                    card.classList.add('unlocked');
+                    card.querySelector('.status-icon').textContent = '🔓';
+                }
+            }
+        }
+
+        // Ouvre la fenêtre (Pop-up)
+        function openGame(level) {
+            // On empêche d'ouvrir les niveaux futurs
+            if (level > currentLevel) return;
+
+            // IMPORTANT : On dit au système quel niveau est sélectionné
+            selectedLevel = level; 
+
+            const modal = document.getElementById('gameModal');
+            const title = document.getElementById('modalTitle');
+            const desc = modal.querySelector('p');
+
+            // --- CONFIGURATION DU TEXTE SELON LE NIVEAU ---
+            
+            if (level === 1) {
+                // NIVEAU 1 : ZIP
+                title.textContent = "Mission 01 : ZIP";
+                // On injecte le bouton pour lancer le jeu
+                desc.innerHTML = 
+                    'Prouve que ta mémoire est synchronisée.<br><br>' + 
+                    '<a href="zip.html" style="background: #0a66c2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight:bold;">LANCER LE JEU</a>' +
+                    '<br><br><small>Une fois le jeu fini, reviens ici et entre le code obtenu :</small>';
+            
+            } else if (level === 2) {
+                // NIVEAU 2 : QUEENS (A venir)
+                title.textContent = "Mission 02 : QUEENS";
+                desc.innerHTML = 
+                    'Prouve que ta mémoire est synchronisée.<br><br>' + 
+                    '<a href="queens.html" style="background: #0a66c2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight:bold;">LANCER LE JEU</a>' +
+                    '<br><br><small>Une fois le jeu fini, reviens ici et entre le code obtenu :</small>';
+            
+            } else if (level === 3) {
+                title.textContent = "Mission 03 : TANGO";
+                desc.innerHTML = 
+                    'Prouve que ta mémoire est synchronisée.<br><br>' + 
+                    '<a href="tango.html" style="background: #0a66c2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight:bold;">LANCER LE JEU</a>' +
+                    '<br><br><small>Une fois le jeu fini, reviens ici et entre le code obtenu :</small>';
+
+            } else if (level === 4) {
+                title.textContent = "Mission 04 : MINI-SUDOK";
+                desc.innerHTML = 
+                    'Prouve que ta mémoire est synchronisée.<br><br>' + 
+                    '<a href="sudoku.html" style="background: #0a66c2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight:bold;">LANCER LE JEU</a>' +
+                    '<br><br><small>Une fois le jeu fini, reviens ici et entre le code obtenu :</small>';
+
+            } else if (level === 5) {
+                title.textContent = "Mission 05 : COLOR CONNECT";
+                desc.innerHTML = 
+                    'Prouve que ta mémoire est synchronisée.<br><br>' + 
+                    '<a href="connect.html" style="background: #0a66c2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight:bold;">LANCER LE JEU</a>' +
+                    '<br><br><small>Une fois le jeu fini, reviens ici et entre le code obtenu :</small>';
+
+            } else if (level === 6) {
+                title.textContent = "Mission 06 : LE GRAND NETTOYAGE";
+                desc.innerHTML = 
+                    'Prouve que ta mémoire est synchronisée.<br><br>' + 
+                    '<a href="legrand.html" style="background: #0a66c2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight:bold;">LANCER LE JEU</a>' +
+                    '<br><br><small>Une fois le jeu fini, reviens ici et entre le code obtenu :</small>';
+
+            } else {
+                // AUTRES NIVEAUX
+                title.textContent = "Mission 0" + level;
+                desc.textContent = "Accès restreint pour le moment.";
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('gameModal').style.display = 'none';
+            // On vide le champ texte pour la prochaine fois
+            document.getElementById('code-input').value = "";
+        }
+
+        function closeSuccess() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+
+        function checkCode() {
+            const input = document.getElementById('code-input').value.toUpperCase().trim();
+            
+            const codes = {
+                1: "ZIP-591", 2: "QUEENS-98", 3: "TANGO-CACA", 
+                4: "SUDOKU-PIPI", 5: "CONNECT-ZINZIN", 6: "FINAL-123" 
+            };
+
+            if (input === codes[selectedLevel]) {
+                closeModal(); // Ferme le clavier
+                
+                if(selectedLevel === currentLevel) {
+                    currentLevel++;
+                    localStorage.setItem('antheProgress', currentLevel);
+                    
+                    // Mise à jour visuelle immédiate (pour voir le check vert)
+                    updateInterface();
+
+                    // Si c'est le dernier niveau (on vient de finir le 6)
+                    if (currentLevel > 6) {
+                        
+                        // ETAPE 1 : On laisse 1.5 seconde pour admirer le tableau complet
+                        setTimeout(() => {
+                            launchGrandFinale();
+                        }, 1500);
+
+                    } else {
+                        // Niveaux normaux : Afficher succès
+                        document.getElementById('successModal').style.display = 'flex';
+                    }
+                } else {
+                    alert("Tu as déjà validé ce niveau, petit génie !");
+                }
+            } else {
+                alert("Code incorrect !");
+            }
+        }
+
+        // LA SÉQUENCE CINÉMATIQUE
+        function launchGrandFinale() {
+            const suspense = document.getElementById('suspense-screen');
+            const text = document.getElementById('hacker-text');
+            const bar = document.getElementById('loader-progress');
+
+            // 1. Afficher écran noir
+            suspense.style.display = 'flex';
+            
+            // 2. Animation de texte style "Hacker"
+            setTimeout(() => { text.textContent = "UPLOAD DES SOUVENIRS..."; }, 1000);
+            setTimeout(() => { text.textContent = "BYPASS DU FIREWALL..."; }, 2000);
+            setTimeout(() => { text.textContent = "SYNCHRONISATION 100%"; text.style.color = "white"; }, 3500);
+
+            // 3. Lancer la barre de chargement (dure 3.5s)
+            setTimeout(() => {
+                bar.style.width = "100%";
+            }, 100);
+
+            // 4. BOUM : Afficher le Cœur Final après 4 secondes
+            setTimeout(() => {
+                suspense.style.display = 'none'; // Cache le hacker
+                document.getElementById('finalModal').style.display = 'flex'; // Affiche l'amour
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

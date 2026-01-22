@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ATTENTE SYNCHRONISATION</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #00ff41; /* Vert Hacker */
+            font-family: 'Courier New', Courier, monospace;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 80vh; margin: 0; text-align: center;
+            overflow: hidden;
+        }
+
+        h1 { font-size: 1.2rem; letter-spacing: 2px; margin-bottom: 40px; text-transform: uppercase; animation: blink 1s infinite; }
+        
+        #countdown {
+            font-size: 4rem; font-weight: bold;
+            border: 2px solid #00ff41;
+            padding: 20px; border-radius: 10px;
+            box-shadow: 0 0 20px #00ff41;
+            margin-bottom: 20px;
+            width: 80%; max-width: 400px;
+        }
+
+        p { color: #888; font-size: 0.9rem; max-width: 300px; line-height: 1.5; }
+
+        .locked-icon { font-size: 3rem; margin-bottom: 20px; opacity: 0.5; }
+
+        /* BOUTON DÉBLOQUÉ */
+        #unlock-btn {
+            display: none; /* Caché par défaut */
+            margin-top: 30px; padding: 20px 40px;
+            background: #00ff41; color: black;
+            font-size: 1.2rem; font-weight: bold; text-decoration: none;
+            border-radius: 5px; box-shadow: 0 0 30px #00ff41;
+            animation: pulse 1s infinite;
+            cursor: pointer; border: none;
+        }
+
+        @keyframes blink { 50% { opacity: 0.5; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div class="locked-icon">🔒</div>
+    <h1 id="status-text">SYNCHRONISATION EN ATTENTE</h1>
+
+    <div id="countdown">--:--:--</div>
+
+    <p>Le module "GASTRONOMIE" est verrouillé temporellement.<br>Veuillez patienter jusqu'à l'heure cible.</p>
+
+    <a href="food.html" id="unlock-btn">OUVRIR L'ARCHIVE</a>
+
+    <script>
+        // === CONFIGURATION DE LA DATE CIBLE ===
+        // Attention : En Javascript, les mois commencent à 0 (0 = Janvier, 1 = Février...)
+        // Donc pour le 30 Janvier, on met le mois 0.
+        
+        const targetYear = 2026;
+        const targetMonth = 1;  // 0 = Janvier
+        const targetDay = 20;   // Le 30
+        const targetHour = 22;  // 12h00
+        const targetMinute = 31; 
+        
+        function updateTimer() {
+            const now = new Date();
+            
+            // On crée la date cible exacte
+            const target = new Date(targetYear, targetMonth - 1, targetDay, targetHour, targetMinute, 0);
+
+            let diff = target - now;
+
+            if (diff <= 0) {
+                // C'EST L'HEURE (ou c'est déjà passé)
+                unlockPhase();
+            } else {
+                // ON ATTEND
+                // Calcul des Jours / Heures / Minutes / Secondes
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const m = Math.floor((diff / (1000 * 60)) % 60);
+                const s = Math.floor((diff / 1000) % 60);
+
+                // Affichage propre
+                // Si il reste des jours, on les affiche (ex: "2j 04:10:05")
+                // Sinon juste l'heure (ex: "04:10:05")
+                if (d > 0) {
+                    document.getElementById('countdown').innerText = 
+                        `${d}j ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                } else {
+                    document.getElementById('countdown').innerText = 
+                        `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                }
+            }
+        }
+
+        function unlockPhase() {
+            const count = document.getElementById('countdown');
+            count.innerText = "00:00:00";
+            count.style.borderColor = "white";
+            count.style.color = "white";
+            
+            document.getElementById('status-text').innerText = "ACCÈS AUTORISÉ";
+            document.getElementById('status-text').style.color = "white";
+            document.querySelector('.locked-icon').innerText = "🔓";
+            
+            // Affiche le bouton
+            document.getElementById('unlock-btn').style.display = "inline-block";
+            
+            // Arrête le timer
+            if(timerInterval) clearInterval(timerInterval);
+        }
+
+        // Lancer le timer
+        const timerInterval = setInterval(updateTimer, 1000);
+        updateTimer(); // Appel immédiat
+
+    </script>
+</body>
+</html>

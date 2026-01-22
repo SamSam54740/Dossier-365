@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mission 05 : CONNECT</title>
+    <style>
+        :root {
+            --bg-app: #1e1e24; 
+            --grid-bg: #121212;
+            --path-width: 40%; /* Épaisseur du tuyau */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-app);
+            color: white;
+            margin: 0; height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            touch-action: none; overflow: hidden;
+        }
+
+        body {
+            /* Change justify-content: center par flex-start */
+            justify-content: flex-start; 
+            padding-top: 5vh; /* Pousse un peu vers le bas mais reste haut */
+            /* ... garde le reste (font-family, colors...) */
+        }
+
+        /* 2. STYLE DU TIMER (Ajouter) */
+        #timer-display {
+            font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;
+            background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 15px;
+            color: inherit; /* S'adapte au thème */
+            border: 1px solid currentColor;
+        }
+
+        /* 3. ECRAN DE FIN PERSONNALISÉ (Modifier #win-modal .code-box) */
+        .code-box {
+            background: #fff; border: 2px dashed currentColor; /* Cadre pointillé joli */
+            padding: 20px; font-size: 2rem; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: rotate(-2deg); /* Petit effet style sticker */
+            margin: 30px 0;
+        }
+        #win-modal h2 { text-transform: uppercase; letter-spacing: 2px; }
+
+        h1 { margin-bottom: 5px; font-size: 1.5rem; letter-spacing: 1px; text-transform: uppercase; color: #fff; }
+        p { margin-top: 0; font-size: 0.9rem; color: #888; max-width: 340px; text-align: center; margin-bottom: 20px;}
+        p2 { margin-top: 0; font-size: 0.9rem; color: #ffffff; max-width: 340px; text-align: center; margin-bottom: 20px;}
+
+        /* GRILLE 10x11 */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(11, 1fr);
+            gap: 1px;
+            background-color: #333; /* Couleur des lignes de grille */
+            border: 2px solid #555;
+            width: 95vw; max-width: 380px; 
+            aspect-ratio: 10/11; /* Ratio précis */
+            user-select: none; touch-action: none;
+            border-radius: 4px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .cell {
+            background-color: var(--grid-bg);
+            position: relative;
+            /* Pas de flex center ici pour ne pas perturber les positions absolues */
+        }
+
+        /* --- LE DESIGN DES TUYAUX (Style "Zip") --- */
+
+        /* 1. Le Joint Central (Rond au milieu) */
+        .path-center {
+            position: absolute;
+            width: var(--path-width); height: var(--path-width);
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            display: none; /* Caché par défaut */
+        }
+        .cell.has-path .path-center { display: block; }
+
+        /* 2. Les Connecteurs (Bras) */
+        .connector {
+            position: absolute;
+            background-color: inherit; /* Hérite la couleur injectée en JS */
+            z-index: 4;
+            display: none;
+        }
+        /* Vertical : Centré horizontalement */
+        .con-top { width: var(--path-width); height: 60%; left: 50%; top: -10%; transform: translateX(-50%); }
+        .con-bottom { width: var(--path-width); height: 60%; left: 50%; bottom: -10%; transform: translateX(-50%); }
+        /* Horizontal : Centré verticalement */
+        .con-left { height: var(--path-width); width: 60%; top: 50%; left: -10%; transform: translateY(-50%); }
+        .con-right { height: var(--path-width); width: 60%; top: 50%; right: -10%; transform: translateY(-50%); }
+
+        /* 3. Les Points de Départ (Dots) */
+        .dot {
+            position: absolute;
+            width: 65%; height: 65%;
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+        }
+        .dot.connected { transform: translate(-50%, -50%) scale(1.1); box-shadow: 0 0 10px white; }
+
+        /* Animation pulsation pour le point actif */
+        .dot.active { animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.2); } 100% { transform: translate(-50%, -50%) scale(1); } }
+
+
+        /* COULEURS (Définies en JS mais classes utiles si besoin) */
+        
+        /* MODALE */
+        #win-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; flex-direction: column; color: white; text-align: center; z-index: 100; animation: fadeIn 0.5s; }
+        .code-box { background: white; color: #333; padding: 15px 30px; margin: 20px; font-family: monospace; font-size: 1.5rem; letter-spacing: 2px; font-weight: bold; border-radius: 10px; }
+        button.reset { margin-top: 25px; padding: 10px 20px; background: #333; border: 1px solid #555; border-radius: 20px; color: white; font-weight: bold; cursor: pointer; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <h1>COLOR CONNECT</h1>
+    <p>Niveau Expert<br>Relie les paires. Remplis la grille.</p>
+    <div id="timer-display">⏱️ 00:00</div>
+
+    <div class="game-board" id="grid"></div>
+
+    <button class="reset" onclick="resetGame()">Réinitialiser</button>
+
+    <div id="win-modal">
+        <div style="font-size: 4rem;">🌈</div>
+        <h2>SYSTÈME CONNECTÉ</h2>
+        <p2>Aussi forte que Jeanne !!!</p2>
+        <div class="code-box">CONNECT-ZINZIN</div>
+        <a href="index.html" style="color: white; font-weight: bold; text-decoration: none; border-bottom: 1px solid white;">Retour au QG</a>
+    </div>
+
+    <script>
+        // --- CONFIGURATION DU NIVEAU (10x11) ---
+        // Basé sur ton image "Niveau 100"
+        // Index = Row * 10 + Col
+
+        let gameStartTime;
+        let timerInterval;
+
+        function startTimer() {
+            gameStartTime = Date.now();
+            timerInterval = setInterval(() => {
+                const delta = Math.floor((Date.now() - gameStartTime) / 1000);
+                const m = Math.floor(delta / 60).toString().padStart(2, '0');
+                const s = (delta % 60).toString().padStart(2, '0');
+                document.getElementById('timer-display').innerText = `⏱️ ${m}:${s}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+        
+        const colors = {
+            pink: '#ff00cc',
+            purple: '#9b59b6',
+            blue: '#0044ff',    // Navy
+            cyan: '#00ccff',
+            grey: '#7f8c8d',
+            green: '#2ecc71',
+            white: '#ecf0f1',
+            darkred: '#8b0000',
+            red: '#e74c3c',
+            lightblue: '#3498db',
+            salmon: '#fa8072',
+            yellow: '#f1c40f',
+            orange: '#e67e22',
+            lime: '#bfff00'
+        };
+
+        const levelConfig = [
+            { start: 1, end: 20, color: colors.pink },      // (0,1) - (2,0)
+            { start: 2, end: 21, color: colors.purple },    // (0,2) - (2,1)
+            { start: 3, end: 25, color: colors.blue },      // (0,3) - (2,5)
+            { start: 4, end: 90, color: colors.cyan },      // (0,4) - (8,0)
+            { start: 18, end: 26, color: colors.grey },     // (1,8) - (2,6)
+            { start: 27, end: 76, color: colors.green },    // (2,3) - (2,7)
+            { start: 37, end: 53, color: colors.white },    // (3,7) - (5,3) [Estimé]
+            { start: 41, end: 52, color: colors.darkred },  // (4,1) - (5,1) [Estimé]
+            { start: 60, end: 92, color: colors.red },      // (5,2) - (8,2)
+            { start: 55, end: 96, color: colors.lightblue },// (5,5) - (8,6)
+            { start: 66, end: 85, color: colors.orange },   // (6,6) - (8,4)
+            { start: 71, end: 95, color: colors.yellow },   // (7,1) - (8,5)
+            { start: 24, end: 84, color: colors.lime }      // (7,6) - (8,3)
+        ];
+
+        // --- MOTEUR DU JEU ---
+        const rows = 11;
+        const cols = 10;
+        const totalCells = rows * cols;
+        const gridEl = document.getElementById('grid');
+        
+        // État de la grille
+        // cells[i] = { dotColor: hex, pathColor: hex, ... }
+        let cells = [];
+        let isDrawing = false;
+        let currentDrawColor = null;
+        let currentPath = []; 
+
+        function initGame() {
+            gridEl.innerHTML = '';
+            cells = [];
+            isDrawing = false;
+            currentDrawColor = null;
+            startTimer();
+
+            // 1. Initialisation Données
+            for(let i=0; i<totalCells; i++) {
+                cells.push({ index: i, dotColor: null, pathColor: null, element: null });
+            }
+
+            // 2. Placement des points
+            levelConfig.forEach(pair => {
+                cells[pair.start].dotColor = pair.color;
+                cells[pair.end].dotColor = pair.color;
+            });
+
+            // 3. Création DOM
+            cells.forEach((cell, i) => {
+                let el = document.createElement('div');
+                el.className = 'cell';
+                el.dataset.index = i;
+                
+                // Joint Central (Le corps du serpent)
+                let center = document.createElement('div');
+                center.className = 'path-center';
+                el.appendChild(center);
+
+                // Connecteurs (Les bras)
+                let cTop = createDiv('connector con-top');
+                let cBottom = createDiv('connector con-bottom');
+                let cLeft = createDiv('connector con-left');
+                let cRight = createDiv('connector con-right');
+                el.append(cTop, cBottom, cLeft, cRight);
+
+                // Point (Dot)
+                if (cell.dotColor) {
+                    let dot = document.createElement('div');
+                    dot.className = 'dot';
+                    dot.style.backgroundColor = cell.dotColor;
+                    el.appendChild(dot);
+                }
+
+                cell.element = el;
+                gridEl.appendChild(el);
+            });
+
+            // Events (Pointer events gère souris + tactile mieux)
+            gridEl.addEventListener('pointerdown', startDraw);
+            window.addEventListener('pointerup', endDraw);
+            window.addEventListener('pointermove', handleMove);
+        }
+
+        function createDiv(cls) {
+            let d = document.createElement('div');
+            d.className = cls;
+            return d;
+        }
+
+        function startDraw(e) {
+            e.preventDefault(); // Important pour éviter scroll sur mobile
+            let target = getTargetCell(e);
+            if (!target) return;
+            
+            let idx = parseInt(target.dataset.index);
+            let cellData = cells[idx];
+
+            // Départ possible sur un Point ou un Chemin existant
+            if (cellData.dotColor) {
+                isDrawing = true;
+                currentDrawColor = cellData.dotColor;
+                clearPath(currentDrawColor); // On recommence ce chemin
+                addToPath(idx);
+                // Animation feedback
+                target.querySelector('.dot').classList.add('active');
+            } 
+            else if (cellData.pathColor) {
+                isDrawing = true;
+                currentDrawColor = cellData.pathColor;
+                truncatePath(currentDrawColor, idx); // On coupe et on reprend
+            }
+        }
+
+        function handleMove(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            
+            let target = getTargetCell(e);
+            if (!target) return;
+            
+            let idx = parseInt(target.dataset.index);
+            let cellData = cells[idx];
+            let lastIdx = currentPath[currentPath.length - 1];
+
+            if (idx === lastIdx) return; // Bouge pas
+            if (!isAdjacent(lastIdx, idx)) return; // Saute des cases
+
+            // Backtracking (Gomme en reculant)
+            if (currentPath.length > 1 && idx === currentPath[currentPath.length - 2]) {
+                removeFromPath(lastIdx);
+                return;
+            }
+
+            // Avancer sur case vide
+            if (!cellData.pathColor && !cellData.dotColor) {
+                addToPath(idx);
+                return;
+            }
+
+            // Arriver sur le Point d'Arrivée (Même couleur)
+            if (cellData.dotColor === currentDrawColor) {
+                if (currentPath.length > 1) { // Eviter de connecter start sur start
+                    addToPath(idx);
+                    isDrawing = false; // Stop
+                    checkWin();
+                }
+                return;
+            }
+
+            // Si on touche un autre chemin ou une autre couleur -> Bloqué
+            // (Le code s'arrête ici, on ne fait rien)
+        }
+
+        function endDraw() {
+            isDrawing = false;
+            currentPath = [];
+            // Retire l'animation active
+            document.querySelectorAll('.dot.active').forEach(d => d.classList.remove('active'));
+        }
+
+        // --- LOGIQUE CHEMIN ---
+
+        function addToPath(idx) {
+            let cell = cells[idx];
+            cell.pathColor = currentDrawColor;
+            currentPath.push(idx);
+
+            // Mise à jour visuelle
+            cell.element.classList.add('has-path');
+            let center = cell.element.querySelector('.path-center');
+            center.style.backgroundColor = currentDrawColor;
+
+            // Connecter avec le précédent
+            if (currentPath.length > 1) {
+                let prevIdx = currentPath[currentPath.length - 2];
+                connectVisuals(prevIdx, idx, currentDrawColor);
+            }
+        }
+
+        function removeFromPath(idx) {
+            let cell = cells[idx];
+            cell.pathColor = null;
+            cell.element.classList.remove('has-path');
+            
+            // Cacher tous les connecteurs de cette case
+            let connectors = cell.element.querySelectorAll('.connector');
+            connectors.forEach(c => c.style.display = 'none');
+
+            // Cacher le connecteur du voisin qui pointait vers ici
+            if (currentPath.length > 1) {
+                let prevIdx = currentPath[currentPath.length - 2];
+                disconnectVisuals(prevIdx, idx);
+            }
+
+            currentPath.pop();
+        }
+
+        function clearPath(color) {
+            // Trouve toutes les cases de cette couleur et reset
+            cells.forEach(c => {
+                if (c.pathColor === color) {
+                    c.pathColor = null;
+                    c.element.classList.remove('has-path');
+                    c.element.querySelectorAll('.connector').forEach(el => el.style.display = 'none');
+                }
+            });
+            currentPath = [];
+        }
+
+        function truncatePath(color, idx) {
+            // On reconstruit currentPath pour cette couleur en scannant la grille ?
+            // Trop complexe. Astuce : On efface tout et on redémarre du point de départ ?
+            // Pour ce mini-jeu, simplifions : Si on clique sur un tuyau existant, on reset tout le tuyau.
+            // C'est moins frustrant que des bugs de coupure.
+            clearPath(color);
+            addToPath(idx); // On redémarre de là où on a cliqué
+        }
+
+        // --- VISUELS ---
+
+        function connectVisuals(i1, i2, color) {
+            let diff = i2 - i1;
+            let el1 = cells[i1].element;
+            let el2 = cells[i2].element;
+
+            // Droite (+1) / Gauche (-1) / Bas (+10) / Haut (-10)
+            if (diff === 1) { // Droite
+                showConn(el1, 'con-right', color); showConn(el2, 'con-left', color);
+            } else if (diff === -1) { // Gauche
+                showConn(el1, 'con-left', color); showConn(el2, 'con-right', color);
+            } else if (diff === cols) { // Bas
+                showConn(el1, 'con-bottom', color); showConn(el2, 'con-top', color);
+            } else if (diff === -cols) { // Haut
+                showConn(el1, 'con-top', color); showConn(el2, 'con-bottom', color);
+            }
+        }
+
+        function disconnectVisuals(i1, i2) {
+            // Cache le connecteur de i1 qui va vers i2
+            let diff = i2 - i1;
+            let el1 = cells[i1].element;
+            if (diff === 1) el1.querySelector('.con-right').style.display = 'none';
+            else if (diff === -1) el1.querySelector('.con-left').style.display = 'none';
+            else if (diff === cols) el1.querySelector('.con-bottom').style.display = 'none';
+            else if (diff === -cols) el1.querySelector('.con-top').style.display = 'none';
+        }
+
+        function showConn(el, cls, color) {
+            let c = el.querySelector('.' + cls);
+            c.style.display = 'block';
+            c.style.backgroundColor = color;
+        }
+
+        // --- HELPERS ---
+
+        function getTargetCell(e) {
+            let x = e.clientX || e.touches[0].clientX;
+            let y = e.clientY || e.touches[0].clientY;
+            return document.elementFromPoint(x, y)?.closest('.cell');
+        }
+
+        function isAdjacent(i1, i2) {
+            let r1 = Math.floor(i1/cols), c1 = i1%cols;
+            let r2 = Math.floor(i2/cols), c2 = i2%cols;
+            return (Math.abs(r1-r2) + Math.abs(c1-c2)) === 1;
+        }
+
+        function checkWin() {
+            // Vérifie si toutes les paires sont connectées
+            let allGood = true;
+            levelConfig.forEach(pair => {
+                // Si le start ou le end n'a pas de chemin, c'est pas fini
+                if (!cells[pair.start].pathColor || !cells[pair.end].pathColor) allGood = false;
+            });
+
+            if (allGood) {
+                // Petit délai pour admirer
+                stopTimer();
+                setTimeout(() => {
+                    document.getElementById('win-modal').style.display = 'flex';
+                }, 300);
+            }
+        }
+
+        function resetGame() {
+            initGame();
+            document.getElementById('win-modal').style.display = 'none';
+        }
+
+        initGame();
+    </script>
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mission 03 : TANGO</title>
+    <style>
+        :root {
+            --bg-app: #f4f7f6;
+            --cell-bg: #ffffff;
+            --eggplant-color: #8e44ad;
+            --water-color: #3498db;
+            --constraint-color: #555; /* Plus foncé pour lisibilité */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-app);
+            color: #333;
+            margin: 0; height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            touch-action: none; overflow: hidden;
+        }
+
+        body {
+            /* Change justify-content: center par flex-start */
+            justify-content: flex-start; 
+            padding-top: 5vh; /* Pousse un peu vers le bas mais reste haut */
+            /* ... garde le reste (font-family, colors...) */
+        }
+
+        /* 2. STYLE DU TIMER (Ajouter) */
+        #timer-display {
+            font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;
+            background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 15px;
+            color: inherit; /* S'adapte au thème */
+            border: 1px solid currentColor;
+        }
+
+        /* 3. ECRAN DE FIN PERSONNALISÉ (Modifier #win-modal .code-box) */
+        .code-box {
+            background: #fff; border: 2px dashed currentColor; /* Cadre pointillé joli */
+            padding: 20px; font-size: 2rem; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: rotate(-2deg); /* Petit effet style sticker */
+            margin: 30px 0;
+        }
+        #win-modal h2 { text-transform: uppercase; letter-spacing: 2px; }
+
+        h1 { margin-bottom: 5px; font-size: 1.5rem; color: #2c3e50; letter-spacing: -0.5px; }
+        p { margin-top: 0; font-size: 0.9rem; color: #7f8c8d; max-width: 340px; text-align: center; margin-bottom: 20px;}
+        p2 { margin-top: 0; font-size: 0.9rem; color: #ffffff; max-width: 340px; text-align: center; margin-bottom: 20px;}
+
+        /* GRILLE */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 4px;
+            background-color: transparent;
+            padding: 10px;
+            width: 90vw; max-width: 360px; aspect-ratio: 1/1;
+            user-select: none;
+            position: relative;
+        }
+
+        .cell {
+            background-color: var(--cell-bg);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: background 0.2s;
+            position: relative;
+        }
+
+        /* Symboles */
+        .cell[data-val="1"]::after { 
+            content: '🍆'; 
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); 
+        }
+        .cell[data-val="2"]::after { 
+            content: '💧'; 
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); 
+        }
+
+        .cell.locked { background-color: #ecf0f1; cursor: default; }
+
+        .cell.error { 
+            background-color: #ffcdd2; 
+            box-shadow: inset 0 0 0 2px #c62828;
+            animation: shake 0.3s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+
+        /* CONTRAINTES */
+        .constraint {
+            position: absolute;
+            font-size: 1.1rem; font-weight: 900; color: var(--constraint-color);
+            background: rgba(255,255,255,0.8); border-radius: 50%;
+            z-index: 10; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+            width: 18px; height: 18px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .con-right { right: -11px; top: 50%; transform: translateY(-50%); }
+        .con-bottom { bottom: -11px; left: 50%; transform: translateX(-50%); }
+
+        #win-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; flex-direction: column; color: white; text-align: center; z-index: 100; animation: fadeIn 0.5s; }
+        .code-box { background: white; color: #2c3e50; padding: 15px 30px; margin: 20px; font-family: monospace; font-size: 1.5rem; letter-spacing: 2px; font-weight: bold; border-radius: 10px; }
+        button.reset { margin-top: 25px; padding: 10px 20px; background: #bdc3c7; border: none; border-radius: 20px; color: white; font-weight: bold; cursor: pointer; }
+
+    </style>
+</head>
+<body>
+
+    <h1>MISSION TANGO</h1>
+    <p>3 🍆 et 3 💧 par ligne/colonne.<br><strong>Niveau Expert.</strong> Bonne chance.</p>
+    <div id="timer-display">⏱️ 00:00</div>
+
+    <div class="game-board" id="grid"></div>
+
+    <button class="reset" onclick="initGame()">Recommencer</button>
+
+    <div id="win-modal">
+        <div style="font-size: 4rem;">🧠</div>
+        <h2>GÉNIE !!!</h2>
+        <p2>Trop forte mon bibi chat !</p2>
+        <div class="code-box">TANGO-CACA</div>
+        <a href="index.html" style="color: white; font-weight: bold; text-decoration: none; border-bottom: 1px solid white;">Retour au QG</a>
+    </div>
+
+    <script>
+        // --- CONFIGURATION DIFFICILE ---
+        // 1 = Aubergine, 2 = Goutte
+        
+        // Solution visée (pour info dev) :
+        // 1 2 2 1 1 2
+        // 2 1 1 2 2 1
+        // 1 2 2 1 2 1
+        // 2 1 1 2 1 2
+        // 1 2 1 2 1 2
+        // 2 1 2 1 2 1
+
+        let gameStartTime;
+        let timerInterval;
+
+        function startTimer() {
+            gameStartTime = Date.now();
+            timerInterval = setInterval(() => {
+                const delta = Math.floor((Date.now() - gameStartTime) / 1000);
+                const m = Math.floor(delta / 60).toString().padStart(2, '0');
+                const s = (delta % 60).toString().padStart(2, '0');
+                document.getElementById('timer-display').innerText = `⏱️ ${m}:${s}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        // Seulement 3 cases données !
+        const startingCells = {
+            14: 2, // R2 C2 : Goutte
+            27: 2, // R4 C3 : Goutte
+            5:  2  // R0 C5 : Goutte
+        };
+
+        // Beaucoup de contraintes pour forcer la logique
+        const constraints = [
+            // Ligne 0
+            { idx: 0, type: 'x', dir: 'right' }, // C0 != C1
+            { idx: 2, type: '=', dir: 'right' }, // C2 == C3
+
+            // Ligne 1
+            { idx: 7, type: '=', dir: 'right' }, // C1 == C2
+
+            // Ligne 3
+            { idx: 18, type: 'x', dir: 'right' }, // C0 != C1
+            { idx: 20, type: '=', dir: 'right' }, // C2 == C3
+
+            // Verticales
+            { idx: 6, type: 'x', dir: 'bottom' }, // R1C0 != R2C0
+            { idx: 17, type: '=', dir: 'bottom' }, // R2C5 == R3C5
+            { idx: 28, type: 'x', dir: 'bottom' }, // R4C4 != R5C4
+            { idx: 25, type: 'x', dir: 'bottom' }  // R4C1 == R5C1
+        ];
+
+        // --- MOTEUR DU JEU ---
+        const gridSize = 6;
+        let gridState = new Array(36).fill(0);
+        const gridEl = document.getElementById('grid');
+        let validationTimeout = null; 
+
+        function initGame() {
+            gridEl.innerHTML = '';
+            gridState.fill(0);
+            startTimer();
+            
+            for(let idx in startingCells) {
+                gridState[idx] = startingCells[idx];
+            }
+
+            for (let i = 0; i < 36; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+                
+                if (startingCells[i]) {
+                    cell.dataset.val = startingCells[i];
+                    cell.classList.add('locked');
+                } else {
+                    cell.dataset.val = 0;
+                    cell.onclick = () => toggleCell(i);
+                    cell.addEventListener('touchstart', (e) => { e.preventDefault(); toggleCell(i); });
+                }
+
+                constraints.forEach(c => {
+                    if (c.idx === i) {
+                        let mark = document.createElement('div');
+                        mark.className = `constraint con-${c.dir}`;
+                        mark.innerText = c.type === 'x' ? '×' : '='; // Affiche × ou =
+                        cell.appendChild(mark);
+                    }
+                });
+
+                gridEl.appendChild(cell);
+            }
+        }
+
+        function toggleCell(index) {
+            let current = gridState[index];
+            let next = (current + 1) > 2 ? 0 : current + 1;
+            
+            gridState[index] = next;
+            const cell = gridEl.children[index];
+            cell.dataset.val = next;
+            
+            document.querySelectorAll('.cell').forEach(c => c.classList.remove('error'));
+
+            if (validationTimeout) clearTimeout(validationTimeout);
+            validationTimeout = setTimeout(() => {
+                validateGrid();
+            }, 1000); // Délai de 2 secondes
+        }
+
+        function validateGrid() {
+            let isValid = true;
+            let errors = new Set();
+            let isFull = !gridState.includes(0);
+
+            // A. CONTRAINTES (X et =)
+            constraints.forEach(c => {
+                let val1 = gridState[c.idx];
+                let idx2 = c.dir === 'right' ? c.idx + 1 : c.idx + 6;
+                let val2 = gridState[idx2];
+
+                if (val1 !== 0 && val2 !== 0) {
+                    if (c.type === 'x' && val1 === val2) { 
+                        errors.add(c.idx); errors.add(idx2); isValid = false; 
+                    }
+                    if (c.type === '=' && val1 !== val2) { 
+                        errors.add(c.idx); errors.add(idx2); isValid = false; 
+                    }
+                }
+            });
+
+            // B. PAS PLUS DE 2 À LA SUITE
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize - 2; c++) {
+                    let idx = r * 6 + c;
+                    let v1 = gridState[idx], v2 = gridState[idx+1], v3 = gridState[idx+2];
+                    if (v1 !== 0 && v1 === v2 && v2 === v3) {
+                        errors.add(idx); errors.add(idx+1); errors.add(idx+2); isValid = false;
+                    }
+                }
+            }
+            for (let c = 0; c < gridSize; c++) {
+                for (let r = 0; r < gridSize - 2; r++) {
+                    let idx = r * 6 + c;
+                    let v1 = gridState[idx], v2 = gridState[idx+6], v3 = gridState[idx+12];
+                    if (v1 !== 0 && v1 === v2 && v2 === v3) {
+                        errors.add(idx); errors.add(idx+6); errors.add(idx+12); isValid = false;
+                    }
+                }
+            }
+
+            // C. NOMBRE ÉGAL (3/3)
+            for (let r = 0; r < gridSize; r++) {
+                let c1 = 0, c2 = 0;
+                for (let c = 0; c < gridSize; c++) {
+                    let val = gridState[r*6+c];
+                    if (val === 1) c1++; if (val === 2) c2++;
+                }
+                if (c1 > 3 || c2 > 3) { 
+                    for(let k=0;k<6;k++) errors.add(r*6+k); isValid=false; 
+                }
+                if (isFull && (c1!==3 || c2!==3)) isValid=false;
+            }
+            for (let c = 0; c < gridSize; c++) {
+                let c1 = 0, c2 = 0;
+                for (let r = 0; r < gridSize; r++) {
+                    let val = gridState[r*6+c];
+                    if (val === 1) c1++; if (val === 2) c2++;
+                }
+                if (c1 > 3 || c2 > 3) { 
+                    for(let k=0;k<6;k++) errors.add(k*6+c); isValid=false; 
+                }
+                if (isFull && (c1!==3 || c2!==3)) isValid=false;
+            }
+
+            errors.forEach(idx => gridEl.children[idx].classList.add('error'));
+
+            if (isValid && isFull && errors.size === 0) {
+                stopTimer();
+                setTimeout(() => {
+                    document.getElementById('win-modal').style.display = 'flex';
+                }, 300);
+            }
+        }
+
+        initGame();
+    </script>
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ARCHIVE GASTRONOMIQUE</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #f5f5f5;
+            --accent: #ff9f43;
+            --error: #ee5253;
+            --success: #2ecc71;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0; height: 80vh; width: 100vw;
+            display: flex; flex-direction: column; 
+            align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        #game-ui {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            width: 100%; height: 100%;
+            padding: 10px; box-sizing: border-box;
+        }
+
+        h1 { font-size: 1.1rem; margin: 0 0 10px 0; letter-spacing: 1px; color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 5px; }
+        #progress-counter { color: #888; font-size: 0.8rem; margin-bottom: 5px; }
+        p#q-text { font-size: 0.9rem; line-height: 1.3; max-width: 95%; margin: 0 0 15px 0; color: #fff; font-weight: bold; text-align: center; }
+
+        .photo-frame {
+            background: #fff; padding: 8px; transform: rotate(1deg); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-bottom: 15px;
+            width: auto; max-width: 90vw;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: transform 0.3s;
+        }
+        .photo-frame img {
+            max-width: 100%; max-height: 35vh; 
+            display: block; object-fit: contain;
+            backface-visibility: hidden; transform: translateZ(0); will-change: opacity;
+            transition: opacity 0.4s ease-out;
+        }
+        .revealed-state { filter: saturate(1.2); }
+        .caption { position: relative; margin-top: 8px; text-align: center; color: #333; font-weight: bold; font-family: sans-serif; font-size: 0.8rem; width: 100%; }
+
+        .input-group { width: 85%; max-width: 280px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        input { width: 100%; padding: 12px; background: #2d2d2d; border: 2px solid #444; color: white; font-family: inherit; font-size: 16px; text-transform: uppercase; text-align: center; outline: none; border-radius: 5px; box-sizing: border-box; margin: 0; }
+        input:focus { border-color: var(--accent); }
+        button { width: 100%; background: var(--accent); color: #000; border: none; padding: 12px 0; font-size: 1rem; font-weight: bold; cursor: pointer; border-radius: 5px; box-sizing: border-box; transition: all 0.2s; }
+        button:active { opacity: 0.8; }
+        button.success { background-color: var(--success); color: white; pointer-events: none;}
+        .shake { animation: shake 0.4s; border-color: var(--error); }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+
+        /* ÉCRAN FINAL (STYLE PARTIE 1) */
+        #end-screen { 
+            display: none; width: 100%; height: 100%; 
+            flex-direction: column; justify-content: center; align-items: center; 
+            animation: fadeIn 1s; text-align: center;
+        }
+        .final-btn {
+            margin-top: 30px; padding: 15px 40px; font-size: 1rem;
+            background: var(--accent); color: black; border: none; border-radius: 50px;
+            font-weight: bold; cursor: pointer; text-decoration: none;
+            box-shadow: 0 0 20px rgba(255, 159, 67, 0.4);
+            animation: pulse 2s infinite;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-ui">
+        <h1>ARCHIVE GASTRONOMIQUE</h1>
+        <div id="progress-counter">Archive 1 / 32</div>
+        <p id="q-text">Chargement...</p>
+
+        <div class="photo-frame">
+            <img id="q-img" src="" alt="Food Memory">
+            <div class="caption" id="q-caption">...</div>
+        </div>
+
+        <div class="input-group" id="input-area">
+            <input type="text" id="answer-input" placeholder="PLAT ?" autocomplete="off">
+            <button id="submit-btn" onclick="checkAnswer()">DÉCRYPTAGE</button>
+        </div>
+    </div>
+
+    <button onclick="skipFoodQuiz()" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; background: red; color: white; border: 2px solid white; padding: 10px; font-weight: bold; border-radius: 5px; cursor: pointer;">
+        ADMIN: FINIR QUIZ
+    </button>
+
+    <script>
+        function skipFoodQuiz() {
+            // On cache le jeu
+            document.getElementById('game-ui').style.display = 'none';
+            // On affiche l'écran de fin directement
+            // (Note: assure-toi que l'ID correspond bien à ton écran de fin, ici c'est end-screen ou menu-screen selon ta version)
+            const endScreen = document.getElementById('end-screen') || document.getElementById('menu-screen');
+            endScreen.style.display = 'flex';
+        }
+    </script>
+
+    <div id="end-screen">
+        <div style="font-size: 5rem; margin-bottom: 20px;">💾</div>
+        <h1 style="font-size: 1.5rem; border: none;">ARCHIVE SAUVEGARDÉE</h1>
+        <p style="font-size: 1rem; max-width: 300px; line-height: 1.5;">
+            Analyse des données culinaires 100%<br>
+            Les souvenirs sont en sécurité.
+        </p>
+        <p style="color: #888; font-size: 0.9rem;">Prête pour la suite ?</p>
+        
+        <a href="wait14h.html" class="final-btn">INITIALISER PHASE 3</a>
+    </div>
+
+    <script>
+        // === TES 32 PHOTOS ===
+        const archives = [
+            {
+                // Archive 1
+                question: "On commence facile! Quel était ce plat ?",
+                imgHidden: "Food\\food1_hidden.jpg",
+                imgRevealed: "Food\\food1_revealed.jpg",
+                caption: "Indice : Colmar",
+                answers: ["FLAMMENKUCHE"]
+            },
+            {
+                // Archive 2
+                question: "Quel était ce délicieux plat ?",
+                imgHidden: "Food\\food2_hidden.jpg",
+                imgRevealed: "Food\\food2_revealed.jpg",
+                caption: "Indice : Y'avais du fromage à raclette dedans :)",
+                answers: ["CORDON BLEU"]
+            },
+            {
+                // Archive 3
+                question: "On avais mangé quoi ce jour là ?",
+                imgHidden: "Food\\food3_hidden.jpg",
+                imgRevealed: "Food\\food3_revealed.jpg",
+                caption: "Indice : Quand on est allé voir le Goyave à Dijon",
+                answers: ["KFC"]
+            },
+            {
+                // Archive 4
+                question: "Qu'avons nous pris comme gourmandise ?",
+                imgHidden: "Food\\food4_hidden.jpg",
+                imgRevealed: "Food\\food4_revealed.jpg",
+                caption: "Indice : On adore ça !",
+                answers: ["SAUCISSON"]
+            },
+            {
+                // Archive 5
+                question: "Le nom de ce plat ?",
+                imgHidden: "Food\\food5_hidden.jpg",
+                imgRevealed: "Food\\food5_revealed.jpg",
+                caption: "Indice : ... DE ... AU ...",
+                answers: ["GRATIN DE SPATZLES AU MUNSTER"]
+            },
+            {
+                // Archive 6
+                question: "Qu'avons nous bu ?",
+                imgHidden: "Food\\food6_hidden.jpg",
+                imgRevealed: "Food\\food6_revealed.jpg",
+                caption: "Indice : Glou glou glou à Lille",
+                answers: ["CAFE"]
+            },
+            {
+                // Archive 7
+                question: "Quel était la couleur de ce légume ?",
+                imgHidden: "Food\\food7_hidden.jpg",
+                imgRevealed: "Food\\food7_revealed.jpg",
+                caption: "Indice : un jeune poivron frérot",
+                answers: ["ROUGE"]
+            },
+            {
+                // Archive 8
+                question: "Quel était le nom de ce plat de GPS ?",
+                imgHidden: "Food\\food8_hidden.jpg",
+                imgRevealed: "Food\\food8_revealed.jpg",
+                caption: "Indice : d'énorme GPS même !",
+                answers: ["GNOCCHIFLETTE"]
+            },
+            {
+                // Archive 9
+                question: "Que y'avais t-il sur mes sushis ?",
+                imgHidden: "Food\\food9_hidden.jpg",
+                imgRevealed: "Food\\food9_revealed.jpg",
+                caption: "Indice : y'avais pas de feu malheureusement...",
+                answers: ["SAUMON"]
+            },
+            {
+                // Archive 10
+                question: "De quel couleur était ce plat ?",
+                imgHidden: "Food\\food10_hidden.jpg",
+                imgRevealed: "Food\\food10_revealed.jpg",
+                caption: "Indice : Phy'sss garant !!!",
+                answers: ["ROSE"]
+            },
+            {
+                // Archive 11
+                question: "Quel était le plat du jour au 1001 ?",
+                imgHidden: "Food\\food11_hidden.jpg",
+                imgRevealed: "Food\\food11_revealed.jpg",
+                caption: "Indice : Eric on t'aimes <3",
+                answers: ["VENDREFRITES", "VENDREFRITE"]
+            },
+            {
+                // Archive 12
+                question: "Qu'avons nous mangé ce jour là ?",
+                imgHidden: "Food\\food12_hidden.jpg",
+                imgRevealed: "Food\\food12_revealed.jpg",
+                caption: "Indice : retour de soirée",
+                answers: ["PATE", "PATES"]
+            },
+            {
+                // Archive 13
+                question: "Combien y'avais t-il de toasts autours ?",
+                imgHidden: "Food\\food13_hidden.jpg",
+                imgRevealed: "Food\\food13_revealed.jpg",
+                caption: "Indice : c'était trop bon!",
+                answers: ["11"]
+            },
+            {
+                // Archive 14
+                question: "Quel événement célébrons-nous le jour où nous avons mangé ce plat ?",
+                imgHidden: "Food\\food14_hidden.jpg",
+                imgRevealed: "Food\\food14_revealed.jpg",
+                caption: "Indice : événement important !",
+                answers: ["ANNIVERSAIRE", "MON ANNIVERSAIRE", "ANNIVERSAIRE ANTHE"]
+            },
+            {
+                // Archive 15
+                question: "Que y'avais t-il dans ses assiettes ?",
+                imgHidden: "Food\\food15_hidden.jpg",
+                imgRevealed: "Food\\food15_revealed.jpg",
+                caption: "Indice : à la rochelle",
+                answers: ["FROMAGE", "FROMAGES"]
+            },
+            {
+                // Archive 16
+                question: "Comment s’appelait la viande que j’ai prise sur cette pizza ?",
+                imgHidden: "Food\\food16_hidden.jpg",   
+                imgRevealed: "Food\\food16_revealed.jpg", 
+                caption: "Indice : Resto pizza fontainebleau",
+                answers: ["GUANCIALE"] 
+            },
+            {
+                // Archive 17
+                question: "Combien y'avais t-il de boulettes dans ce plat ?",
+                imgHidden: "Food\\food17_hidden.jpg",
+                imgRevealed: "Food\\food17_revealed.jpg",
+                caption: "Indice : avec la jeune sauce poivre mmh",
+                answers: ["6"]
+            },
+            {
+                // Archive 18
+                question: "Combien y'avais t-il de sushis en TOUT sur cette photo ?",
+                imgHidden: "Food\\food18_hidden.jpg",
+                imgRevealed: "Food\\food18_revealed.jpg",
+                caption: "Indice : bonne chance :)",
+                answers: ["71", "70", "69", "72"]
+            },
+            {
+                // Archive 19
+                question: "Qu'avons nous bu avec le jeune nathanael ce jour là ?",
+                imgHidden: "Food\\food19_hidden.jpg",
+                imgRevealed: "Food\\food19_revealed.jpg",
+                caption: "Indice : on avais soif en tout cas !",
+                answers: ["CAFE", "EAU"]
+            },
+            {
+                // Archive 20
+                question: "Quel boisson j'avais pris ?",
+                imgHidden: "Food\\food20_hidden.jpg",
+                imgRevealed: "Food\\food20_revealed.jpg",
+                caption: "Indice : Phy'sss garant !!!",
+                answers: ["SEX ON THE BEACH"]
+            },
+            {
+                // Archive 21
+                question: "Qui a fait ces meringues ?",
+                imgHidden: "Food\\food21_hidden.jpg",
+                imgRevealed: "Food\\food21_revealed.jpg",
+                caption: "Indice : trop belles !!!",
+                answers: ["ANTHE", "ANTHEA"]
+            },
+            {
+                // Archive 22
+                question: "Et celles-ci ?",
+                imgHidden: "Food\\food22_hidden.jpg",
+                imgRevealed: "Food\\food22_revealed.jpg",
+                caption: "Indice : encore plus belles !!!",
+                answers: ["SAM", "SAMSAM", "SAMUEL"]
+            },
+            {
+                // Archive 23
+                question: "Combien y'avais t-il de filou dans cette caisse ?",
+                imgHidden: "Food\\food23_hidden.jpg",
+                imgRevealed: "Food\\food23_revealed.jpg",
+                caption: "Indice : pas assez en tout cas...#sansrespect",
+                answers: ["6"]
+            },
+            {
+                // Archive 24
+                question: "Que préparions-nous ce jour là ?",
+                imgHidden: "Food\\food24_hidden.jpg",
+                imgRevealed: "Food\\food24_revealed.jpg",
+                caption: "Indice : l'équipe complète au fourneaux !",
+                answers: ["SALADE DE FRUITS"]
+            },
+            {
+                // Archive 25
+                question: "Quel était la sauce avec ce burger ?",
+                imgHidden: "Food\\food25_hidden.jpg",
+                imgRevealed: "Food\\food25_revealed.jpg",
+                caption: "Indice : elle envoyais shpeck !",
+                answers: ["MAROILLES"]
+            },
+            {
+                // Archive 26
+                question: "Que y'avais t-il posé sur la table ?",
+                imgHidden: "Food\\food26_hidden.jpg",   
+                imgRevealed: "Food\\food26_revealed.jpg", 
+                caption: "Indice : c'était blanc...",
+                answers: ["STATUE", "STATUETTE", "FIGURINE"] 
+            },
+            {
+                // Archive 27
+                question: "Qu'avons nous pris à boire ?",
+                imgHidden: "Food\\food27_hidden.jpg",
+                imgRevealed: "Food\\food27_revealed.jpg",
+                caption: "Indice : on avais plus soif que faim ce jour là !",
+                answers: ["BIERE"]
+            },
+            {
+                // Archive 28
+                question: "Quel viande était dans mon burger ?",
+                imgHidden: "Food\\food28_hidden.jpg",
+                imgRevealed: "Food\\food28_revealed.jpg",
+                caption: "Indice : il était pas mal mais pas mon préféré...",
+                answers: ["PORC EFFILOCHE"]
+            },
+            {
+                // Archive 29
+                question: "Combien de sortes de fromage à raclette différentes y avait-il ?",
+                imgHidden: "Food\\food29_hidden.jpg",
+                imgRevealed: "Food\\food29_revealed.jpg",
+                caption: "Indice : on s'était tellement explosé la pense !",
+                answers: ["5"]
+            },
+            {
+                // Archive 30
+                question: "Que préparons-nous dans cet extrait de vidéo ?",
+                imgHidden: "Food\\food30_hidden.jpg",
+                imgRevealed: "Food\\food30_revealed.jpg",
+                caption: "Indice : bon petit plat en zoo 37 :)",
+                answers: ["SAUCE BOLOGNAISE", "SAUCE BOLO", "BOLOGNAISE", "PATES BOLOGNAISE"]
+            },
+            {
+                // Archive 31
+                question: "Que donnes-tu à manger a ce jeune Goyave tout malade ?",
+                imgHidden: "Food\\food31_hidden.jpg",
+                imgRevealed: "Food\\food31_revealed.jpg",
+                caption: "Indice : une vraie maman !",
+                answers: ["COMPOTE"]
+            },
+            {
+                // Archive 32
+                question: "Quel était ce plat qui a failli nous coûter la vie ?",
+                imgHidden: "Food\\food32_hidden.jpg",
+                imgRevealed: "Food\\food32_revealed.jpg",
+                caption: "Indice : on a eu chaud quand même...",
+                answers: ["CAMEMBERT FRIT", "CAMEMBERT"]
+            }
+
+        ];
+
+        let currentStep = 0;
+        const imgEl = document.getElementById('q-img');
+        const inputArea = document.getElementById('input-area');
+        const submitBtn = document.getElementById('submit-btn');
+        const inputField = document.getElementById('answer-input');
+
+        function loadArchive() {
+            const data = archives[currentStep];
+            document.getElementById('progress-counter').textContent = `Archive ${currentStep + 1} / ${archives.length}`;
+            document.getElementById('q-text').textContent = data.question;
+            document.getElementById('q-caption').textContent = data.caption;
+            
+            imgEl.classList.remove('revealed-state');
+            imgEl.style.opacity = 0; 
+            setTimeout(() => {
+                imgEl.src = data.imgHidden; 
+                imgEl.onload = function() { imgEl.style.opacity = 1; };
+            }, 200);
+            
+            inputField.value = "";
+            inputArea.style.opacity = "1";
+            inputArea.style.pointerEvents = "auto";
+            submitBtn.classList.remove('success');
+            submitBtn.textContent = "DÉCRYPTAGE";
+        }
+
+        function checkAnswer() {
+            const val = inputField.value.toUpperCase().trim();
+            const validAnswers = archives[currentStep].answers;
+            const cleanVal = val.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            if(validAnswers.some(ans => cleanVal.includes(ans))) {
+                inputArea.style.pointerEvents = "none";
+                submitBtn.classList.add('success');
+                submitBtn.textContent = "IDENTIFIÉ !";
+
+                imgEl.style.opacity = 0; 
+                setTimeout(() => {
+                    imgEl.src = archives[currentStep].imgRevealed; 
+                    imgEl.onload = function() {
+                        imgEl.classList.add('revealed-state'); 
+                        imgEl.style.opacity = 1; 
+                    };
+                }, 300);
+
+                setTimeout(() => { nextStep(); }, 2500);
+            } else {
+                inputField.classList.add('shake');
+                setTimeout(() => inputField.classList.remove('shake'), 400);
+            }
+        }
+
+        function nextStep() {
+            currentStep++;
+            if(currentStep < archives.length) {
+                loadArchive();
+            } else {
+                // FINI ! Affiche l'écran final
+                document.getElementById('game-ui').style.display = 'none';
+                document.getElementById('end-screen').style.display = 'flex'; 
+            }
+        }
+
+        if(archives.length > 0) loadArchive();
+        else document.getElementById('q-text').textContent = "Erreur : Aucune archive.";
+    </script>
+</body>
+</html>

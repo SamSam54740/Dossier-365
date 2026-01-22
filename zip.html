@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mission 01 : ZIP</title>
+    <style>
+        :root {
+            --bg-app: #f4f7f6;
+            --grid-bg: #e0e5ec;
+            --cell-bg: #ffffff;
+            --snake-color: #0a66c2;
+            --snake-shadow: rgba(10, 102, 194, 0.4);
+            --wall-color: #2c3e50;
+            --snake-width: 18px; /* Épaisseur du serpent définie ici pour tout aligner */
+        }
+
+        body {
+            justify-content: flex-start; 
+            padding-top: 5vh; /* Pousse un peu vers le bas mais reste haut */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-app);
+            color: #333;
+            margin: 0; height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            touch-action: none; overflow: hidden;
+        }
+
+        h1 { margin-bottom: 5px; font-size: 1.5rem; color: var(--snake-color); letter-spacing: -0.5px; }
+        p { margin-top: 0; font-size: 0.9rem; color: #7f8c8d; max-width: 320px; text-align: center; }
+        p2 { margin-top: 0; font-size: 0.9rem; color: #ffffff; max-width: 320px; text-align: center; }
+
+        /* CONTENEUR DU JEU */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(7, 1fr);
+            gap: 2px;
+            background-color: var(--grid-bg);
+            padding: 8px;
+            border-radius: 20px;
+            width: 90vw; max-width: 360px; aspect-ratio: 1/1;
+            box-shadow: 10px 10px 20px #bebebe, -10px -10px 20px #ffffff;
+            user-select: none; touch-action: none;
+            position: relative;
+        }
+
+        .cell {
+            background-color: var(--cell-bg);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            font-weight: bold; color: #bdc3c7;
+        }
+
+        /* --- LE SERPENT (Architecture Fusion Parfaite) --- */
+        
+        /* 1. Le rond central (L'articulation) */
+        .cell.active::before {
+            content: ''; position: absolute;
+            width: var(--snake-width); height: var(--snake-width);
+            background-color: var(--snake-color);
+            border-radius: 50%;
+            z-index: 5;
+            box-shadow: 0 0 5px var(--snake-shadow);
+            /* Centrage absolu parfait */
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* 2. Les Connecteurs (Les tubes) */
+        .connector {
+            position: absolute;
+            background-color: var(--snake-color);
+            z-index: 4;
+        }
+
+        /* TUBE VERTICAL (Haut/Bas) */
+        .conn-top { 
+            width: var(--snake-width); height: 70%; 
+            left: 50%; top: -10%; 
+            transform: translateX(-50%); /* Centre horizontalement */
+        }
+        .conn-bottom { 
+            width: var(--snake-width); height: 70%; 
+            left: 50%; bottom: -10%; 
+            transform: translateX(-50%); 
+        }
+
+        /* TUBE HORIZONTAL (Gauche/Droite) */
+        .conn-left { 
+            height: var(--snake-width); width: 70%; 
+            top: 50%; left: -10%; 
+            transform: translateY(-50%); /* Centre verticalement */
+        }
+        .conn-right { 
+            height: var(--snake-width); width: 70%; 
+            top: 50%; right: -10%; 
+            transform: translateY(-50%); 
+        }
+
+        /* 3. La Tête (Pulsation) */
+        .cell.head::before {
+            transform: translate(-50%, -50%) scale(1.3); /* On garde le centrage + scale */
+            box-shadow: 0 0 15px var(--snake-color);
+            z-index: 6;
+        }
+
+        /* --- CHECKPOINTS --- */
+        .cell.fixed span {
+            z-index: 10; font-size: 1.1rem; font-weight: 800; color: #555;
+            position: relative; pointer-events: none;
+        }
+        /* Cercle autour du chiffre */
+        .cell.fixed .badge {
+            position: absolute; width: 80%; height: 80%;
+            border: 2px solid #ddd; border-radius: 50%;
+            z-index: 9; background: white;
+            /* Centrage parfait du badge */
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+        }
+        
+        .cell.fixed.active .badge {
+            border-color: var(--snake-color);
+            background-color: #fff;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        .cell.fixed.active span { color: var(--snake-color); }
+        .cell[data-val="1"] .badge { border-color: var(--snake-color); background: #e3f2fd; }
+
+        /* --- MURS --- */
+        .wall-right { border-right: 5px solid var(--wall-color); border-top-right-radius: 2px; border-bottom-right-radius: 2px; }
+        .wall-bottom { border-bottom: 5px solid var(--wall-color); border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; }
+
+        /* MODALE */
+        #win-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; flex-direction: column; color: white; text-align: center; z-index: 100; animation: fadeIn 0.5s; }
+        .code-box { background: white; color: var(--snake-color); padding: 15px 30px; margin: 20px; font-family: monospace; font-size: 1.5rem; letter-spacing: 2px; font-weight: bold; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        button.reset { margin-top: 25px; padding: 12px 25px; background: white; border: 1px solid #ddd; border-radius: 30px; color: #555; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.1s;}
+        button.reset:active { transform: scale(0.95); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #timer-display {
+            font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;
+            background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 15px;
+            color: inherit; /* S'adapte au thème */
+            border: 1px solid currentColor;
+        }
+
+        .code-box {
+            background: #fff; border: 2px dashed currentColor; /* Cadre pointillé joli */
+            padding: 20px; font-size: 2rem; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: rotate(-2deg); /* Petit effet style sticker */
+            margin: 30px 0;
+        }
+        #win-modal h2 { text-transform: uppercase; letter-spacing: 2px; }
+
+    </style>
+</head>
+<body>
+
+    <h1>MISSION ZIP</h1>
+    <p>Relie les points <strong>1 à 9</strong> dans l'ordre.<br>Remplis toute la grille.</p>
+    <div id="timer-display">⏱️ 00:00</div>
+    <div class="game-board" id="grid"></div>
+
+    <button class="reset" onclick="resetGame()">Réinitialiser le tracé</button>
+
+    <div id="win-modal">
+        <div style="font-size: 4rem;">🧩</div>
+        <h2>SÉQUENCE COMPLÈTE</h2>
+        <p2>Mouais pas mal...</p2>
+        <div class="code-box">ZIP-591</div>
+        <a href="index.html" style="color: white; font-weight: bold; text-decoration: none; border-bottom: 1px solid white;">Retour au QG</a>
+    </div>
+
+    <script>
+        // === CONFIGURATION ===
+        const checkpoints = {
+            24: 1, 36: 2, 8: 3, 42: 4, 12: 5, 40: 6, 48: 7, 6: 8, 0: 9 
+        };
+
+        const walls = [
+            // Haut
+            { idx: 9, side: 'right' }, { idx: 10, side: 'right' },
+            // Centre (autour du 1)
+            { idx: 21, side: 'right' }, { idx: 22, side: 'right' },
+            { idx: 25, side: 'right' }, { idx: 26, side: 'right' }, 
+            { idx: 37, side: 'right' }, { idx: 38, side: 'right' },
+        ];
+        
+        const finalNumber = 9;
+
+        // === MOTEUR ===
+        const totalCells = 49;
+        let path = [];
+        let nextNumberExpected = 2;
+        let isDragging = false;
+        const gridEl = document.getElementById('grid');
+        let startIdx = parseInt(Object.keys(checkpoints).find(key => checkpoints[key] === 1));
+
+        let gameStartTime;
+        let timerInterval;
+
+        function startTimer() {
+            gameStartTime = Date.now();
+            timerInterval = setInterval(() => {
+                const delta = Math.floor((Date.now() - gameStartTime) / 1000);
+                const m = Math.floor(delta / 60).toString().padStart(2, '0');
+                const s = (delta % 60).toString().padStart(2, '0');
+                document.getElementById('timer-display').innerText = `⏱️ ${m}:${s}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function initGame() {
+            gridEl.innerHTML = '';
+            path = [startIdx];
+            nextNumberExpected = 2;
+            startTimer();
+            
+            for (let i = 0; i < totalCells; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+
+                // Ajout des murs
+                walls.forEach(w => { 
+                    if (w.idx === i) {
+                        cell.classList.add('wall-' + w.side); 
+                    }
+                });
+
+                // Checkpoints
+                if (checkpoints[i]) {
+                    cell.classList.add('fixed');
+                    cell.dataset.val = checkpoints[i];
+                    cell.innerHTML = `<div class="badge"></div><span>${checkpoints[i]}</span>`;
+                }
+
+                // Connecteurs (Haut/Bas/Gauche/Droite)
+                let cTop = document.createElement('div'); cTop.className = 'connector conn-top'; cTop.style.display = 'none';
+                let cBottom = document.createElement('div'); cBottom.className = 'connector conn-bottom'; cBottom.style.display = 'none';
+                let cLeft = document.createElement('div'); cLeft.className = 'connector conn-left'; cLeft.style.display = 'none';
+                let cRight = document.createElement('div'); cRight.className = 'connector conn-right'; cRight.style.display = 'none';
+                
+                cell.appendChild(cTop); cell.appendChild(cBottom); 
+                cell.appendChild(cLeft); cell.appendChild(cRight);
+
+                gridEl.appendChild(cell);
+            }
+            
+            // Events
+            gridEl.addEventListener('mousedown', startDrag); gridEl.addEventListener('touchstart', startDrag, {passive: false});
+            window.addEventListener('mouseup', endDrag); window.addEventListener('touchend', endDrag);
+            window.addEventListener('mousemove', handleMove); window.addEventListener('touchmove', handleMove, {passive: false});
+            
+            render();
+        }
+
+        function startDrag(e) {
+            const target = getTargetCell(e); if (!target) return;
+            if (parseInt(target.dataset.index) === path[path.length - 1]) { isDragging = true; e.preventDefault(); }
+        }
+        function endDrag() { isDragging = false; }
+
+        function handleMove(e) {
+            if (!isDragging) return; e.preventDefault();
+            const target = getTargetCell(e); if (!target) return;
+            const index = parseInt(target.dataset.index);
+            const headIndex = path[path.length - 1];
+
+            // Retour arrière
+            if (path.length > 1 && index === path[path.length - 2]) {
+                if (checkpoints[headIndex] === nextNumberExpected - 1) nextNumberExpected--;
+                path.pop(); render(); return;
+            }
+
+            // Avancer
+            if (index !== headIndex && !path.includes(index) && isValidMove(headIndex, index)) {
+                if (checkpoints[index]) {
+                    if (checkpoints[index] === nextNumberExpected) {
+                        nextNumberExpected++; path.push(index); render(); checkWin();
+                    }
+                } else {
+                    path.push(index); render(); checkWin();
+                }
+            }
+        }
+
+        // --- CORRECTION LOGIQUE DES MURS ---
+        function isValidMove(from, to) {
+            const r1 = Math.floor(from/7), c1 = from%7, r2 = Math.floor(to/7), c2 = to%7;
+            if (Math.abs(r1-r2) + Math.abs(c1-c2) !== 1) return false;
+            
+            // Vérification des murs
+            for (let w of walls) {
+                if (w.side === 'right') { 
+                    // Si on va à droite (from -> to), le mur est sur 'from'
+                    if (w.idx === from && to === from + 1) return false; 
+                    // Si on va à gauche (to <- from), le mur est sur 'to'
+                    if (w.idx === to && from === to + 1) return false; 
+                }
+                if (w.side === 'bottom') { 
+                    // Si on va en bas (from -> to), le mur est sur 'from'
+                    if (w.idx === from && to === from + 7) return false; 
+                    // Si on va en haut (to <- from), le mur est sur 'to'
+                    if (w.idx === to && from === to + 7) return false; 
+                }
+            }
+            return true;
+        }
+
+        function getTargetCell(e) {
+            let x = e.touches ? e.touches[0].clientX : e.clientX, y = e.touches ? e.touches[0].clientY : e.clientY;
+            return document.elementFromPoint(x, y)?.closest('.cell');
+        }
+
+        function render() {
+            // Reset
+            document.querySelectorAll('.cell').forEach(c => {
+                c.classList.remove('active', 'head');
+                c.querySelectorAll('.connector').forEach(conn => conn.style.display = 'none');
+            });
+            
+            path.forEach((idx, step) => {
+                const cell = document.querySelector(`.cell[data-index='${idx}']`);
+                cell.classList.add('active');
+                if (step === path.length - 1) cell.classList.add('head');
+                
+                // Dessiner les connecteurs
+                if (step > 0) {
+                    const prevIdx = path[step - 1];
+                    drawConnector(cell, idx, prevIdx);
+                }
+                if (step < path.length - 1) {
+                    const nextIdx = path[step + 1];
+                    drawConnector(cell, idx, nextIdx);
+                }
+            });
+        }
+
+        function drawConnector(cell, currentIdx, neighborIdx) {
+            if (neighborIdx === currentIdx - 1) cell.querySelector('.conn-left').style.display = 'block';
+            else if (neighborIdx === currentIdx + 1) cell.querySelector('.conn-right').style.display = 'block';
+            else if (neighborIdx === currentIdx - 7) cell.querySelector('.conn-top').style.display = 'block';
+            else if (neighborIdx === currentIdx + 7) cell.querySelector('.conn-bottom').style.display = 'block';
+        }
+
+        function checkWin() {
+            if (path.length === totalCells && nextNumberExpected > finalNumber) {
+                stopTimer();
+                setTimeout(() => document.getElementById('win-modal').style.display = 'flex', 300);
+            }
+        }
+        function resetGame() { initGame(); document.getElementById('win-modal').style.display = 'none'; }
+        
+        initGame();
+    </script>
+</body>
+</html>

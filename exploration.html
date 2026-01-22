@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EXPLORATION</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <style>
+        :root {
+            --bg-color: #0f1c2e;
+            --text-color: #ecf0f1;
+            --accent: #00d2d3;
+            --btn-bg: #222f3e;
+            --correct: #1dd1a1;
+            --wrong: #ff6b6b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0; height: 100vh; width: 100vw;
+            display: flex; flex-direction: column; 
+            align-items: center; justify-content: center;
+            overflow: hidden; text-align: center;
+        }
+
+        /* HEADER */
+        .header { position: absolute; top: 10px; width: 100%; z-index: 20; }
+        h1 { color: var(--accent); font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; margin: 0; }
+        .progress-bar { width: 80%; height: 6px; background: #333; margin: 10px auto; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.3s; }
+        .level-indicator { font-size: 0.8rem; color: #7f8c8d; }
+
+        /* ZONE DE JEU */
+        #game-container {
+            width: 95%; max-width: 400px; height: 85vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            padding-top: 60px;
+            animation: fadeIn 0.5s;
+            position: relative; z-index: 10;
+        }
+
+        .question-text { font-size: 1.1rem; margin-bottom: 10px; font-weight: bold; min-height: 40px; display: flex; align-items: center; justify-content: center;}
+
+        /* --- GESTION DES MÉDIAS (CORRIGÉE) --- */
+
+        /* Base pour tous les médias */
+        .media-box {
+            width: 100%; 
+            background: #0f1c2e;
+            border-radius: 10px; overflow: hidden; margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 2px solid #333;
+            flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        /* 1. IMAGES FIXES (Partie 1 & 2) - CORRECTIF PHOTO 14 */
+        .media-box.static-image {
+            /* On enlève la hauteur fixe pour que le cadre s'adapte à l'image */
+            height: auto; 
+            max-height: 40vh; /* Limite maximale */
+            min-height: 200px; /* Minimum pour pas que ce soit minuscule */
+            background: #000; 
+            transition: none;
+        }
+
+        .media-box.static-image img {
+            width: auto; 
+            height: auto;
+            max-width: 100%; 
+            max-height: 40vh; /* Force l'image à ne pas dépasser */
+            object-fit: contain; 
+            
+            opacity: 1;
+            /* Transition plus rapide pour éviter les blancs */
+            transition: opacity 0.4s ease-in-out; 
+        }
+
+        /* 2. VIDÉO (Partie 3) - Dynamique */
+        .media-box.video-playing {
+            height: auto; max-height: 75vh;
+            margin-bottom: 0; border-color: var(--accent);
+            transition: max-height 0.5s ease-in-out;
+        }
+        .media-box.video-paused {
+            height: auto; max-height: 40vh;
+            transition: max-height 0.5s ease-in-out;
+        }
+        
+        .media-box video {
+            width: auto; height: auto; max-width: 100%; max-height: 100%;
+            object-fit: contain;
+        }
+
+        .revealed-state { filter: saturate(1.2); }
+
+        /* PLAYER */
+        #video-player { width: 100%; height: 100%; }
+        #play-overlay {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 10;
+        }
+        #play-overlay span { font-size: 3rem; color: white; background: rgba(0,0,0,0.5); border-radius: 50%; padding: 10px 20px; }
+
+        /* MAP */
+        #map-container {
+            width: 100%; height: 350px; 
+            border-radius: 10px; border: 2px solid var(--accent);
+            display: none; margin-bottom: 10px;
+        }
+        #map-validate-btn {
+            display: none; background: var(--accent); color: #000; 
+            padding: 12px 30px; border-radius: 30px; font-weight: bold; 
+            border: none; cursor: pointer; margin-top: 10px; font-size: 1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* BOUTON TOGGLE CARTE */
+        #toggle-map-btn {
+            background: #34495e; color: white; border: 1px solid #fff;
+            padding: 12px 25px; border-radius: 30px; font-weight: bold;
+            cursor: pointer; margin: 10px 0; width: 80%;
+            transition: background 0.3s;
+        }
+        #toggle-map-btn:active { transform: scale(0.98); }
+
+        /* INTERACTION */
+        .interaction-area { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        
+        .options-grid { 
+            display: grid; gap: 10px; width: 100%; 
+            grid-template-columns: 1fr 1fr; 
+        }
+        
+        .btn-opt {
+            background: var(--btn-bg); color: white; border: none;
+            padding: 15px; font-size: 1rem; border-radius: 8px;
+            cursor: pointer; transition: transform 0.1s;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-opt:active { transform: scale(0.98); }
+        .btn-opt.correct { background: var(--correct) !important; color: #000; }
+        .btn-opt.wrong { background: var(--wrong) !important; opacity: 0.8; animation: shake 0.3s; }
+
+        /* INPUT */
+        .text-input-group { display: flex; width: 90%; gap: 5px; }
+        .text-input { 
+            flex: 1; padding: 12px; border-radius: 8px; border: none; 
+            text-align: center; text-transform: uppercase; font-size: 1rem; 
+        }
+        .text-submit { 
+            padding: 12px 20px; border-radius: 8px; border: none; 
+            background: var(--accent); font-weight: bold; cursor: pointer; 
+        }
+
+        /* TIMELINE */
+        .timeline-container { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+        .timeline-card {
+            background: white; padding: 4px; border-radius: 6px;
+            cursor: pointer; display: flex; align-items: center;
+            border: 2px solid transparent; transition: all 0.2s;
+        }
+        .timeline-card img { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; pointer-events: none;}
+        .timeline-card span { color: #333; margin-left: 10px; font-size: 0.9rem; font-weight: bold; }
+        .timeline-card.selected { border-color: var(--accent); transform: scale(1.02); background: #e0f7fa; }
+
+        .validate-btn {
+            background: var(--accent); color: #000; border: none;
+            padding: 12px 30px; font-weight: bold; border-radius: 30px;
+            margin-top: 20px; cursor: pointer; text-transform: uppercase;
+        }
+
+        /* ECRANS */
+        #level-screen {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 28, 46, 0.98); z-index: 100;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .level-title { font-size: 2rem; color: var(--accent); margin-bottom: 10px; }
+        .level-desc { color: #ccc; margin-bottom: 30px; }
+
+        #end-screen { display: none; width: 100%; flex-direction: column; align-items: center; margin-top: 50px;}
+
+        .shake { animation: shake 0.4s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+<body>
+
+    <div class="header">
+        <h1>EXPLORATION</h1>
+        <div class="progress-bar"><div class="progress-fill" id="prog-bar"></div></div>
+        <div class="level-indicator">Niveau <span id="current-level">1</span> / <span id="total-level"></span></div>
+    </div>
+
+    <div id="game-container">
+        <div id="dynamic-content"></div>
+        
+        <p id="map-instruction" style="font-size: 0.8rem; color: #aaa; margin: 0 0 5px 0; display:none;">🎯 Précision requise : 20km max</p>
+        
+        <button id="toggle-map-btn" style="display:none;" onclick="toggleMapMode()">📍 OUVRIR LA CARTE</button>
+
+        <div id="map-container"></div>
+        <button id="map-validate-btn" onclick="validateMap()">CONFIRMER LA POSITION</button>
+    </div>
+
+    <div id="level-screen" onclick="nextLevel()">
+        <div style="font-size: 3rem;">🚀</div>
+        <div class="level-title" id="lvl-title">MODULE 1</div>
+        <div class="level-desc" id="lvl-desc">...</div>
+        <div style="font-size: 0.8rem; opacity: 0.7;">(Tape pour continuer)</div>
+    </div>
+
+    <div id="end-screen">
+        <div style="font-size: 4rem;">✨</div>
+        <h1 style="font-size: 1.5rem; margin: 20px 0;">VOYAGE TERMINÉ</h1>
+        <p>Toutes les données sont récupérées.</p>
+        <a href="wait_18h.html" class="validate-btn" style="text-decoration: none;">INITIALISER PHASE 4</a>
+    </div>
+
+    <script>
+        // ==========================================================
+        // CONFIGURATION DES NIVEAUX
+        // ==========================================================
+        
+        const levels = [
+            // --- BLOC 1 : LE LOCALISATEUR (MAP - 20km de tolérance) ---
+            { type: 'map', q: "Dans quelle ville étions-nous sur cette photo ?", img: "Temps/geo1.jpg", target: [48.0794, 7.3585] },
+            { type: 'map', q: "Où était cette soirée ?", img: "Temps/geo2.jpg", target: [48.4344, 2.1574] },
+            { type: 'map', q: "Où étions-nous tous les 3 ? #pilliers2bar", img: "Temps/geo3.jpg", target: [37.9062, 23.7156] },
+            { type: 'map', q: "Où c'était ? Tu avais vu le mec derrière mdr ?", img: "Temps/geo4.jpg", target: [50.6292, 3.0573] },
+            { type: 'map', q: "Les délinquants...", img: "Temps/geo5.jpg", target: [48.8566, 2.3522] },
+            { type: 'map', q: "Où allons-nous en avion ?", img: "Temps/geo6.jpg", target: [37.3891, -5.9845] },
+            { type: 'map', q: "À qui tu téléphonais... mmh ?", img: "Temps/geo7.jpg", target: [47.3220, 5.0415] },
+            { type: 'map', q: "La fameuse casquette perdue... :(", img: "Temps/geo8.jpg", target: [44.8378, -0.5792] },
+            { type: 'map', q: "Le coude cassé mdr", img: "Temps/geo9.jpg", target: [48.8566, 2.3522] },
+            { type: 'map', q: "Les 2 frangins", img: "Temps/geo10.jpg", target: [48.8566, 2.3522] },
+            { type: 'map', q: "Oh la casquette de Mourlon", img: "Temps/geo11.jpg", target: [46.4335, 4.6575] },
+            { type: 'map', q: "Les BGs !!!", img: "Temps/geo12.jpg", target: [45.9868, -1.0950] },
+            { type: 'map', q: "Où a été prise cette photo ?", img: "Temps/geo13.jpg", target: [48.4047, 2.7016] },
+            { type: 'map', q: "CACA", img: "Temps/geo14.jpg", target: [46.1601, 4.6818] },
+            { type: 'map', q: "Où était située cette fontaine ?", img: "Temps/geo15.jpg", target: [48.2996, 4.0744] },
+
+            // --- BLOC 2 : QUI A FAIT QUOI ? (AVEC RÉVÉLATION) ---
+            { type: 'quiz', q: "Que buvais t-on ?", imgHidden: "Temps/qui1_hidden.jpg", imgRevealed: "Temps/qui1_revealed.jpg", options: ["FILOU", "COCA", "MONACO", "EAU"], answer: 2 },
+            { type: 'quiz', q: "Qui était allongé sur ce canap ?", imgHidden: "Temps/qui2_hidden.jpg", imgRevealed: "Temps/qui2_revealed.jpg", options: ["MALIK", "AXEL", "LACHNALI", "GRIMAULT"], answer: 1 },
+            { type: 'quiz', q: "Qui est l'intru sur cette photo ?", imgHidden: "Temps/qui3_hidden.jpg", imgRevealed: "Temps/qui3_revealed.jpg", options: ["BOUTEMY", "MOURLON", "GABOU", "ZAMOULS"], answer: 0 },
+            { type: 'quiz', q: "Qui est allongé dans le lit ?", imgHidden: "Temps/qui4_hidden.jpg", imgRevealed: "Temps/qui4_revealed.jpg", options: ["ANTHE", "GOYAVE", "SAMSAM", "WALLOIS"], answer: 0 },
+            { type: 'quiz', q: "Qui est l'autre exancé sur la photo ?", imgHidden: "Temps/qui5_hidden.jpg", imgRevealed: "Temps/qui5_revealed.jpg", options: ["MANIOC", "LACHNALI", "NATHAN", "BICH"], answer: 2 },
+            { type: 'quiz', q: "Que buvais-tu ?", imgHidden: "Temps/qui6_hidden.jpg", imgRevealed: "Temps/qui6_revealed.jpg", options: ["BIERE", "COKTAIL ROUGE CHELOU", "CAFE", "MOSCOW MULE"], answer: 1 },
+            { type: 'quiz', q: "Qui était avec nous sur cette photo ?", imgHidden: "Temps/qui7_hidden.jpg", imgRevealed: "Temps/qui7_revealed.jpg", options: ["BASILE", "NATHAN", "LACHNALI", "MALIK"], answer: 3 },
+            { type: 'quiz', q: "Combien de bénef ?", imgHidden: "Temps/qui8_hidden.jpg", imgRevealed: "Temps/qui8_revealed.jpg", options: ["591,98€", "2748,00€", "2878,00€", "2915,00€"], answer: 2 },
+            { type: 'quiz', q: "Quelle était notre point en commun sur cette photo ?", imgHidden: "Temps/qui9_hidden.jpg", imgRevealed: "Temps/qui9_revealed.jpg", options: ["COIFFURE", "LUNETTES", "BRACELET", "PENTALON"], answer: 1 },
+            { type: 'quiz', q: "On faisais quoi ici ?", imgHidden: "Temps/qui10_hidden.jpg", imgRevealed: "Temps/qui10_revealed.jpg", options: ["DU SPORT", "DON DE SANG", "STAND STOP TABAC", "VENTE NOEL LR"], answer: 3 },
+
+            // --- BLOC 3 : VIDÉO INTERACTIVE ---
+            { type: 'video', q: "Qui embêtes-tu sur la vidéo ?", src: "Temps/vid1.mp4", pauseAt: 0.8, mode: 'choice', options: ["LACHNALI", "SAMSAM", "MALIK", "NATHAN"], answer: 3 },
+            { type: 'video', q: "Que fais-tu ???", src: "Temps/vid3.mp4", pauseAt: 1, mode: 'choice', options: ["TU PRIES", "TU EVITES QUE LE VIN COULE", "TU DORS", "T'ES JUSTE NEUILLE"], answer: 3 },
+            { type: 'video', q: "C'était une classique bechard ?", src: "Temps/vid4.mp4", pauseAt: 2, mode: 'choice', options: ["OUI", "NON"], answer: 0 },
+            { type: 'video', q: "Qui va se présenter ?", src: "Temps/vid5.mp4", pauseAt: 3, mode: 'choice', options: ["NATHAN", "ANTHE", "AXEL", "LACHENALI"], answer: 2 },
+            { type: 'video', q: "Que se passe t-il ensuite ?", src: "Temps/vid6.mp4", pauseAt: 11, mode: 'choice', options: ["IL GOBE TOUT L'OEUF", "IL ME CRACHE L'OEUF DESSUS", "IL GLISSE SUR L'OEUF ET TOMBE", "QUELQU'UN ARRIVE ET NOUS ENGUELE"], answer: 1 },
+            { type: 'video', q: "Qui va se fail pour casser son gobelet ?", src: "Temps/vid7.mp4", pauseAt: 16, mode: 'input', answer: "BOUVIER" },
+            { type: 'video', q: "Que vas-tu dire ?", src: "Temps/vid8.mp4", pauseAt: 2.5, mode: 'choice', options: ["JE T'AIME", "QWWWAAAA...?!", "MON AMOUR", "MMMH :("], answer: 1 },
+            { type: 'video', q: "Avec qui on était dans cette boite ?", src: "Temps/vid2.mp4", pauseAt: 2, mode: 'input', answer: "NATHAN" },
+            { type: 'video', q: "Entre Qui & Qui cette UAI Pian'sss ?", src: "Temps/vid9.mp4", pauseAt: 2, mode: 'choice', options: ["PIMPON VS RUPIN", "LACHNALI VS TUTT", "SAMSAM VS GOYAVE", "ALLAIRE VS BLONDEL"], answer: 3 },
+            { type: 'video', q: "Qui gagne ?", src: "Temps/vid10.mp4", pauseAt: 2, mode: 'input', answer: "BLONDEL" },
+
+            // --- BLOC 4 : TIMELINE ---
+            { type: 'timeline', q: "Remets dans l'ordre", items: ["t1_1.jpg", "t1_2.jpg", "t1_3.jpg", "t1_4.jpg"] },
+            { type: 'timeline', q: "Chronologie soirée", items: ["t2_1.jpg", "t2_2.jpg", "t2_3.jpg", "t2_4.jpg"] },
+            { type: 'timeline', q: "Coupes de cheveux", items: ["t3_1.jpg", "t3_2.jpg", "t3_3.jpg", "t3_4.jpg"] },
+            { type: 'timeline', q: "Nos repas", items: ["t4_1.jpg", "t4_2.jpg", "t4_3.jpg", "t4_4.jpg"] },
+            { type: 'timeline', q: "L'HISTOIRE DE NOUS", items: ["final_1.jpg", "final_2.jpg", "final_3.jpg", "final_4.jpg"] }
+        ];
+
+        // ==========================================================
+
+        let currentLevelIdx = 25;
+        const container = document.getElementById('dynamic-content');
+        const mapContainer = document.getElementById('map-container');
+        const mapBtn = document.getElementById('map-validate-btn');
+        const instructionText = document.getElementById('map-instruction');
+        
+        let map = null;
+        let currentMarker = null;
+        let userLat = null, userLng = null;
+        let currentTimelineItems = [];
+        let selectedIdx = null;
+        let hasPaused = false; // Pour la vidéo
+
+        function init() {
+            document.getElementById('total-level').innerText = levels.length;
+            showTransitionScreen();
+        }
+
+        function showTransitionScreen() {
+            const screen = document.getElementById('level-screen');
+            const title = document.getElementById('lvl-title');
+            const desc = document.getElementById('lvl-desc');
+            
+            mapContainer.style.display = 'none';
+            mapBtn.style.display = 'none';
+            instructionText.style.display = 'none';
+            container.innerHTML = ''; 
+
+            if (currentLevelIdx === 0) {
+                title.innerText = "MODULE 1"; desc.innerText = "Localisation GPS";
+                screen.style.display = 'flex';
+            } else if (currentLevelIdx === 15) {
+                title.innerText = "MODULE 2"; desc.innerText = "Analyse Comportementale";
+                screen.style.display = 'flex';
+            } else if (currentLevelIdx === 25) { 
+                title.innerText = "MODULE 3"; desc.innerText = "Lecture Vidéo";
+                screen.style.display = 'flex';
+            } else if (currentLevelIdx === 35) { 
+                title.innerText = "MODULE 4"; desc.innerText = "Reconstruction Temporelle";
+                screen.style.display = 'flex';
+            } else {
+                loadLevel();
+            }
+        }
+
+        function nextLevel() {
+            document.getElementById('level-screen').style.display = 'none';
+            loadLevel();
+        }
+
+        function loadLevel() {
+            if (map) { map.remove(); map = null; }
+            mapContainer.style.display = 'none';
+            mapBtn.style.display = 'none';
+
+            document.getElementById('toggle-map-btn').style.display = 'none';
+
+            instructionText.style.display = 'none';
+            container.innerHTML = '';
+            hasPaused = false; 
+
+            document.getElementById('current-level').innerText = currentLevelIdx + 1;
+            const pct = ((currentLevelIdx) / levels.length) * 100;
+            document.getElementById('prog-bar').style.width = pct + "%";
+
+            if (currentLevelIdx >= levels.length) {
+                endGame();
+                return;
+            }
+
+            const data = levels[currentLevelIdx];
+
+            if (data.type === 'map') renderMap(data);
+            else if (data.type === 'quiz') renderQuiz(data);
+            else if (data.type === 'video') renderVideo(data);
+            else if (data.type === 'timeline') renderTimeline(data);
+        }
+
+        // --- RENDER MAP ---
+        function renderMap(data) {
+            renderCommonHeader(data);
+            
+            // Masquer la carte et le bouton valider au début
+            mapContainer.style.display = 'none';
+            mapBtn.style.display = 'none';
+            
+            // Afficher le bouton "Ouvrir la carte"
+            const toggleBtn = document.getElementById('toggle-map-btn');
+            toggleBtn.style.display = 'block';
+            toggleBtn.innerText = "📍 OUVRIR LA CARTE";
+            toggleBtn.style.background = "#34495e"; // Reset couleur
+            
+            // Instruction
+            instructionText.style.display = 'block';
+            
+            // Initialisation Leaflet (même si caché pour l'instant)
+            if(map) { map.remove(); }
+            map = L.map('map-container').setView([46.603354, 1.888334], 5); // Centré France par défaut
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap', subdomains: 'abcd', maxZoom: 19
+            }).addTo(map);
+
+            currentMarker = null;
+            map.on('click', function(e) {
+                if (currentMarker) map.removeLayer(currentMarker);
+                currentMarker = L.marker(e.latlng).addTo(map);
+                userLat = e.latlng.lat; userLng = e.latlng.lng;
+                
+                // Active le bouton valider
+                mapBtn.innerText = "CONFIRMER LA POSITION"; 
+                mapBtn.style.background = "#00d2d3";
+            });
+        }
+
+        // --- NOUVELLE FONCTION : GÈRE L'AFFICHAGE CARTE VS IMAGE ---
+        function toggleMapMode() {
+            const toggleBtn = document.getElementById('toggle-map-btn');
+            const mediaBox = document.querySelector('.media-box'); // L'image
+            
+            // Si la carte est cachée, on l'affiche
+            if (mapContainer.style.display === 'none') {
+                mapContainer.style.display = 'block';
+                mapBtn.style.display = 'block'; // Bouton valider
+                if(mediaBox) mediaBox.style.display = 'none'; // Cache l'image
+                
+                toggleBtn.innerText = "🖼️ REVOIR LA PHOTO";
+                
+                // CRUCIAL : Force Leaflet à recalculer sa taille car il était caché
+                map.invalidateSize(); 
+            } 
+            // Sinon, on revient à la photo
+            else {
+                mapContainer.style.display = 'none';
+                mapBtn.style.display = 'none';
+                if(mediaBox) mediaBox.style.display = 'flex'; // Réaffiche l'image
+                
+                toggleBtn.innerText = "📍 OUVRIR LA CARTE";
+            }
+        }
+
+        function validateMap() {
+            if (!currentMarker) { alert("Place un point sur la carte !"); return; }
+            const target = levels[currentLevelIdx].target;
+            const dist = getDistanceFromLatLonInKm(userLat, userLng, target[0], target[1]);
+            const tolerance = 20;
+
+            if (dist <= tolerance) { 
+                L.circle(target, { radius: 20000, color: '#1dd1a1', fillOpacity: 0.3 }).addTo(map);
+                L.polyline([[userLat, userLng], target], {color: 'white', dashArray: '5, 10'}).addTo(map);
+                mapBtn.style.background = '#1dd1a1';
+                mapBtn.innerText = "BRAVO ! (" + Math.round(dist) + "km)";
+                setTimeout(() => { currentLevelIdx++; showTransitionScreen(); }, 1500);
+            } else {
+                mapBtn.style.background = '#ff6b6b';
+                mapBtn.innerText = "TROP LOIN (" + Math.round(dist) + "km) - RÉESSAYE";
+                mapBtn.classList.add('shake');
+                setTimeout(() => mapBtn.classList.remove('shake'), 400);
+            }
+        }
+
+        // --- RENDER VIDEO ---
+        function renderVideo(data) {
+            let q = document.createElement('div');
+            q.className = 'question-text';
+            q.innerText = data.q;
+            q.style.display = 'none'; 
+            q.id = 'video-question';
+            container.appendChild(q);
+
+            let box = document.createElement('div');
+            box.className = 'media-box';
+            box.classList.add('video-playing');
+            
+            let overlay = document.createElement('div');
+            overlay.id = 'play-overlay';
+            overlay.innerHTML = '<span>▶</span>';
+            box.appendChild(overlay);
+
+            let vid = document.createElement('video');
+            vid.id = 'game-video';
+            vid.src = data.src;
+            vid.playsInline = true; 
+            box.appendChild(vid);
+            container.appendChild(box);
+
+            let interaction = document.createElement('div');
+            interaction.className = 'interaction-area';
+            interaction.id = 'video-interaction';
+            interaction.style.display = 'none';
+            container.appendChild(interaction);
+
+            overlay.onclick = function() {
+                vid.play();
+                overlay.style.display = 'none';
+            };
+
+            vid.addEventListener('timeupdate', function() {
+                if (!hasPaused && vid.currentTime >= data.pauseAt) {
+                    vid.pause();
+                    hasPaused = true;
+                    box.classList.remove('video-playing');
+                    box.classList.add('video-paused');
+                    showVideoInteraction(data, interaction);
+                }
+            });
+
+            vid.addEventListener('ended', function() {
+                currentLevelIdx++;
+                showTransitionScreen();
+            });
+        }
+
+        function showVideoInteraction(data, containerDiv) {
+            document.getElementById('video-question').style.display = 'flex';
+            containerDiv.style.display = 'flex';
+
+            if (data.mode === 'choice') {
+                let grid = document.createElement('div');
+                grid.className = 'options-grid';
+                data.options.forEach((opt, idx) => {
+                    let btn = document.createElement('button');
+                    btn.className = 'btn-opt';
+                    btn.innerText = opt;
+                    btn.onclick = () => checkVideoAnswer(idx, data.answer, btn, data.mode);
+                    grid.appendChild(btn);
+                });
+                containerDiv.appendChild(grid);
+            } else if (data.mode === 'input') {
+                let group = document.createElement('div');
+                group.className = 'text-input-group';
+                
+                let input = document.createElement('input');
+                input.className = 'text-input';
+                input.placeholder = "Réponse ?";
+                
+                let submit = document.createElement('button');
+                submit.className = 'text-submit';
+                submit.innerText = "OK";
+                submit.onclick = () => checkVideoAnswer(input.value, data.answer, submit, data.mode);
+
+                group.appendChild(input);
+                group.appendChild(submit);
+                containerDiv.appendChild(group);
+            }
+        }
+
+        function checkVideoAnswer(val, correct, btn, mode) {
+            let isCorrect = false;
+            
+            if (mode === 'choice') {
+                isCorrect = (val === correct);
+            } else {
+                let cleanVal = val.toString().toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                let cleanCorrect = correct.toString().toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                isCorrect = cleanVal.includes(cleanCorrect);
+            }
+
+            if (isCorrect) {
+                if(mode === 'choice') btn.classList.add('correct');
+                else btn.style.background = '#1dd1a1';
+
+                // CORRECTION SCROLL + BLUR
+                if(document.activeElement) document.activeElement.blur();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                setTimeout(() => {
+                    document.getElementById('video-interaction').style.display = 'none';
+                    document.getElementById('video-question').style.display = 'none';
+                    const box = document.querySelector('.media-box');
+                    if(box) {
+                        box.classList.remove('video-paused');
+                        box.classList.add('video-playing');
+                    }
+                    document.getElementById('game-video').play();
+                }, 500);
+            } else {
+                if(mode === 'choice') btn.classList.add('wrong');
+                else {
+                    btn.style.background = '#ff6b6b';
+                    setTimeout(()=> btn.style.background = '#00d2d3', 1000);
+                }
+            }
+        }
+
+        // --- RENDER QUIZ ---
+        function renderQuiz(data) {
+            renderCommonHeader(data);
+            let grid = document.createElement('div');
+            grid.className = 'options-grid';
+            if (data.options.length > 4) grid.style.gridTemplateColumns = "1fr 1fr";
+
+            data.options.forEach((opt, idx) => {
+                let btn = document.createElement('button');
+                btn.className = 'btn-opt';
+                btn.innerText = opt;
+                btn.onclick = () => checkQuizAnswer(idx, data.answer, btn, data); 
+                grid.appendChild(btn);
+            });
+            container.appendChild(grid);
+        }
+
+        function checkQuizAnswer(selected, correct, btn, data) {
+            if (selected === correct) {
+                btn.classList.add('correct');
+                const btns = document.querySelectorAll('.btn-opt');
+                btns.forEach(b => b.onclick = null); 
+                
+                // CORRECTION REVEAL MOBILE
+                if (data.imgHidden && data.imgRevealed) {
+                    const imgEl = document.getElementById('quiz-img');
+                    if (imgEl) {
+                        // 1. Fade Out
+                        imgEl.style.opacity = 0; 
+                        
+                        // Pré-chargement de l'image
+                        const newImg = new Image();
+                        newImg.src = data.imgRevealed;
+                        newImg.onload = () => {
+                            // On attend que le fade out soit fini (400ms CSS)
+                            setTimeout(() => {
+                                imgEl.src = data.imgRevealed; 
+                                imgEl.classList.add('revealed-state');
+                                imgEl.style.opacity = 1; 
+                            }, 450); 
+                        };
+                    }
+                    setTimeout(() => { currentLevelIdx++; showTransitionScreen(); }, 3000);
+                } else {
+                    setTimeout(() => { currentLevelIdx++; showTransitionScreen(); }, 800);
+                }
+            } else {
+                btn.classList.add('wrong');
+                btn.innerText = "NON !";
+            }
+        }
+
+        // --- RENDER TIMELINE ---
+        function renderTimeline(data) {
+            renderCommonHeader(data);
+            currentTimelineItems = [...data.items].sort(() => Math.random() - 0.5);
+            selectedIdx = null;
+
+            let grid = document.createElement('div');
+            grid.className = 'timeline-container';
+            grid.id = 'timeline-grid';
+            container.appendChild(grid);
+
+            renderTimelineItems(grid);
+
+            let btn = document.createElement('button');
+            btn.className = 'validate-btn';
+            btn.innerText = "VALIDER";
+            btn.onclick = () => checkTimelineAnswer(data.items, btn);
+            container.appendChild(btn);
+        }
+
+        // --- HELPERS COMMUNS ---
+        function renderCommonHeader(data) {
+            let q = document.createElement('div');
+            q.className = 'question-text';
+            q.innerText = data.q;
+            container.appendChild(q);
+
+            if (data.type !== 'video') {
+                const imgSrc = data.imgHidden ? data.imgHidden : data.img;
+                if (imgSrc) {
+                    let box = document.createElement('div');
+                    // Ajout classe static-image
+                    box.className = 'media-box static-image';
+                    let img = document.createElement('img');
+                    img.id = 'quiz-img'; 
+                    img.src = imgSrc;
+                    box.appendChild(img);
+                    container.appendChild(box);
+                }
+            }
+        }
+
+        function renderTimelineItems(gridElement) {
+            gridElement.innerHTML = '';
+            currentTimelineItems.forEach((src, idx) => {
+                let card = document.createElement('div');
+                card.className = 'timeline-card';
+                if (idx === selectedIdx) card.classList.add('selected');
+                card.onclick = () => handleSwap(idx);
+                let img = document.createElement('img');
+                img.src = src;
+                let txt = document.createElement('span');
+                txt.innerText = "# " + (idx + 1);
+                card.appendChild(img);
+                card.appendChild(txt);
+                gridElement.appendChild(card);
+            });
+        }
+
+        function handleSwap(idx) {
+            if (selectedIdx === null) { selectedIdx = idx; }
+            else if (selectedIdx === idx) { selectedIdx = null; }
+            else {
+                let temp = currentTimelineItems[selectedIdx];
+                currentTimelineItems[selectedIdx] = currentTimelineItems[idx];
+                currentTimelineItems[idx] = temp;
+                selectedIdx = null;
+            }
+            renderTimelineItems(document.getElementById('timeline-grid'));
+        }
+
+        function checkTimelineAnswer(correctOrder, btn) {
+            let isCorrect = true;
+            for (let i = 0; i < correctOrder.length; i++) {
+                if (currentTimelineItems[i] !== correctOrder[i]) isCorrect = false;
+            }
+
+            if (isCorrect) {
+                btn.style.background = '#1dd1a1'; btn.innerText = "OK";
+                setTimeout(() => { currentLevelIdx++; showTransitionScreen(); }, 1000);
+            } else {
+                btn.style.background = '#ff6b6b'; btn.innerText = "ERREUR";
+                btn.classList.add('shake');
+                setTimeout(() => { 
+                    btn.classList.remove('shake');
+                    btn.style.background = ''; btn.innerText = "VALIDER"; 
+                }, 1000);
+            }
+        }
+
+        function endGame() {
+            document.querySelector('.header').style.display = 'none';
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'flex';
+        }
+
+        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+            var R = 6371; 
+            var dLat = deg2rad(lat2-lat1);
+            var dLon = deg2rad(lon2-lon1); 
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+            return R * c; 
+        }
+        function deg2rad(deg) { return deg * (Math.PI/180); }
+
+        init();
+    </script>
+</body>
+</html>
