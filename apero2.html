@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LE FOY'S - PLOMBERIE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #050505;
@@ -17,8 +18,7 @@
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
 
         body {
-            /* Police plus lisible */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Russo One', sans-serif; /* Nouvelle police */
             background-color: var(--bg-color);
             color: white;
             margin: 0; padding: 0;
@@ -27,22 +27,23 @@
             overflow: hidden;
         }
 
-        /* 1. HEADER COMPACT */
+        /* 1. HEADER ULTRA COMPACT (Haut) */
         #top-ui {
-            flex-shrink: 0;
-            width: 100%; padding: 10px; text-align: center;
+            flex: 0 0 auto; /* Ne s'étire pas */
+            width: 100%; 
+            padding: 5px 10px; 
+            text-align: center;
             background: #111; border-bottom: 2px solid #333;
             z-index: 10;
-            display: flex; flex-direction: column; justify-content: center; gap: 5px;
         }
         
-        h1 { margin: 0; font-size: 1.1rem; color: var(--beer-gold); letter-spacing: 1px; font-weight: 900; text-transform: uppercase; }
-        .subtitle { font-size: 0.8rem; color: #aaa; margin: 0; }
+        h1 { margin: 0; font-size: 1.2rem; color: var(--beer-gold); letter-spacing: 1px; text-transform: uppercase; line-height: 1.2;}
+        .subtitle { font-size: 0.7rem; color: #888; margin: 0 0 5px 0; font-family: sans-serif;}
 
         #pressure-container {
-            width: 100%; height: 12px; background: #222;
-            border: 1px solid #555; border-radius: 10px;
-            position: relative; overflow: hidden; margin-top: 2px;
+            width: 100%; height: 10px; background: #222;
+            border: 1px solid #555; border-radius: 5px;
+            position: relative; overflow: hidden;
         }
         
         #pressure-bar {
@@ -50,23 +51,24 @@
             transition: width 0.2s linear;
         }
 
-        /* 2. BOARD (Optimisé pour ne pas dépasser) */
+        /* 2. BOARD (Flexible et centré) */
         #game-board {
-            flex-grow: 1; 
+            flex: 1 1 auto; /* Prend toute la place disponible */
             width: 100%; 
             display: flex; align-items: center; justify-content: center;
             position: relative; 
             padding: 5px;
-            overflow: hidden; /* Empêche le débordement */
+            overflow: hidden; 
         }
 
         #grid-container {
             position: relative;
-            /* La grille prend la largeur max OU la hauteur max dispo pour rester carrée */
-            width: 90vw; 
-            height: 90vw; 
-            max-width: 65vh; /* Empêche de pousser le header */
-            max-height: 65vh;
+            /* ASTUCE MOBILE : La grille ne dépasse jamais 95% de la largeur OU 55% de la hauteur */
+            /* Cela garantit qu'il reste de la place pour le header et le bouton */
+            width: min(95vw, 55vh); 
+            height: min(95vw, 55vh);
+            /* Aspect ratio carré */
+            aspect-ratio: 1/1;
         }
 
         #grid {
@@ -82,15 +84,15 @@
         /* MARQUEURS */
         .marker {
             position: absolute; 
-            font-size: 0.8rem; font-weight: bold; 
+            font-size: 0.8rem; 
             color: var(--beer-gold); 
-            background: #111; border: 1px solid #333; padding: 2px 5px; border-radius: 4px;
+            text-shadow: 1px 1px 0 #000;
             z-index: 20; pointer-events: none;
             display: flex; align-items: center; gap: 5px;
             white-space: nowrap;
         }
-        #start-marker { top: -28px; left: 0; }
-        #end-marker { bottom: -28px; right: 0; }
+        #start-marker { top: -20px; left: 0; }
+        #end-marker { bottom: -20px; right: 0; }
 
         /* TUILES & TUYAUX */
         .tile {
@@ -108,31 +110,36 @@
             transform: translate(-50%, -50%); border-radius: 50%;
             transition: background 0.2s;
         }
-        .arm.top { top: 0; left: 50%; width: var(--pipe-width); height: 50%; transform: translateX(-50%); }
-        .arm.bottom { bottom: 0; left: 50%; width: var(--pipe-width); height: 50%; transform: translateX(-50%); }
-        .arm.left { left: 0; top: 50%; width: 50%; height: var(--pipe-width); transform: translateY(-50%); }
-        .arm.right { right: 0; top: 50%; width: 50%; height: var(--pipe-width); transform: translateY(-50%); }
+        /* Ajustement fin des tuyaux pour qu'ils se touchent bien */
+        .arm.top { top: -1px; left: 50%; width: var(--pipe-width); height: 55%; transform: translateX(-50%); }
+        .arm.bottom { bottom: -1px; left: 50%; width: var(--pipe-width); height: 55%; transform: translateX(-50%); }
+        .arm.left { left: -1px; top: 50%; width: 55%; height: var(--pipe-width); transform: translateY(-50%); }
+        .arm.right { right: -1px; top: 50%; width: 55%; height: var(--pipe-width); transform: translateY(-50%); }
 
         /* ETATS LIQUIDE */
         .tile.filled .arm, .tile.filled .center-hub { background: var(--beer-gold); box-shadow: 0 0 5px var(--beer-gold); }
         .tile.error .arm, .tile.error .center-hub { background: var(--neon-alert); box-shadow: 0 0 5px red; }
 
-        /* 3. FOOTER */
+        /* 3. FOOTER (Collé au jeu) */
         #controls {
-            flex-shrink: 0;
-            width: 100%; padding: 15px;
+            flex: 0 0 auto; /* Ne s'étire pas */
+            width: 100%; padding: 10px 20px 20px 20px;
             display: flex; justify-content: center; align-items: center;
             background: #111; border-top: 1px solid #333;
         }
         #btn-check {
             width: 100%; max-width: 300px;
-            padding: 15px 0; border-radius: 50px; border: none;
+            padding: 12px 0; border-radius: 8px; border: none;
             background: var(--beer-gold); color: black;
-            font-weight: 900; font-size: 1.1rem; cursor: pointer;
-            box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
-            animation: pulse 1.5s infinite;
+            font-family: 'Russo One', sans-serif;
+            font-size: 1.2rem; cursor: pointer;
+            box-shadow: 0 4px 0 #b38f00; /* Effet bouton 3D */
+            transition: transform 0.1s, box-shadow 0.1s;
             text-transform: uppercase;
-            font-family: 'Segoe UI', sans-serif;
+        }
+        #btn-check:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #b38f00;
         }
 
         /* OVERLAYS */
@@ -148,8 +155,6 @@
         
         .shake { animation: shake 0.5s infinite; }
         @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -2px); } 100% { transform: translate(1px, -2px); } }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
-
     </style>
 </head>
 <body>
@@ -177,7 +182,7 @@
     <div id="intro-overlay" class="overlay">
         <h1 style="color:var(--beer-gold); font-size:2.5rem; margin-bottom:10px;">ÉTAPE 2</h1>
         <p style="font-size:1.1rem; color:#ccc;">CONNECTE LA "COMME D'HAB"</p>
-        <div style="background:#222; padding:15px; margin:20px; border:1px solid #444; text-align:left; font-size:0.95rem; border-radius: 8px;">
+        <div style="background:#222; padding:15px; margin:20px 0; border:1px solid #444; text-align:left; font-size:0.95rem; border-radius: 8px; font-family: sans-serif;">
             <p>1. Les Piliers ont soif.</p>
             <p>2. Connecte le <b>Fût</b> (Haut) à la <b>Tireuse</b> (Bas).</p>
             <p>3. Attention : La pression monte <b>VITE</b>.</p>
@@ -194,7 +199,7 @@
             PÉNALITÉ :<br>3 GORGÉES
         </div>
         
-        <button style="margin-top:30px; padding:15px 30px; background:black; color:white; border:2px solid white; font-weight:bold; cursor:pointer; border-radius:30px;" onclick="retryLevel()">J'AI BU, JE RÉESSAYE</button>
+        <button id="btn-check" style="margin-top:30px; background:black; color:white; border:2px solid white;" onclick="retryLevel()">J'AI BU, JE RÉESSAYE</button>
     </div>
 
     <div id="win-overlay" class="overlay hidden">
@@ -351,7 +356,7 @@
         function gameLoop() {
             if(!isPlaying) return;
             
-            // PRESSION (Vitesse)
+            // PRESSION (Vitesse x2 par rapport au dernier)
             pressure += 0.25; 
             
             document.getElementById('pressure-bar').style.width = Math.min(pressure, 100) + "%";
@@ -386,7 +391,7 @@
             const flowPath = pathData.path;
             const success = pathData.success;
 
-            // Anim rapide
+            // Anim case par case
             for (let i = 0; i < flowPath.length; i++) {
                 tiles[flowPath[i]].el.classList.add('filled');
                 await new Promise(r => setTimeout(r, 40)); 
