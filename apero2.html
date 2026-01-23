@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PLOMBERIE ENFER</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --neon-blue: #00f3ff;
+            --neon-alert: #ff0055;
+            --beer-gold: #ffaa00;
+            --pipe-dark: #2a2a2a; /* Plus sombre pour contraste */
+            --pipe-width: 8px; /* Très fin pour 10x10 */
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: var(--bg-color);
+            color: white;
+            margin: 0; padding: 0;
+            height: 100vh; width: 100vw;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            overflow: hidden;
+        }
+
+        /* HEADER & JAUGE */
+        #top-ui {
+            width: 100%; padding: 5px 10px; text-align: center;
+            background: #111; border-bottom: 2px solid #333;
+            z-index: 10; height: 12vh;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        
+        h1 { margin: 0; font-size: 1rem; color: var(--neon-alert); }
+
+        #pressure-container {
+            width: 100%; height: 15px; background: #222;
+            border: 1px solid #555; border-radius: 10px;
+            margin-top: 5px; position: relative; overflow: hidden;
+        }
+        
+        #pressure-bar {
+            width: 0%; height: 100%; background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+            transition: width 0.2s linear;
+        }
+        
+        #shout-box {
+            height: 15px; margin-top: 2px; color: var(--neon-blue);
+            font-size: 0.7rem; font-style: italic; white-space: nowrap; overflow: hidden;
+        }
+
+        /* GRILLE DE JEU */
+        #game-board {
+            height: 78vh; width: 100%; 
+            display: flex; align-items: center; justify-content: center;
+            position: relative; padding: 2px;
+        }
+
+        #grid {
+            display: grid;
+            /* 10x10 Grille */
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 0; 
+            background: #000;
+            border: 1px solid #333;
+            width: 100%;
+            aspect-ratio: 1 / 1; 
+            max-width: 600px;
+        }
+
+        /* TUILE (CASE) */
+        .tile {
+            width: 100%; height: 100%;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.1s linear; 
+            background: #111;
+            border: 0.5px solid #1a1a1a;
+        }
+        /* Hitbox plus large pour les doigts */
+        .tile::after {
+            content: ''; position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
+        }
+
+        /* SYSTÈME DE TUYAUX (ARMS) */
+        .arm { position: absolute; background: var(--pipe-dark); transition: background 0.3s; }
+        .center-hub {
+            position: absolute; top: 50%; left: 50%;
+            width: var(--pipe-width); height: var(--pipe-width);
+            background: var(--pipe-dark);
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        .arm.top { top: 0; left: 50%; width: var(--pipe-width); height: 50%; transform: translateX(-50%); }
+        .arm.bottom { bottom: 0; left: 50%; width: var(--pipe-width); height: 50%; transform: translateX(-50%); }
+        .arm.left { left: 0; top: 50%; width: 50%; height: var(--pipe-width); transform: translateY(-50%); }
+        .arm.right { right: 0; top: 50%; width: 50%; height: var(--pipe-width); transform: translateY(-50%); }
+
+        /* MARQUEURS */
+        .marker {
+            position: absolute; font-size: 1.2rem; z-index: 20; pointer-events: none;
+        }
+        #start-marker { top: -20px; left: 0; }
+        #end-marker { bottom: -20px; right: 0; }
+
+        /* ETATS */
+        .tile.filled .arm, .tile.filled .center-hub {
+            background: var(--beer-gold);
+            box-shadow: 0 0 2px var(--beer-gold);
+        }
+        .tile.error .arm, .tile.error .center-hub {
+            background: var(--neon-alert);
+            box-shadow: 0 0 5px red;
+        }
+
+        /* BOUTON TEST */
+        #controls {
+            height: 10vh; width: 100%; padding: 5px;
+            display: flex; justify-content: center; align-items: center;
+            background: #111; border-top: 1px solid #333;
+        }
+        #btn-check {
+            padding: 12px 30px; border-radius: 30px; border: none;
+            background: var(--beer-gold); color: black;
+            font-weight: 900; font-size: 1rem; cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.3);
+            animation: pulse 1s infinite;
+        }
+
+        /* OVERLAYS */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 20px;
+        }
+        .hidden { display: none; }
+        
+        #explode-overlay { background: rgba(255, 170, 0, 0.95); color: black; }
+        
+        .shake { animation: shake 0.5s infinite; }
+        @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -2px); } 100% { transform: translate(1px, -2px); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+    </style>
+</head>
+<body>
+
+    <div id="top-ui">
+        <h1>NIVEAU : ENFER (10x10)</h1>
+        <div id="pressure-container">
+            <div id="pressure-bar"></div>
+        </div>
+        <div id="shout-box">"Impossible que tu y arrives..."</div>
+    </div>
+
+    <div id="game-board">
+        <div id="grid">
+            <div class="marker" id="start-marker">🛢️</div>
+            <div class="marker" id="end-marker">🍺</div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <button id="btn-check" onclick="checkWin()">OUVRIR LA VANNE</button>
+    </div>
+
+    <div id="intro-overlay" class="overlay">
+        <h1 style="color:var(--beer-gold); font-size:2.5rem;">ÉTAPE 2</h1>
+        <p style="font-size:1rem; color:#ccc;">LE SPAGHETTI (10x10)</p>
+        <div style="background:#222; padding:15px; margin:20px; border:1px solid #444; text-align:left; font-size:0.9rem;">
+            <p>1. Grille de 100 tuiles.</p>
+            <p>2. Connecte Haut-Gauche à Bas-Droite.</p>
+            <p>3. <b>ATTENTION :</b> Il y a plein de faux chemins.</p>
+            <p style="color:red; text-align:center; font-weight:bold;">FUITE = +30% PRESSION !</p>
+        </div>
+        <button id="btn-check" onclick="startLevel()">J'AI MES LUNETTES</button>
+    </div>
+
+    <div id="explode-overlay" class="overlay hidden">
+        <h1 style="font-size:4rem; margin:0;">BOUM !</h1>
+        <p style="font-size:1.5rem; font-weight:bold;">T'AS NOYÉ LE BAR</p>
+        <div style="border:4px solid black; padding:20px; font-weight:bold; margin-top:20px; transform:rotate(-2deg); font-size:1.5rem; background:white;">
+            PÉNALITÉ : 3 GORGÉES
+        </div>
+        <button style="margin-top:30px; padding:15px; background:black; color:white; border:none; font-weight:bold; cursor:pointer;" onclick="retryLevel()">J'AI BU, JE RÉESSAYE</button>
+    </div>
+
+    <div id="win-overlay" class="overlay hidden">
+        <h1 style="color:var(--neon-blue); font-size:3rem;">GÉNIE</h1>
+        <p>Tu m'as impressionné.</p>
+        <button id="btn-check" onclick="nextStep()">ÉTAPE 3</button>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const ROWS = 10;
+        const COLS = 10;
+        const NB_TILES = 100;
+
+        // Connexions à rotation 0: [Haut, Droite, Bas, Gauche]
+        const TILES_DEF = {
+            'I': [1, 0, 1, 0], 
+            'L': [1, 1, 0, 0]
+        };
+
+        let tiles = []; 
+        let pressure = 0;
+        let gameInterval;
+        let isPlaying = false;
+        
+        const shouts = [
+            "C'est un plat de nouilles !", "Regarde bien...", "Ça fuit d'avance...", 
+            "Connecte le vrai chemin !", "Ne te perds pas...", "Tic tac..."
+        ];
+
+        function startLevel() {
+            document.getElementById('intro-overlay').classList.add('hidden');
+            generateLevel();
+            pressure = 0;
+            isPlaying = true;
+            gameInterval = setInterval(gameLoop, 200);
+        }
+
+        // --- GÉNÉRATEUR SPAGHETTI ---
+        function generateLevel() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '<div class="marker" id="start-marker">🛢️</div><div class="marker" id="end-marker">🍺</div>';
+            tiles = new Array(NB_TILES).fill(null);
+
+            // 1. Créer le vrai chemin (Snake)
+            let visited = new Set();
+            let mainPathIndices = createSnakePath(0, 99, visited);
+            
+            // 2. Remplir TOUT le reste avec des leurres (Faux chemins)
+            fillWithDecoys(visited);
+
+            // 3. Rendu DOM
+            for(let i=0; i<NB_TILES; i++) {
+                const data = tiles[i];
+                const el = document.createElement('div');
+                el.className = 'tile';
+                el.id = `tile-${i}`;
+                
+                // Rotation Random
+                const startRot = Math.floor(Math.random() * 4) * 90;
+                
+                createVisuals(el, data.type);
+                
+                el.style.transform = `rotate(${startRot}deg)`;
+                el.onclick = () => rotateTile(i);
+                
+                grid.appendChild(el);
+                
+                // Update data with visual element and rotation
+                tiles[i].el = el;
+                tiles[i].visualRot = startRot;
+                tiles[i].baseConn = TILES_DEF[data.type];
+            }
+        }
+
+        function createSnakePath(start, end, visited) {
+            // Algorithme de chemin aléatoire contraint
+            // Doit atteindre la fin. 
+            // Pour 10x10, on force un chemin d'au moins 25 étapes pour que ce soit dur.
+            let success = false;
+            let finalPathMap = new Map();
+
+            while(!success) {
+                visited.clear();
+                let path = [start];
+                visited.add(start);
+                let curr = start;
+                let stuck = false;
+
+                while(curr !== end && !stuck) {
+                    let neighbors = getNeighbors(curr);
+                    let validNeighbors = neighbors.filter(n => !visited.has(n));
+                    
+                    // Heuristique : tendre vers la fin, mais avec du bruit
+                    if(validNeighbors.length > 0) {
+                        // Tri pour favoriser ceux qui rapprochent de la fin (un peu)
+                        validNeighbors.sort((a,b) => dist(a, end) - dist(b, end) + (Math.random()*10 - 5));
+                        
+                        // Pick random best
+                        let next = validNeighbors[0];
+                        // Parfois on prend un moins bon pour faire des détours
+                        if(Math.random() > 0.6 && validNeighbors.length > 1) next = validNeighbors[1];
+
+                        visited.add(next);
+                        path.push(next);
+                        curr = next;
+                    } else {
+                        stuck = true;
+                    }
+                }
+
+                if(curr === end && path.length > 20) { // Chemin valide et assez long
+                    success = true;
+                    // Définir les types
+                    for(let i=0; i<path.length; i++) {
+                        let c = path[i];
+                        let p = (i===0) ? (c-10) : path[i-1]; // Start virtual Top
+                        let n = (i===path.length-1) ? (c+10) : path[i+1]; // End virtual Bottom
+                        
+                        let d1 = getDir(c, p);
+                        let d2 = getDir(c, n);
+                        // Opposés (0-2 ou 1-3) => I, sinon L
+                        let type = (Math.abs(d1 - d2) === 2) ? 'I' : 'L';
+                        tiles[c] = { type: type };
+                    }
+                }
+            }
+            return visited;
+        }
+
+        function fillWithDecoys(visitedMain) {
+            // Pour chaque case vide, on lance un mini-snake
+            for(let i=0; i<NB_TILES; i++) {
+                if(!visitedMain.has(i)) {
+                    // C'est un leurre. On génère aléatoirement, 
+                    // mais on essaie de faire des chaines.
+                    // Simplification : Random I/L suffit car la densité crée l'illusion
+                    tiles[i] = { type: (Math.random() > 0.5 ? 'I' : 'L') };
+                }
+            }
+        }
+
+        function getNeighbors(idx) {
+            let n = [];
+            let r = Math.floor(idx/10);
+            let c = idx%10;
+            if(r>0) n.push(idx-10); // Top
+            if(c<9) n.push(idx+1);  // Right
+            if(r<9) n.push(idx+10); // Bottom
+            if(c>0) n.push(idx-1);  // Left
+            return n;
+        }
+
+        function dist(a, b) {
+            let r1 = Math.floor(a/10), c1 = a%10;
+            let r2 = Math.floor(b/10), c2 = b%10;
+            return Math.abs(r1-r2) + Math.abs(c1-c2);
+        }
+
+        function getDir(from, to) {
+            if(to === from - 10) return 0; // Top
+            if(to === from + 1) return 1;  // Right
+            if(to === from + 10) return 2; // Bottom
+            if(to === from - 1) return 3;  // Left
+            return -1;
+        }
+
+        function createVisuals(el, type) {
+            el.innerHTML += '<div class="center-hub"></div>';
+            const conns = TILES_DEF[type];
+            if(conns[0]) el.innerHTML += '<div class="arm top"></div>';
+            if(conns[1]) el.innerHTML += '<div class="arm right"></div>';
+            if(conns[2]) el.innerHTML += '<div class="arm bottom"></div>';
+            if(conns[3]) el.innerHTML += '<div class="arm left"></div>';
+        }
+
+        function rotateTile(idx) {
+            if(!isPlaying) return;
+            const t = tiles[idx];
+            t.visualRot += 90; 
+            t.el.style.transform = `rotate(${t.visualRot}deg)`;
+            document.querySelectorAll('.tile').forEach(e => e.classList.remove('filled', 'error'));
+        }
+
+        function gameLoop() {
+            if(!isPlaying) return;
+            pressure += 0.1; // Lent mais constant
+            document.getElementById('pressure-bar').style.width = Math.min(pressure, 100) + "%";
+            
+            if(Math.random() < 0.02) document.getElementById('shout-box').innerText = shouts[Math.floor(Math.random() * shouts.length)];
+
+            if(pressure > 85) {
+                document.body.classList.add('shake');
+                document.getElementById('pressure-bar').style.background = "red";
+            }
+            if(pressure >= 100) explode();
+        }
+
+        function explode() {
+            isPlaying = false;
+            clearInterval(gameInterval);
+            document.body.classList.remove('shake');
+            document.getElementById('explode-overlay').classList.remove('hidden');
+        }
+
+        function retryLevel() {
+            document.getElementById('explode-overlay').classList.add('hidden');
+            document.body.classList.remove('shake');
+            document.getElementById('pressure-bar').style.background = "linear-gradient(90deg, #00ff00, #ffff00, #ff0000)";
+            startLevel();
+        }
+
+        // --- VALIDATION ---
+        function checkWin() {
+            if(!isPlaying) return;
+            
+            const visited = new Set();
+            let flowPath = [];
+            let success = false;
+            
+            // Flood Fill depuis index 0, entrée par HAUT (0)
+            function flood(curr, from) {
+                if(visited.has(curr)) return;
+                
+                const t = tiles[curr];
+                const logicRot = t.visualRot % 360;
+                const realConns = getRealConnections(t.type, logicRot); // [T, R, B, L]
+                
+                if(!realConns[from]) return;
+
+                visited.add(curr);
+                flowPath.push(curr);
+
+                // VICTOIRE : Index 99, Sortie BAS (2) ou DROITE (1)
+                if(curr === 99 && (realConns[2] || realConns[1])) {
+                    success = true;
+                    return;
+                }
+
+                // Voisins
+                if(realConns[0] && from !== 0 && curr >= 10) flood(curr - 10, 2);
+                if(realConns[1] && from !== 1 && curr % 10 !== 9) flood(curr + 1, 3);
+                if(realConns[2] && from !== 2 && curr < 90) flood(curr + 10, 0);
+                if(realConns[3] && from !== 3 && curr % 10 !== 0) flood(curr - 1, 1);
+            }
+
+            flood(0, 0);
+
+            flowPath.forEach(idx => tiles[idx].el.classList.add('filled'));
+
+            if(success) {
+                isPlaying = false;
+                clearInterval(gameInterval);
+                document.body.classList.remove('shake');
+                setTimeout(() => document.getElementById('win-overlay').classList.remove('hidden'), 500);
+            } else {
+                if(flowPath.length > 0) tiles[flowPath[flowPath.length-1]].el.classList.add('error');
+                else tiles[0].el.classList.add('error');
+                
+                pressure += 30; // BOUM
+                document.getElementById('shout-box').innerText = "FUITE ! +30% PRESSION !";
+                document.getElementById('shout-box').style.color = "red";
+                document.getElementById('pressure-container').classList.add('shake');
+                setTimeout(() => document.getElementById('pressure-container').classList.remove('shake'), 500);
+                setTimeout(() => document.querySelectorAll('.tile').forEach(e => e.classList.remove('filled', 'error')), 1000);
+            }
+        }
+
+        function getRealConnections(type, rot) {
+            const shift = rot / 90;
+            const base = TILES_DEF[type];
+            let res = [0,0,0,0];
+            for(let i=0; i<4; i++) {
+                if(base[i]) res[(i + shift)%4] = 1;
+            }
+            return res;
+        }
+
+        function nextStep() {
+            window.location.href = "apero3.html";
+        }
+
+    </script>
+</body>
+</html>
