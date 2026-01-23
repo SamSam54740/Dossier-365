@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LE FOY'S - PLOMBERIE</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #050505;
@@ -18,31 +17,32 @@
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
 
         body {
-            font-family: 'Orbitron', sans-serif;
+            /* Police plus lisible */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: white;
             margin: 0; padding: 0;
             height: 100vh; width: 100vw;
-            /* Layout vertical strict pour mobile */
             display: flex; flex-direction: column; 
             overflow: hidden;
         }
 
-        /* 1. HEADER (Compact) */
+        /* 1. HEADER COMPACT */
         #top-ui {
-            flex-shrink: 0; /* Ne rétrécit pas */
+            flex-shrink: 0;
             width: 100%; padding: 10px; text-align: center;
             background: #111; border-bottom: 2px solid #333;
             z-index: 10;
+            display: flex; flex-direction: column; justify-content: center; gap: 5px;
         }
         
-        h1 { margin: 0; font-size: 1rem; color: var(--beer-gold); letter-spacing: 2px; }
-        .subtitle { font-size: 0.7rem; color: #888; margin-bottom: 5px; }
+        h1 { margin: 0; font-size: 1.1rem; color: var(--beer-gold); letter-spacing: 1px; font-weight: 900; text-transform: uppercase; }
+        .subtitle { font-size: 0.8rem; color: #aaa; margin: 0; }
 
         #pressure-container {
-            width: 100%; height: 15px; background: #222;
+            width: 100%; height: 12px; background: #222;
             border: 1px solid #555; border-radius: 10px;
-            position: relative; overflow: hidden;
+            position: relative; overflow: hidden; margin-top: 2px;
         }
         
         #pressure-bar {
@@ -50,21 +50,23 @@
             transition: width 0.2s linear;
         }
 
-        /* 2. BOARD (Prend tout l'espace restant) */
+        /* 2. BOARD (Optimisé pour ne pas dépasser) */
         #game-board {
-            flex-grow: 1; /* Prend l'espace libre */
+            flex-grow: 1; 
             width: 100%; 
             display: flex; align-items: center; justify-content: center;
             position: relative; 
-            padding: 10px; /* Marge de sécurité */
+            padding: 5px;
+            overflow: hidden; /* Empêche le débordement */
         }
 
         #grid-container {
             position: relative;
-            width: 95vw; /* Max largeur mobile */
-            height: 95vw; /* Carré */
-            max-height: 65vh; /* Ne pas dépasser la hauteur dispo */
-            max-width: 65vh;  /* Garder le carré */
+            /* La grille prend la largeur max OU la hauteur max dispo pour rester carrée */
+            width: 90vw; 
+            height: 90vw; 
+            max-width: 65vh; /* Empêche de pousser le header */
+            max-height: 65vh;
         }
 
         #grid {
@@ -77,7 +79,7 @@
             width: 100%; height: 100%;
         }
 
-        /* MARQUEURS (Collés à la grille) */
+        /* MARQUEURS */
         .marker {
             position: absolute; 
             font-size: 0.8rem; font-weight: bold; 
@@ -87,12 +89,8 @@
             display: flex; align-items: center; gap: 5px;
             white-space: nowrap;
         }
-        #start-marker { 
-            top: -25px; left: 0; 
-        }
-        #end-marker { 
-            bottom: -25px; right: 0; 
-        }
+        #start-marker { top: -28px; left: 0; }
+        #end-marker { bottom: -28px; right: 0; }
 
         /* TUILES & TUYAUX */
         .tile {
@@ -119,7 +117,7 @@
         .tile.filled .arm, .tile.filled .center-hub { background: var(--beer-gold); box-shadow: 0 0 5px var(--beer-gold); }
         .tile.error .arm, .tile.error .center-hub { background: var(--neon-alert); box-shadow: 0 0 5px red; }
 
-        /* 3. FOOTER (Bouton accessible) */
+        /* 3. FOOTER */
         #controls {
             flex-shrink: 0;
             width: 100%; padding: 15px;
@@ -134,6 +132,7 @@
             box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
             animation: pulse 1.5s infinite;
             text-transform: uppercase;
+            font-family: 'Segoe UI', sans-serif;
         }
 
         /* OVERLAYS */
@@ -166,10 +165,7 @@
     <div id="game-board">
         <div id="grid-container">
             <div class="marker" id="start-marker">🛢️ COMME D'HAB</div>
-            
-            <div id="grid">
-                </div>
-
+            <div id="grid"></div>
             <div class="marker" id="end-marker">TIREUSE FOY'S 🍺</div>
         </div>
     </div>
@@ -179,30 +175,32 @@
     </div>
 
     <div id="intro-overlay" class="overlay">
-        <h1 style="color:var(--beer-gold); font-size:2.5rem;">ÉTAPE 2</h1>
-        <p style="font-size:1rem; color:#ccc;">CONNECTE LA "COMME D'HAB"</p>
-        <div style="background:#222; padding:15px; margin:20px; border:1px solid #444; text-align:left; font-size:0.9rem;">
+        <h1 style="color:var(--beer-gold); font-size:2.5rem; margin-bottom:10px;">ÉTAPE 2</h1>
+        <p style="font-size:1.1rem; color:#ccc;">CONNECTE LA "COMME D'HAB"</p>
+        <div style="background:#222; padding:15px; margin:20px; border:1px solid #444; text-align:left; font-size:0.95rem; border-radius: 8px;">
             <p>1. Les Piliers ont soif.</p>
             <p>2. Connecte le <b>Fût</b> (Haut) à la <b>Tireuse</b> (Bas).</p>
             <p>3. Attention : La pression monte <b>VITE</b>.</p>
-            <p style="color:red; text-align:center; font-weight:bold;">FUITE = PÉNALITÉ !</p>
+            <p style="color:red; text-align:center; font-weight:bold; margin-top:10px;">FUITE = PÉNALITÉ !</p>
         </div>
         <button id="btn-check" onclick="startLevel()">JE GÈRE</button>
     </div>
 
     <div id="explode-overlay" class="overlay hidden">
-        <h1 style="font-size:4rem; margin:0;">BOUM !</h1>
-        <p style="font-size:1.5rem; font-weight:bold;">QUEL GÂCHIS...</p>
-        <div style="border:4px solid black; padding:20px; font-weight:bold; margin-top:20px; transform:rotate(-2deg); font-size:1.5rem; background:white;">
-            PÉNALITÉ : 3 GORGÉES
+        <h1 style="color:red; font-size:4rem; margin:0; text-shadow: 2px 2px 0px black;">BOUM !</h1>
+        <p style="font-size:1.5rem; font-weight:bold; margin-top:10px;">QUEL GÂCHIS...</p>
+        
+        <div style="border:4px solid black; padding:20px; font-weight:bold; margin-top:20px; transform:rotate(-2deg); font-size:1.5rem; background:white; color:black;">
+            PÉNALITÉ :<br>3 GORGÉES
         </div>
-        <button style="margin-top:30px; padding:15px; background:black; color:white; border:none; font-weight:bold; cursor:pointer;" onclick="retryLevel()">J'AI BU, JE RÉESSAYE</button>
+        
+        <button style="margin-top:30px; padding:15px 30px; background:black; color:white; border:2px solid white; font-weight:bold; cursor:pointer; border-radius:30px;" onclick="retryLevel()">J'AI BU, JE RÉESSAYE</button>
     </div>
 
     <div id="win-overlay" class="overlay hidden">
-        <h1 style="color:var(--neon-blue); font-size:3rem;">SANTÉ !</h1>
-        <p>Service impeccable.</p>
-        <button id="btn-check" onclick="nextStep()">ÉTAPE 3</button>
+        <h1 style="color:var(--neon-blue); font-size:3rem; margin-bottom:10px;">SANTÉ !</h1>
+        <p style="font-size:1.2rem;">Service impeccable.</p>
+        <button id="btn-check" style="margin-top:30px;" onclick="nextStep()">ÉTAPE 3</button>
     </div>
 
     <script>
@@ -219,30 +217,26 @@
         let pressure = 0;
         let gameInterval;
         let isPlaying = false;
-        let isChecking = false; // Bloque le jeu pendant l'animation
+        let isChecking = false;
 
         function startLevel() {
             document.getElementById('intro-overlay').classList.add('hidden');
             generateLevel();
             pressure = 0;
             isPlaying = true;
-            gameInterval = setInterval(gameLoop, 100); // 100ms
+            gameInterval = setInterval(gameLoop, 100); 
         }
 
-        // --- GENERATEUR SPAGHETTI (Chemin unique + leurres) ---
+        // --- GENERATEUR SPAGHETTI ---
         function generateLevel() {
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
             tiles = new Array(NB_TILES).fill(null);
 
-            // 1. Snake Path
             let visited = new Set();
             createSnakePath(0, 99, visited);
-            
-            // 2. Decoyst
             fillWithDecoys(visited);
 
-            // 3. Render
             for(let i=0; i<NB_TILES; i++) {
                 const data = tiles[i];
                 const el = document.createElement('div');
@@ -289,7 +283,7 @@
                     }
                 }
 
-                if(curr === end && path.length > 25) { // Min 25 cases pour que ce soit long
+                if(curr === end && path.length > 25) { 
                     success = true;
                     for(let i=0; i<path.length; i++) {
                         let c = path[i];
@@ -356,7 +350,8 @@
 
         function gameLoop() {
             if(!isPlaying) return;
-            // Difficulté : Pression monte de 0.25% toutes les 100ms
+            
+            // PRESSION (Vitesse)
             pressure += 0.25; 
             
             document.getElementById('pressure-bar').style.width = Math.min(pressure, 100) + "%";
@@ -382,41 +377,37 @@
             startLevel();
         }
 
-        // --- ANIMATION DE FLUX ---
+        // --- ANIMATION ---
         async function checkWin() {
             if(!isPlaying || isChecking) return;
-            isChecking = true; // Bloque les clics
+            isChecking = true; 
             
-            // Calculer le chemin
             const pathData = calculateFlow();
             const flowPath = pathData.path;
             const success = pathData.success;
 
-            // Animation du flux
+            // Anim rapide
             for (let i = 0; i < flowPath.length; i++) {
                 tiles[flowPath[i]].el.classList.add('filled');
-                // Petit délai pour l'effet liquide
-                await new Promise(r => setTimeout(r, 50)); 
+                await new Promise(r => setTimeout(r, 40)); 
             }
 
-            // Résultat
             if(success) {
                 isPlaying = false;
                 clearInterval(gameInterval);
                 document.body.classList.remove('shake');
                 setTimeout(() => document.getElementById('win-overlay').classList.remove('hidden'), 500);
             } else {
-                // Erreur
                 if(flowPath.length > 0) tiles[flowPath[flowPath.length-1]].el.classList.add('error');
                 else tiles[0].el.classList.add('error');
                 
-                pressure += 25; // Grosse pénalité
+                pressure += 25; 
                 document.getElementById('pressure-container').classList.add('shake');
                 setTimeout(() => document.getElementById('pressure-container').classList.remove('shake'), 500);
                 
                 await new Promise(r => setTimeout(r, 1000));
                 document.querySelectorAll('.tile').forEach(e => e.classList.remove('filled', 'error'));
-                isChecking = false; // Débloque
+                isChecking = false; 
             }
         }
 
@@ -424,23 +415,18 @@
             const visited = new Set();
             let flowPath = [];
             let success = false;
-            
-            // Stack pour flood recursif (mais on le fait iteratif pour simplifier l'enregistrement du chemin unique)
-            // Ici on suit le flux. Si bifurcation, on prend le premier valide.
-            // Vu que c'est des tuyaux simples, il n'y a qu'une sortie max par entrée.
-            
             let curr = 0;
-            let from = 0; // Entrée HAUT
+            let from = 0; 
             let flowing = true;
 
             while(flowing) {
-                if(visited.has(curr)) break; // Boucle
+                if(visited.has(curr)) break; 
                 
                 const t = tiles[curr];
                 const logicRot = t.visualRot % 360;
                 const realConns = getRealConnections(t.type, logicRot);
                 
-                if(!realConns[from]) { flowing = false; break; } // Bloqué à l'entrée
+                if(!realConns[from]) { flowing = false; break; } 
 
                 visited.add(curr);
                 flowPath.push(curr);
@@ -451,24 +437,19 @@
                     break;
                 }
 
-                // Trouver la sortie
                 let next = -1;
                 let nextFrom = -1;
 
-                // Haut
                 if(realConns[0] && from !== 0 && curr >= 10) { next = curr - 10; nextFrom = 2; }
-                // Droite
                 else if(realConns[1] && from !== 1 && curr % 10 !== 9) { next = curr + 1; nextFrom = 3; }
-                // Bas
                 else if(realConns[2] && from !== 2 && curr < 90) { next = curr + 10; nextFrom = 0; }
-                // Gauche
                 else if(realConns[3] && from !== 3 && curr % 10 !== 0) { next = curr - 1; nextFrom = 1; }
 
                 if(next !== -1) {
                     curr = next;
                     from = nextFrom;
                 } else {
-                    flowing = false; // Cul de sac
+                    flowing = false; 
                 }
             }
             return { path: flowPath, success: success };
