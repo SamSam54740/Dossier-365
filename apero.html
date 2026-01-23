@@ -3,435 +3,612 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BAR DES AMIS</title>
+    <title>LE COIN-COIN DES PILIERS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #1a1a1a;
-            --text-color: #f1c40f;
-            --accent: #e67e22;
+            --bg-color: #000000;
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --beer-gold: #ffaa00;
+            --hud-bg: #111;
         }
+
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+
         body {
-            font-family: 'Courier New', Courier, monospace;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0; height: 100vh; width: 100vw;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            overflow: hidden; user-select: none;
-        }
-
-        /* UI GÉNÉRALE */
-        h2 { text-transform: uppercase; margin-bottom: 10px; font-size: 1.2rem; border-bottom: 2px solid var(--accent); padding-bottom: 5px;}
-        .instruction { font-size: 0.9rem; color: #aaa; margin-bottom: 20px; text-align: center; max-width: 90%; }
-        .game-area { width: 100%; height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-        
-        /* BOUTON SUIVANT */
-        #next-btn {
-            display: none; margin-top: 20px;
-            padding: 15px 30px; background: var(--accent); color: white;
-            border: none; border-radius: 50px; font-weight: bold; font-size: 1rem;
-            cursor: pointer; animation: popIn 0.5s;
-        }
-
-        /* --- ETAPE 1 : COIN COIN --- */
-        #coin-table {
-            width: 300px; height: 400px; background: #2c3e50; border: 10px solid #5d4037;
-            border-radius: 10px; position: relative; overflow: hidden; display: none;
-        }
-        .cup {
-            width: 50px; height: 50px; border-radius: 50%; border: 3px solid white;
-            background: #c0392b; position: absolute; left: 50%; transform: translateX(-50%);
-            display: flex; align-items: center; justify-content: center; font-size: 2rem;
-        }
-        #target-cup { top: 20px; }
-        #player-cup { bottom: 20px; background: transparent; border: none;}
-        
-        #ping-pong-ball {
-            width: 20px; height: 20px; background: white; border-radius: 50%;
-            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-        
-        #throw-btn {
-            position: absolute; bottom: 20px; padding: 15px 40px;
-            background: white; color: black; border-radius: 30px; font-weight: bold;
-            border: none; font-size: 1.2rem; cursor: pointer; display: none; z-index: 100;
-        }
-
-        /* --- ETAPE 2 : PUZZLE SOUS-BOCK (CHEMIN) --- */
-        #puzzle-grid {
-            display: none; grid-template-columns: repeat(3, 1fr); gap: 5px;
-            background: #5d4037; padding: 10px; border-radius: 10px;
-        }
-        .tile {
-            width: 80px; height: 80px; background: #ecf0f1; border-radius: 50%;
+            font-family: 'Orbitron', sans-serif;
+            background-color: #050505;
+            color: white;
+            margin: 0; padding: 0;
+            height: 100vh; width: 100vw;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: transform 0.3s;
+            overflow: hidden;
+        }
+
+        /* CADRE DE JEU (80vh) */
+        #game-wrapper {
+            width: 100%; max-width: 450px; height: 80vh;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 90%);
+            border: 2px solid #333;
+            border-top: 4px solid var(--neon-blue);
+            border-bottom: 4px solid var(--neon-purple);
+            position: relative;
+            display: flex; flex-direction: column;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.15);
+            overflow: hidden;
+        }
+
+        /* --- TABLE & VERRES --- */
+        #table-area {
+            flex-grow: 1; position: relative;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 30px 10px;
+        }
+
+        .team-zone {
+            display: flex; justify-content: center; gap: 40px; height: 100px; width: 100%;
+        }
+
+        .cup-container {
+            width: 70px; height: 70px; position: relative;
+        }
+
+        /* Le verre physique */
+        .cup {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid #555;
             position: relative; overflow: hidden;
-        }
-        /* Les lignes sur les sous-bocks */
-        .line { position: absolute; background: var(--accent); }
-        .line-v { width: 10px; height: 100%; top: 0; left: 35px; } /* Vertical */
-        .line-h { width: 100%; height: 10px; top: 35px; left: 0; } /* Horizontal */
-        .line-c { width: 50px; height: 50px; border: 10px solid var(--accent); border-radius: 50%; position: absolute; } /* Courbe */
-        
-        /* --- ETAPE 3 : DECAPSULEUR --- */
-        #bottle-area { display: none; position: relative; width: 200px; height: 400px; }
-        #bottle-neck {
-            width: 80px; height: 200px; background: linear-gradient(90deg, #27ae60, #2ecc71);
-            margin: 0 auto; border-radius: 10px 10px 0 0; position: absolute; bottom: 0; left: 60px;
-        }
-        #bottle-cap {
-            width: 90px; height: 30px; background: linear-gradient(90deg, #95a5a6, #bdc3c7);
-            position: absolute; top: 180px; left: 55px; border-radius: 5px;
-            border-bottom: 4px solid #7f8c8d; z-index: 10;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
             transition: transform 0.2s;
         }
-        #swipe-hint {
-            position: absolute; top: 100px; width: 100%; text-align: center;
-            font-size: 2rem; color: white; animation: slideUp 1.5s infinite;
+        .cup.active { border-color: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); }
+        .cup.enemy-active { border-color: var(--neon-purple); box-shadow: 0 0 15px var(--neon-purple); }
+
+        /* Liquide Bière */
+        .beer-liquid {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; 
+            background: linear-gradient(0deg, var(--beer-gold) 0%, #ffe100 100%);
+            transition: height 0.3s linear;
+        }
+        .foam {
+            width: 100%; height: 10px; background: white;
+            position: absolute; top: 0; left: 0;
+            opacity: 0.8;
         }
 
-        /* --- ETAPE 4 : L'ADDITION A GRATTER --- */
-        #bill-container { display: none; position: relative; width: 300px; height: 400px; background: white; color: black; padding: 20px; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
-        .bill-header { text-align: center; border-bottom: 1px dashed black; padding-bottom: 10px; margin-bottom: 10px; }
-        .bill-item { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
-        .bill-total { border-top: 2px solid black; margin-top: 10px; padding-top: 10px; display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; }
+        /* BALLE */
+        #ball {
+            width: 18px; height: 18px; background: white; border-radius: 50%;
+            position: absolute; top: 85%; left: 50%; transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px #fff; display: none; z-index: 20;
+        }
+
+        /* --- ZONE D'ACTION (BAS) --- */
+        #controls-area {
+            height: 180px; background: var(--hud-bg);
+            border-top: 2px solid #333;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; padding: 10px;
+        }
+
+        /* 1. UI TIR (AIM + POWER) */
+        #shooting-ui { width: 100%; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        .gauge-box { width: 80%; height: 15px; background: #222; border: 1px solid #555; border-radius: 10px; position: relative; overflow: hidden; }
+        .cursor { width: 8px; height: 100%; background: white; position: absolute; left: 0; box-shadow: 0 0 8px white; }
+        .target-zone { position: absolute; height: 100%; background: rgba(0, 255, 0, 0.3); border-left: 1px solid lime; border-right: 1px solid lime; }
         
-        /* Canvas de grattage */
-        #scratch-canvas {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 200px; height: 60px; cursor: crosshair; touch-action: none;
+        #btn-action {
+            width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--neon-blue);
+            background: transparent; color: var(--neon-blue); font-weight: bold; font-family: 'Orbitron';
+            font-size: 1rem; cursor: pointer; box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
         }
-        #hidden-code {
-            position: absolute; bottom: 35px; width: 100%; text-align: center;
-            font-size: 1.5rem; font-weight: bold; color: var(--accent);
-            pointer-events: none;
+        #btn-action:active { background: var(--neon-blue); color: black; }
+
+        /* 2. UI BOIRE (RHYTHM) */
+        #drinking-ui { display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+        #throat-gauge {
+            width: 100px; height: 100px; border-radius: 50%; border: 5px solid #333;
+            position: relative; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; background: #000;
+        }
+        #throat-fill {
+            width: 100%; height: 100%; background: #c0392b; 
+            border-radius: 50%; transform: scale(0);
+        }
+        .safe-zone { border: 4px solid #2ecc71; position: absolute; width: 70%; height: 70%; border-radius: 50%; pointer-events: none; z-index: 10; opacity: 0.5;}
+        
+        /* 3. UI DEFENSE (MATHS) */
+        #math-ui { display: none; flex-direction: column; align-items: center; width: 100%; gap: 10px;}
+        #math-problem { font-size: 2rem; color: var(--neon-purple); margin-bottom: 10px; font-weight: 900; }
+        .math-answers { display: flex; gap: 10px; width: 100%; justify-content: center; }
+        .math-btn {
+            padding: 15px 20px; background: #222; border: 2px solid var(--neon-purple);
+            color: white; font-size: 1.2rem; font-family: 'Orbitron'; border-radius: 8px; flex: 1; transition: background 0.2s;
+        }
+        .math-btn:active { background: var(--neon-purple); }
+        .math-btn.wrong { background: red !important; border-color: red; }
+
+        /* STATUS TEXT */
+        #status-overlay {
+            position: absolute; top: 40%; width: 100%; text-align: center;
+            font-size: 2.5rem; font-weight: 900; text-transform: uppercase;
+            text-shadow: 0 0 20px black; pointer-events: none; z-index: 50; display: none;
         }
 
-        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
-        @keyframes slideUp { 0% { transform: translateY(20px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(-20px); opacity: 0; } }
-        @keyframes bounceBall { 0% { left: 10%; } 100% { left: 90%; } }
+        /* ECRAN PENALITE (ROUGE) */
+        #penalty-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(150, 0, 0, 0.95); z-index: 60;
+            flex-direction: column; align-items: center; justify-content: center;
+            text-align: center;
+        }
+        .btn-resume {
+            margin-top: 20px; padding: 15px 30px; background: white; color: black;
+            border: none; font-weight: bold; font-family: 'Orbitron'; font-size: 1rem; border-radius: 30px; cursor: pointer;
+        }
+
+        /* ECRANS OVERLAY (INTRO/FIN) */
+        .overlay-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 100; /* Opaque */
+            display: flex; flex-direction: column; align-items: center; justify-content: center; /* Centrage vertical */
+            padding: 20px; text-align: center;
+        }
+        
+        .btn-start {
+            margin-top: 20px; padding: 15px 40px; background: var(--beer-gold); color: black;
+            border: none; font-weight: bold; font-family: 'Orbitron'; font-size: 1.2rem; border-radius: 5px; cursor: pointer;
+        }
+
+        .rules-box {
+            border: 1px solid #333; padding: 20px; background: #111; 
+            margin: 10px 0; width: 100%; text-align: left;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.9rem; line-height: 1.5;
+        }
 
     </style>
 </head>
 <body>
 
-    <h2 id="step-title">ÉTAPE 1/4</h2>
-    <div class="instruction" id="step-desc">...</div>
-
-    <div class="game-area">
+    <div id="game-wrapper">
         
-        <div id="coin-table">
-            <div class="cup" id="target-cup">🎯</div>
-            <div id="ping-pong-ball"></div>
-            <div class="cup" id="player-cup"></div>
-        </div>
-        <button id="throw-btn" onclick="shootBall()">TIRER !</button>
-
-        <div id="puzzle-grid"></div>
-
-        <div id="bottle-area">
-            <div id="bottle-cap"></div>
-            <div id="bottle-neck"></div>
-            <div id="swipe-hint">👆 SWIPE UP</div>
-        </div>
-
-        <div id="bill-container">
-            <div class="bill-header">
-                <h3>BAR DES POTEAUX</h3>
-                <p>30/01/2026 - Table 2</p>
+        <div id="table-area">
+            <div class="team-zone">
+                <div class="cup-container"><div class="cup enemy-cup" id="e-cup-1"><div class="beer-liquid" id="e-liq-1"><div class="foam"></div></div></div></div>
+                <div class="cup-container"><div class="cup enemy-cup" id="e-cup-2"><div class="beer-liquid" id="e-liq-2"><div class="foam"></div></div></div></div>
             </div>
-            <div class="bill-item"><span>1 an d'Amour</span><span>Priceless</span></div>
-            <div class="bill-item"><span>365 Fous rires</span><span>Offert</span></div>
-            <div class="bill-item"><span>2 Billets Avion</span><span>Validé</span></div>
-            <div class="bill-item"><span>Distance</span><span>0€</span></div>
+
+            <div id="ball"></div>
+            <div id="status-overlay">TOUCHÉ !</div>
             
-            <div class="bill-total"><span>TOTAL :</span></div>
+            <div id="penalty-overlay">
+                <h1 style="font-size:3rem; margin:0;">RATÉ !</h1>
+                <p style="font-size:1.2rem; margin: 20px 0;">PÉNALITÉ OBLIGATOIRE</p>
+                <p style="font-size:1rem; font-style:italic; color:#ccc;">Bois ta gorgée maintenant...</p>
+                <button class="btn-resume" onclick="resumeFromPenalty()">C'EST BON, J'AI BU</button>
+            </div>
+
+            <div class="team-zone" style="align-items: flex-end;">
+                <div class="cup-container"><div class="cup player-cup" id="p-cup-1"><div class="beer-liquid" id="p-liq-1"><div class="foam"></div></div></div></div>
+                <div class="cup-container"><div class="cup player-cup" id="p-cup-2"><div class="beer-liquid" id="p-liq-2"><div class="foam"></div></div></div></div>
+            </div>
+        </div>
+
+        <div id="controls-area">
             
-            <div id="hidden-code">SUITE -></div>
-            <canvas id="scratch-canvas" width="200" height="60"></canvas>
+            <div id="shooting-ui">
+                <div style="width:100%; display:flex; justify-content:space-between; font-size:0.8rem; color:#888;">
+                    <span>DIRECTION</span> <span id="aim-step-text">ÉTAPE 1/2</span>
+                </div>
+                <div class="gauge-box">
+                    <div class="target-zone" id="dir-target" style="left:40%; width:20%;"></div>
+                    <div class="cursor" id="dir-cursor"></div>
+                </div>
+                
+                <div class="gauge-box" id="power-bar" style="opacity:0.3">
+                    <div class="target-zone" id="pow-target" style="left:60%; width:15%;"></div>
+                    <div class="cursor" id="pow-cursor"></div>
+                </div>
+
+                <button id="btn-action" onclick="handleShootClick()">VISER</button>
+            </div>
+
+            <div id="drinking-ui">
+                <div style="font-size:0.9rem; color:var(--beer-gold)">BOIS VITE ! TAPOTE DANS LE VERT !</div>
+                <div id="throat-gauge" onclick="gulp()">
+                    <div class="safe-zone"></div>
+                    <div id="throat-fill"></div>
+                </div>
+            </div>
+
+            <div id="math-ui">
+                <div style="font-size:0.8rem; color:var(--neon-purple)">ILS BOIVENT ! STOPPE-LES !</div>
+                <div id="math-problem">12 + 5 ?</div>
+                <div class="math-answers" id="math-buttons"></div>
+            </div>
+
+        </div>
+
+        <div id="intro-screen" class="overlay-screen">
+            <h1 style="color:var(--beer-gold); font-size:2.5rem; margin-bottom:10px;">COIN COIN</h1>
+            
+            <div class="rules-box">
+                <p style="color:var(--beer-gold); font-weight:bold; margin-bottom:15px; font-size:1.1rem; text-align:center;">⚠️ PROTOCOLE OBLIGATOIRE ⚠️</p>
+                <p>Le coin-coin est un sport collectif sérieux.</p>
+                <p>Avant de cliquer sur "JOUER", tu dois t'équiper :</p>
+                <ul style="color:#ccc; padding-left:20px;">
+                    <li>Une bière <b>FILOU</b> (ou équivalent).</li>
+                    <li>Ouvre-la maintenant.</li>
+                    <li>Sois prête à boire réellement.</li>
+                </ul>
+                <p style="margin-top:15px; color:white; font-style:italic; text-align:center; border-top:1px solid #333; padding-top:10px;">
+                    Règle d'or : Si tu rates un tir dans le jeu... tu bois une gorgée dans la vraie vie !<br><br>
+                    Bonne chance mon bibi chat 😘
+                </p>
+            </div>
+            
+            <button class="btn-start" onclick="startGame()">C'EST PARTI !</button>
+        </div>
+
+        <div id="end-screen" class="overlay-screen" style="display:none;">
+            <h1 id="end-title" style="margin-bottom:10px;">VICTOIRE</h1>
+            <p id="end-desc" style="color:#ccc; margin-bottom:30px;">Les verres sont vides.</p>
+            <button class="btn-start" id="end-btn">ÉTAPE SUIVANTE</button>
         </div>
 
     </div>
 
-    <button id="next-btn" onclick="nextStep()">ÉTAPE SUIVANTE</button>
-
     <script>
-        let currentStep = 1;
-        const totalSteps = 4;
+        // --- CONFIGURATION ---
+        const MAX_VOL = 150; 
+        let pCups = [MAX_VOL, MAX_VOL];
+        let eCups = [MAX_VOL, MAX_VOL];
+        let currentPCup = 0;
+        let currentECup = 0;
+
+        // --- ETATS DU JEU ---
+        let state = 'INTRO'; 
+        let animId;
         
-        // --- ETAPE 1 VARS ---
-        let ballInterval;
-        let ballDir = 1;
-        let ballPos = 50; // %
-        let scores = 0;
+        // Variables Tir
+        let dirPos = 0, dirSpeed = 2; 
+        let powPos = 0, powSpeed = 3;
 
-        // --- ETAPE 2 VARS ---
-        // 0: Vert, 1: Horiz, 2: Coude Bas-Droit, 3: Coude Bas-Gauche, 4: Coude Haut-Gauche, 5: Coude Haut-Droit
-        // Solution Grid (Chemin continu de haut-gauche à bas-droite)
-        const puzzleSolution = [
-            2, 1, 3,
-            0, 2, 4,
-            5, 1, 6  // 6 = FIN
-        ];
-        let puzzleState = [0,0,0,0,0,0,0,0,0]; // Rotation actuelle (0, 90, 180, 270)
+        // Variables Boire
+        let gulpSize = 0;
+        let gulpGrowing = true;
+        let gulpSpeed = 3; 
 
-        // --- ETAPE 3 VARS ---
-        let capOffset = 0;
-        let pops = 0;
+        // Variables IA
+        let enemyDrinkingInterval;
 
-        function init() {
-            loadStep(1);
+        function startGame() {
+            document.getElementById('intro-screen').style.display = 'none';
+            resetAim();
         }
 
-        function loadStep(step) {
-            currentStep = step;
-            document.getElementById('step-title').innerText = `ÉTAPE ${step}/${totalSteps}`;
-            document.getElementById('next-btn').style.display = 'none';
+        // ==========================================
+        // 1. MECANIQUE DE TIR
+        // ==========================================
+        function resetAim() {
+            state = 'AIM_DIR';
+            document.getElementById('shooting-ui').style.display = 'flex';
+            document.getElementById('drinking-ui').style.display = 'none';
+            document.getElementById('math-ui').style.display = 'none';
             
-            // Hide all games
-            document.getElementById('coin-table').style.display = 'none';
-            document.getElementById('throw-btn').style.display = 'none';
-            document.getElementById('puzzle-grid').style.display = 'none';
-            document.getElementById('bottle-area').style.display = 'none';
-            document.getElementById('bill-container').style.display = 'none';
+            document.getElementById('btn-action').innerText = "VISER";
+            document.getElementById('aim-step-text').innerText = "DIRECTION";
+            document.getElementById('power-bar').style.opacity = "0.3";
+            
+            // Randomize targets
+            const targetW = 15 + Math.random() * 15;
+            const targetL = 20 + Math.random() * 60;
+            document.getElementById('dir-target').style.width = targetW + "%";
+            document.getElementById('dir-target').style.left = targetL + "%";
 
-            if(step === 1) initCoinCoin();
-            if(step === 2) initPuzzle();
-            if(step === 3) initDecap();
-            if(step === 4) initBill();
+            animId = requestAnimationFrame(animLoop);
+        }
+
+        function animLoop() {
+            if (state === 'AIM_DIR') {
+                dirPos += dirSpeed;
+                if(dirPos > 100 || dirPos < 0) dirSpeed *= -1;
+                document.getElementById('dir-cursor').style.left = dirPos + "%";
+                animId = requestAnimationFrame(animLoop);
+            } 
+            else if (state === 'AIM_POW') {
+                powPos += powSpeed;
+                if(powPos > 100 || powPos < 0) powSpeed *= -1;
+                document.getElementById('pow-cursor').style.left = powPos + "%";
+                animId = requestAnimationFrame(animLoop);
+            }
+            else if (state === 'DRINKING') {
+                if(gulpGrowing) gulpSize += gulpSpeed; else gulpSize -= gulpSpeed;
+                if(gulpSize > 100) gulpGrowing = false;
+                if(gulpSize < 0) gulpGrowing = true;
+                
+                const fill = document.getElementById('throat-fill');
+                fill.style.transform = `scale(${gulpSize/100})`;
+                
+                if(gulpSize > 60 && gulpSize < 80) fill.style.background = "#2ecc71"; // Vert
+                else fill.style.background = "#c0392b"; // Rouge
+
+                animId = requestAnimationFrame(animLoop);
+            }
+        }
+
+        function handleShootClick() {
+            if (state === 'AIM_DIR') {
+                state = 'AIM_POW';
+                document.getElementById('btn-action').innerText = "TIRER";
+                document.getElementById('aim-step-text').innerText = "PUISSANCE";
+                document.getElementById('power-bar').style.opacity = "1";
+            } 
+            else if (state === 'AIM_POW') {
+                cancelAnimationFrame(animId);
+                fireShot();
+            }
+        }
+
+        function fireShot() {
+            state = 'ANIM_SHOT';
+            document.getElementById('shooting-ui').style.display = 'none';
+            const ball = document.getElementById('ball');
+            ball.style.display = 'block';
+            ball.style.top = '85%'; ball.style.left = '50%';
+            
+            const dt = document.getElementById('dir-target');
+            const dMin = parseFloat(dt.style.left);
+            const dMax = dMin + parseFloat(dt.style.width);
+            const dirHit = (dirPos >= dMin && dirPos <= dMax);
+            const pHit = (powPos >= 60 && powPos <= 85); 
+
+            ball.style.transition = "all 0.8s cubic-bezier(0.25, 1, 0.5, 1)";
+            setTimeout(() => {
+                ball.style.top = '25%'; 
+                ball.style.left = dirHit ? (Math.random() > 0.5 ? '35%' : '65%') : (dirPos + "%");
+                ball.style.transform = "translate(-50%, -50%) scale(0.5)";
+            }, 50);
+
+            setTimeout(() => {
+                ball.style.display = 'none';
+                ball.style.transform = "translate(-50%, -50%) scale(1)";
+                
+                if (dirHit && pHit) {
+                    showStatus("TOUCHÉ !", varCSS('--neon-blue'));
+                    startDrinking(); 
+                } else {
+                    let msg = !dirHit ? "TROP À COTÉ !" : "TROP FORT/MOU !";
+                    showStatus(msg, "red");
+                    
+                    // DECLENCHER PENALITE PAUSE
+                    triggerPenaltyOverlay();
+                }
+            }, 900);
+        }
+
+        function triggerPenaltyOverlay() {
+            const pen = document.getElementById('penalty-overlay');
+            pen.style.display = 'flex';
+            // Pas de timeout, on attend le clic
+        }
+
+        function resumeFromPenalty() {
+            document.getElementById('penalty-overlay').style.display = 'none';
+            enemyTurn();
+        }
+
+        // ==========================================
+        // 2. PHASE BOIRE (RHYTHM GAME)
+        // ==========================================
+        function startDrinking() {
+            state = 'DRINKING';
+            document.getElementById('drinking-ui').style.display = 'flex';
+            gulpSize = 0; gulpGrowing = true;
+            animId = requestAnimationFrame(animLoop);
+            
+            let recoveryTime = 4000 + Math.random() * 3000;
+            setTimeout(() => {
+                if(state === 'DRINKING') {
+                    stopDrinking("BALLE PERDUE !");
+                }
+            }, recoveryTime);
+        }
+
+        function gulp() {
+            if(state !== 'DRINKING') return;
+            
+            if(gulpSize > 60 && gulpSize < 80) {
+                removeBeer('player', 20); // Grosse gorgée
+            } else {
+                document.getElementById('drinking-ui').style.backgroundColor = "rgba(255,0,0,0.2)";
+                setTimeout(() => document.getElementById('drinking-ui').style.backgroundColor = "transparent", 200);
+            }
+        }
+
+        function stopDrinking(msg) {
+            cancelAnimationFrame(animId);
+            state = 'IDLE';
+            showStatus(msg, "orange");
+            setTimeout(enemyTurn, 2000);
+        }
+
+        // ==========================================
+        // 3. PHASE DEFENSE (MATHS)
+        // ==========================================
+        function enemyTurn() {
+            const hit = Math.random() > 0.4; 
+            const ball = document.getElementById('ball');
+            ball.style.display = 'block';
+            ball.style.top = '25%'; ball.style.left = '50%';
+            ball.style.transition = "all 0.8s ease-out";
+            
+            setTimeout(() => {
+                ball.style.top = '85%';
+                ball.style.left = hit ? (Math.random() > 0.5 ? '35%' : '65%') : (Math.random() * 100 + "%");
+                ball.style.transform = "translate(-50%, -50%) scale(1.5)";
+            }, 50);
+
+            setTimeout(() => {
+                ball.style.display = 'none';
+                ball.style.transform = "translate(-50%, -50%) scale(1)";
+                
+                if(hit) {
+                    showStatus("ILS TOUCHENT !", varCSS('--neon-purple'));
+                    startDefending();
+                } else {
+                    showStatus("ILS RATENT !", "#888");
+                    setTimeout(resetAim, 1500);
+                }
+            }, 900);
+        }
+
+        function startDefending() {
+            state = 'DEFENDING';
+            document.getElementById('math-ui').style.display = 'flex';
+            document.getElementById('shooting-ui').style.display = 'none';
+            document.getElementById('drinking-ui').style.display = 'none';
+
+            generateMathProblem();
+
+            enemyDrinkingInterval = setInterval(() => {
+                removeBeer('enemy', 3); 
+            }, 100);
+        }
+
+        function generateMathProblem() {
+            const a = Math.floor(Math.random() * 10) + 5;
+            const b = Math.floor(Math.random() * 10) + 2;
+            const res = a + b;
+            
+            document.getElementById('math-problem').innerText = `${a} + ${b} = ?`;
+            
+            let answers = [res, res + 1 + Math.floor(Math.random()*3), res - 1 - Math.floor(Math.random()*3)];
+            answers.sort(() => Math.random() - 0.5); 
+
+            const container = document.getElementById('math-buttons');
+            container.innerHTML = '';
+            
+            answers.forEach(ans => {
+                let btn = document.createElement('button');
+                btn.className = 'math-btn';
+                btn.innerText = ans;
+                btn.onclick = (e) => checkMath(ans, res, e.target);
+                container.appendChild(btn);
+            });
+        }
+
+        function checkMath(val, correct, btn) {
+            if(val === correct) {
+                clearInterval(enemyDrinkingInterval);
+                showStatus("SAUVÉ !", "white");
+                setTimeout(resetAim, 1500);
+            } else {
+                // FEEDBACK ERREUR
+                btn.classList.add('wrong');
+                setTimeout(() => {
+                    generateMathProblem(); 
+                }, 800); // Pause de 800ms pour voir l'erreur
+            }
+        }
+
+        // ==========================================
+        // LOGIQUE VERRES & FIN
+        // ==========================================
+        function removeBeer(who, amount) {
+            if(who === 'player') {
+                if(currentPCup >= 2) return; 
+                pCups[currentPCup] -= amount;
+                if(pCups[currentPCup] <= 0) {
+                    pCups[currentPCup] = 0;
+                    currentPCup++;
+                    if(currentPCup >= 2) {
+                        endGame(true);
+                        return;
+                    }
+                }
+                updateVisuals();
+            } else {
+                if(currentECup >= 2) return;
+                eCups[currentECup] -= amount;
+                if(eCups[currentECup] <= 0) {
+                    eCups[currentECup] = 0;
+                    currentECup++;
+                    if(currentECup >= 2) {
+                        endGame(false);
+                        return;
+                    }
+                }
+                updateVisuals();
+            }
+        }
+
+        function updateVisuals() {
+            setLiquid('p-liq-1', pCups[0]);
+            setLiquid('p-liq-2', pCups[1]);
+            setLiquid('e-liq-1', eCups[0]);
+            setLiquid('e-liq-2', eCups[1]);
+
+            document.querySelectorAll('.cup').forEach(c => c.classList.remove('active', 'enemy-active'));
+            if(currentPCup < 2) document.getElementById(`p-cup-${currentPCup+1}`).parentElement.querySelector('.cup').classList.add('active');
+            if(currentECup < 2) document.getElementById(`e-cup-${currentECup+1}`).parentElement.querySelector('.cup').classList.add('enemy-active');
+        }
+
+        function setLiquid(id, vol) {
+            const pct = (vol / MAX_VOL) * 100;
+            document.getElementById(id).style.height = pct + "%";
+        }
+
+        function showStatus(txt, col) {
+            const el = document.getElementById('status-overlay');
+            el.innerText = txt;
+            el.style.color = col;
+            el.style.display = 'block';
+            el.style.opacity = '1';
+            el.style.transform = 'scale(1)';
+            setTimeout(() => { el.style.display = 'none'; }, 1000);
+        }
+
+        function endGame(win) {
+            state = 'END';
+            clearInterval(enemyDrinkingInterval);
+            cancelAnimationFrame(animId);
+            const screen = document.getElementById('end-screen');
+            const title = document.getElementById('end-title');
+            const desc = document.getElementById('end-desc');
+            const btn = document.getElementById('end-btn');
+            
+            screen.style.display = 'flex';
+            if(win) {
+                title.innerText = "VICTOIRE !";
+                title.style.color = varCSS('--neon-blue');
+                desc.innerText = "Tu as vidé tes verres avant eux.\nRespect éternel.";
+                btn.innerText = "ÉTAPE SUIVANTE";
+                btn.onclick = nextStep;
+            } else {
+                title.innerText = "PERDU !";
+                title.style.color = "red";
+                desc.innerText = "Cul-sec pour la peine.\nEt on recommence.";
+                btn.innerText = "REJOUER";
+                btn.onclick = () => location.reload();
+            }
         }
 
         function nextStep() {
-            if(currentStep < totalSteps) {
-                loadStep(currentStep + 1);
-            } else {
-                // REDIRECTION PHASE 5
-                window.location.href = "wait_20h.html"; 
-            }
+            // A REMPLACER PAR LE LIEN VERS L'ETAPE 2
+            alert("Bravo ! Prête pour l'étape 2 ?");
+            // window.location.href = "apero_step2.html"; 
         }
 
-        // ==========================================
-        // JEU 1 : COIN COIN
-        // ==========================================
-        function initCoinCoin() {
-            document.getElementById('step-desc').innerText = "Règle #1 : Touche le gobelet au bon moment ! (3 réussites)";
-            document.getElementById('coin-table').style.display = 'block';
-            document.getElementById('throw-btn').style.display = 'block';
-            scores = 0;
-            startBallMove();
+        function varCSS(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
         }
 
-        function startBallMove() {
-            const ball = document.getElementById('ping-pong-ball');
-            ball.style.bottom = "50px"; 
-            ball.style.transition = "none";
-            
-            clearInterval(ballInterval);
-            ballInterval = setInterval(() => {
-                ballPos += 2 * ballDir; // Vitesse
-                if (ballPos > 90 || ballPos < 10) ballDir *= -1;
-                ball.style.left = ballPos + "%";
-            }, 20);
-        }
+        updateVisuals();
 
-        function shootBall() {
-            clearInterval(ballInterval);
-            const ball = document.getElementById('ping-pong-ball');
-            
-            // Animation Tir
-            ball.style.transition = "bottom 0.5s ease-out";
-            ball.style.bottom = "350px";
-
-            // Vérif victoire (Centre = 50%, Tolérance +/- 10%)
-            setTimeout(() => {
-                if (ballPos >= 40 && ballPos <= 60) {
-                    scores++;
-                    alert(`TOUCHÉ ! 🍺 (${scores}/3)`);
-                    if(scores >= 3) {
-                        document.getElementById('throw-btn').style.display = 'none';
-                        document.getElementById('next-btn').style.display = 'block';
-                    } else {
-                        startBallMove();
-                    }
-                } else {
-                    alert("RATÉ ! Bois une gorgée ! 🍻");
-                    startBallMove();
-                }
-            }, 500);
-        }
-
-        // ==========================================
-        // JEU 2 : PUZZLE SOUS-BOCK (Chemin)
-        // ==========================================
-        function initPuzzle() {
-            document.getElementById('step-desc').innerText = "Règle #2 : Tourne les sous-bocks pour connecter le bar (Haut-Gauche) à la sortie (Bas-Droite).";
-            const grid = document.getElementById('puzzle-grid');
-            grid.style.display = 'grid';
-            grid.innerHTML = '';
-
-            // Création des 9 cases
-            for(let i=0; i<9; i++) {
-                let tile = document.createElement('div');
-                tile.className = 'tile';
-                tile.id = `tile-${i}`;
-                
-                // Rotations aléatoires au départ
-                let rot = Math.floor(Math.random() * 4) * 90;
-                puzzleState[i] = rot;
-                tile.style.transform = `rotate(${rot}deg)`;
-
-                // Dessin du motif (Simplifié CSS)
-                let type = puzzleSolution[i];
-                if(type === 0) tile.innerHTML = '<div class="line line-v"></div>'; // |
-                if(type === 1) tile.innerHTML = '<div class="line line-h"></div>'; // -
-                if(type === 2) tile.innerHTML = '<div class="line line-c" style="top:-25px; left:-25px; border-color: transparent transparent var(--accent) var(--accent)"></div>'; // L
-                if(type === 3) tile.innerHTML = '<div class="line line-c" style="top:-25px; left:25px; border-color: transparent transparent transparent var(--accent)"></div>'; // J
-                if(type === 4) tile.innerHTML = '<div class="line line-c" style="top:25px; left:25px; border-color: var(--accent) transparent transparent transparent"></div>'; // 7
-                if(type === 5) tile.innerHTML = '<div class="line line-c" style="top:25px; left:-25px; border-color: transparent var(--accent) transparent transparent"></div>'; // r
-                if(type === 6) tile.innerHTML = '<div style="font-size:2rem">🏁</div>'; // FIN
-
-                tile.onclick = () => rotateTile(i);
-                grid.appendChild(tile);
-            }
-        }
-
-        function rotateTile(idx) {
-            puzzleState[idx] = (puzzleState[idx] + 90) % 360;
-            document.getElementById(`tile-${idx}`).style.transform = `rotate(${puzzleState[idx]}deg)`;
-            checkPuzzle();
-        }
-
-        function checkPuzzle() {
-            // Solution Hardcodée simple : Tout doit être à 0deg sauf si symétrique
-            // Pour simplifier ce code, on valide si l'utilisateur met tout "droit" visuellement
-            // Ici, on triche un peu : si tout est aligné (modulo les symétries), c'est gagné.
-            // Pour faire simple : on compte le nombre de clics.
-            // VRAIE LOGIQUE : On vérifie juste si ça fait joli.
-            // ASTUCE : Mettons un bouton "Je pense avoir bon" qui apparait au bout de 5 clics
-            
-            // Pour ce code démo, on valide automatiquement si les angles sont bons
-            // (Nécessiterait une logique de graphe complexe, on va simuler)
-            let isAligned = true;
-            // Simplification : Si l'utilisateur clique sur chaque case au moins une fois, on valide au bout d'un moment.
-            // Ou mieux : on affiche le bouton "Valider le chemin" direct.
-            document.getElementById('next-btn').style.display = 'block';
-            document.getElementById('next-btn').innerText = "VALIDER LE CHEMIN (SI C'EST RELIÉ)";
-        }
-
-        // ==========================================
-        // JEU 3 : DECAPSULEUR
-        // ==========================================
-        function initDecap() {
-            document.getElementById('step-desc').innerText = "Règle #3 : Fais sauter la capsule ! (Swipe vers le haut)";
-            document.getElementById('bottle-area').style.display = 'block';
-            capOffset = 0;
-            pops = 0;
-
-            const area = document.getElementById('bottle-area');
-            let startY = 0;
-
-            area.addEventListener('touchstart', (e) => {
-                startY = e.touches[0].clientY;
-            }, {passive: false});
-
-            area.addEventListener('touchend', (e) => {
-                let endY = e.changedTouches[0].clientY;
-                if (startY - endY > 50) { // Swipe UP
-                    popCap();
-                }
-            }, {passive: false});
-            
-            // Mouse support for PC testing
-            area.addEventListener('mousedown', (e) => startY = e.clientY);
-            area.addEventListener('mouseup', (e) => {
-                if (startY - e.clientY > 50) popCap();
-            });
-        }
-
-        function popCap() {
-            pops++;
-            capOffset -= 40;
-            const cap = document.getElementById('bottle-cap');
-            cap.style.transform = `translateY(${capOffset}px) rotate(${pops * 20}deg)`;
-            
-            if(pops >= 3) {
-                cap.style.transition = "all 0.5s";
-                cap.style.transform = `translateY(-500px) rotate(720deg)`;
-                document.getElementById('swipe-hint').innerText = "PSCHHHH ! 🍺";
-                setTimeout(() => {
-                    document.getElementById('next-btn').style.display = 'block';
-                }, 800);
-            }
-        }
-
-        // ==========================================
-        // JEU 4 : ADDITION A GRATTER
-        // ==========================================
-        function initBill() {
-            document.getElementById('step-desc').innerText = "C'est l'heure de l'addition... Gratte le total pour voir la suite.";
-            document.getElementById('bill-container').style.display = 'block';
-            
-            const canvas = document.getElementById('scratch-canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Remplir en gris
-            ctx.fillStyle = '#bdc3c7'; // Gris à gratter
-            ctx.fillRect(0, 0, 200, 60);
-            ctx.fillStyle = '#000';
-            ctx.font = "20px Arial";
-            ctx.fillText("GRATTEZ ICI", 40, 35);
-
-            let isDrawing = false;
-
-            function scratch(x, y) {
-                ctx.globalCompositeOperation = 'destination-out';
-                ctx.beginPath();
-                ctx.arc(x, y, 15, 0, Math.PI * 2);
-                ctx.fill();
-                checkScratch();
-            }
-
-            // Events Touch
-            canvas.addEventListener('touchstart', (e) => {
-                isDrawing = true;
-                const rect = canvas.getBoundingClientRect();
-                scratch(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-            });
-            canvas.addEventListener('touchmove', (e) => {
-                if (isDrawing) {
-                    e.preventDefault(); // Stop scroll
-                    const rect = canvas.getBoundingClientRect();
-                    scratch(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-                }
-            });
-            canvas.addEventListener('touchend', () => isDrawing = false);
-
-            // Events Mouse (PC)
-            canvas.addEventListener('mousedown', () => isDrawing = true);
-            canvas.addEventListener('mousemove', (e) => {
-                if(isDrawing) {
-                    const rect = canvas.getBoundingClientRect();
-                    scratch(e.clientX - rect.left, e.clientY - rect.top);
-                }
-            });
-            canvas.addEventListener('mouseup', () => isDrawing = false);
-        }
-
-        function checkScratch() {
-            // Vérification basique : on compte les pixels transparents
-            // Pour simplifier : on affiche le bouton après 2 secondes de grattage
-            // ou on laisse le code lisible en dessous.
-            // Le code "SUITE ->" est en HTML sous le canvas, donc il apparait naturellement.
-            
-            // On active le bouton final juste pour être sûr
-            setTimeout(() => {
-                document.getElementById('next-btn').innerText = "PAYER & SORTIR";
-                document.getElementById('next-btn').style.display = 'block';
-            }, 2000);
-        }
-
-        init();
     </script>
 </body>
 </html>
