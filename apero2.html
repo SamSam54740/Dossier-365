@@ -40,14 +40,8 @@
         
         h1 { margin: 0; font-size: 1.2rem; color: var(--beer-gold); letter-spacing: 1px; text-transform: uppercase; }
         
-        /* Sous-titre long qui s'adapte */
         .subtitle { 
-            font-size: 0.6rem; 
-            color: #aaa; 
-            margin: 5px 10px; 
-            font-family: sans-serif; 
-            line-height: 1.2;
-            white-space: normal; /* Permet le retour à la ligne si besoin */
+            font-size: 0.6rem; color: #aaa; margin: 5px 10px; font-family: sans-serif; line-height: 1.2; white-space: normal;
         }
 
         #pressure-container {
@@ -63,84 +57,49 @@
 
         /* 2. BOARD */
         #game-board {
-            flex: 1; 
-            width: 100%; 
-            display: flex; align-items: center; justify-content: center;
-            position: relative; 
-            padding: 20px; 
-            overflow: visible; /* Important pour voir les marqueurs qui dépassent */
+            flex: 1; width: 100%; display: flex; align-items: center; justify-content: center;
+            position: relative; padding: 20px; overflow: visible;
         }
 
         #grid-container {
             position: relative;
-            /* Grille carrée optimisée */
-            width: min(90vw, 60vh);
-            height: min(90vw, 60vh);
+            width: min(90vw, 60vh); height: min(90vw, 60vh);
             aspect-ratio: 1 / 1; 
-            
-            display: flex; justify-content: center; align-items: center;
-            margin: auto; 
+            display: flex; justify-content: center; align-items: center; margin: auto; 
         }
 
         #grid {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            grid-template-rows: repeat(10, 1fr);
-            gap: 0; 
-            background: #000;
-            border: 2px solid #444;
-            width: 100%; height: 100%;
+            display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr);
+            gap: 0; background: #000; border: 2px solid #444; width: 100%; height: 100%;
         }
 
-        /* MARQUEURS (Repositionnés) */
+        /* MARQUEURS */
         .marker {
-            position: absolute; 
-            font-size: 0.8rem; 
-            color: var(--beer-gold); 
-            text-shadow: 1px 1px 2px #000;
-            z-index: 20; pointer-events: none;
-            display: flex; align-items: center; gap: 5px;
-            white-space: nowrap;
+            position: absolute; font-size: 0.8rem; color: var(--beer-gold); text-shadow: 1px 1px 2px #000;
+            z-index: 20; pointer-events: none; display: flex; align-items: center; gap: 5px; white-space: nowrap;
         }
-        
-        /* Entrée : Centrée sur la 1ère colonne (5%) */
         #start-marker { 
-            top: -50px; /* Plus d'espace */
-            left: 5%;   /* Milieu de la colonne 1 */
-            transform: translateX(-50%); /* Centrage précis */
-            flex-direction: column; align-items: center; gap: 0;
+            top: -50px; left: 5%; transform: translateX(-50%); flex-direction: column; align-items: center; gap: 0;
         }
         #start-marker .arrow { font-size: 1.5rem; color: var(--neon-blue); animation: bounceDown 1s infinite; margin-top: -5px;}
-        
-        /* Sortie : Centrée sur la dernière colonne (95% ou right 5%) */
         #end-marker { 
-            bottom: -50px; /* Plus d'espace */
-            right: 5%;     /* Milieu de la dernière colonne */
-            transform: translateX(50%); /* Centrage précis */
-            flex-direction: column-reverse; align-items: center; gap: 0;
+            bottom: -50px; right: 5%; transform: translateX(50%); flex-direction: column-reverse; align-items: center; gap: 0;
         }
         #end-marker .arrow { font-size: 1.5rem; color: var(--neon-blue); animation: bounceDown 1s infinite; margin-bottom: -5px;}
 
         @keyframes bounceDown {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(5px); }
+            0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); }
         }
 
         /* TUILES & TUYAUX */
         .tile {
-            width: 100%; height: 100%;
-            position: relative; cursor: pointer;
-            background: #151515; border: 0.5px solid #222;
-            transition: transform 0.1s linear; 
+            width: 100%; height: 100%; position: relative; cursor: pointer;
+            background: #151515; border: 0.5px solid #222; transition: transform 0.1s linear; 
         }
-        
         .arm { position: absolute; background: var(--pipe-dark); transition: background 0.2s; }
         .center-hub {
-            position: absolute; top: 50%; left: 50%;
-            width: var(--pipe-width); height: var(--pipe-width);
-            background: var(--pipe-dark);
-            transform: translate(-50%, -50%); border-radius: 50%;
-            transition: background 0.2s;
+            position: absolute; top: 50%; left: 50%; width: var(--pipe-width); height: var(--pipe-width);
+            background: var(--pipe-dark); transform: translate(-50%, -50%); border-radius: 50%; transition: background 0.2s;
         }
         .arm.top { top: -1px; left: 50%; width: var(--pipe-width); height: 55%; transform: translateX(-50%); }
         .arm.bottom { bottom: -1px; left: 50%; width: var(--pipe-width); height: 55%; transform: translateX(-50%); }
@@ -153,20 +112,15 @@
 
         /* 3. FOOTER */
         #controls {
-            flex: 0 0 auto;
-            width: 100%; padding: 10px;
+            flex: 0 0 auto; width: 100%; padding: 10px;
             display: flex; justify-content: center; align-items: center;
             background: #111; border-top: 1px solid #333;
         }
         #btn-check {
-            width: 100%; max-width: 300px;
-            padding: 12px 0; border-radius: 8px; border: none;
-            background: var(--beer-gold); color: black;
-            font-family: 'Russo One', sans-serif;
-            font-size: 1.1rem; cursor: pointer;
-            box-shadow: 0 4px 0 #b38f00; 
-            transition: transform 0.1s, box-shadow 0.1s;
-            text-transform: uppercase;
+            width: 100%; max-width: 300px; padding: 12px 0; border-radius: 8px; border: none;
+            background: var(--beer-gold); color: black; font-family: 'Russo One', sans-serif;
+            font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 0 #b38f00; 
+            transition: transform 0.1s, box-shadow 0.1s; text-transform: uppercase;
         }
         #btn-check:active { transform: translateY(4px); box-shadow: 0 0 0 #b38f00; }
 
@@ -183,6 +137,36 @@
         
         .shake { animation: shake 0.5s infinite; }
         @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -2px); } 100% { transform: translate(1px, -2px); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+
+        /* --- NOUVEAU STYLE ECRAN GAGNANT --- */
+        #win-overlay h1 {
+            color: var(--neon-blue);
+            font-size: 3.5rem;
+            text-shadow: 0 0 15px var(--neon-blue), 0 0 30px var(--neon-blue);
+            margin-bottom: 0;
+        }
+        #win-overlay .win-icon {
+            font-size: 6rem;
+            animation: pulse 2s infinite;
+            filter: drop-shadow(0 0 20px var(--beer-gold));
+        }
+        #win-overlay p {
+            font-size: 1.2rem; margin: 10px 0; color: #ccc;
+        }
+        #win-overlay .win-highlight {
+            color: var(--beer-gold); font-weight: bold; font-size: 1.4rem;
+        }
+        /* Animation d'entrée pour le contenu gagnant */
+        #win-overlay:not(.hidden) > div {
+            animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
     </style>
 </head>
 <body>
@@ -205,8 +189,8 @@
             <div id="grid"></div>
             
             <div class="marker" id="end-marker">
-                <div class="arrow">⬇️</div>
                 <div>TIREUSE FOY'S 🍺</div>
+                <div class="arrow">⬆️</div>
             </div>
         </div>
     </div>
@@ -216,10 +200,10 @@
     </div>
 
     <div id="intro-overlay" class="overlay">
-        <h1 style="color:var(--beer-gold); font-size:2.5rem; margin-bottom:10px;">ÉTAPE 2</h1>
+        <h1 style="color:var(--beer-gold); font-size:2.5rem; margin-bottom:10px;">LE SAINT FOY'S</h1>
         <p style="font-size:1.1rem; color:#ccc;">CONNECTE LA "COMME D'HAB"</p>
         <div style="background:#222; padding:15px; margin:20px 0; border:1px solid #444; text-align:left; font-size:0.95rem; border-radius: 8px; font-family: sans-serif;">
-            <p>1. Les Piliers ont soif...</p>
+            <p>1. Les Piliers ont soif</p>
             <p>2. Connecte le <b>Fût</b> (Haut) à la <b>Tireuse</b> (Bas)</p>
             <p>3. Attention : La pression monte <b>VITE</b></p>
             <p style="color:red; text-align:center; font-weight:bold; margin-top:10px;">FUITE = PÉNALITÉ !</p>
@@ -237,9 +221,13 @@
     </div>
 
     <div id="win-overlay" class="overlay hidden">
-        <h1 style="color:var(--neon-blue); font-size:3rem; margin-bottom:10px;">SANTÉ !</h1>
-        <p style="font-size:1.2rem;">Service impeccable.</p>
-        <button id="btn-check" style="margin-top:30px;" onclick="nextStep()">ÉTAPE 3</button>
+        <div>
+            <div class="win-icon">🍻</div>
+            <h1>SANTÉ !</h1>
+            <p>La "Comme d'hab" coule à flots.</p>
+            <p class="win-highlight">MISSION RÉUSSIE</p>
+            <button id="btn-check" style="margin-top:30px; width: auto; padding-left: 40px; padding-right: 40px;" onclick="nextStep()">ÉTAPE SUIVANTE ➡</button>
+        </div>
     </div>
 
     <script>
