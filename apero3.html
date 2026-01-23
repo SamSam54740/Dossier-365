@@ -1,12 +1,399 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <h1>Hello</h1>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+    <title>PHASE 3 : L'ENQUÊTE DU SAINT FOY'S</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Caveat:wght@400;700&family=Montserrat:wght@300;600;900&family=Share+Tech+Mono&family=Reenie+Beanie&family=Libre+Barcode+39&display=swap" rel="stylesheet">
+
+    <style>
+        /* ================================= VARIABLES ================================= */
+        :root {
+            --bg-color: #050505;
+            --wood-texture: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+            --paper-texture: url('https://www.transparenttextures.com/patterns/cream-paper.png');
+            --cardboard-texture: url('https://www.transparenttextures.com/patterns/cardboard.png');
+            --ink-black: #1a1a1a;
+            --ink-blue: #1a237e;
+            --accent-gold: #ffc107;
+            --accent-uv: #6200ea;
+            --text-uv: rgba(100, 255, 50, 0.85);
+            --font-ui: 'Montserrat', sans-serif;
+            --font-type: 'Special Elite', monospace;
+            --font-hand: 'Caveat', cursive;
+            --font-messy: 'Reenie Beanie', cursive;
+            --font-tech: 'Share Tech Mono', monospace;
+        }
+
+        * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: var(--bg-color); overflow: hidden; font-family: var(--font-ui); color: white; }
+
+        /* ================================= ENVIRONNEMENT ================================= */
+        #game-stage {
+            position: relative; width: 100%; height: 100%;
+            background-color: #2e1a0f; background-image: var(--wood-texture);
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
+        }
+        #stage-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.5) 100%); pointer-events: none;
+        }
+
+        /* ================================= ITEMS ================================= */
+        .table-item {
+            position: absolute; cursor: pointer; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+            transition: transform 0.1s ease-out, filter 0.1s; transform-origin: center; will-change: transform, left, top; z-index: 10;
+        }
+        .table-item:active { transform: scale(0.97) !important; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+
+        /* --- COFFRE --- */
+        #item-safe {
+            width: 170px; height: 130px; background: linear-gradient(180deg, #444, #222);
+            border: 2px solid #111; border-radius: 6px; box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: grab; z-index: 100;
+        }
+        #item-safe:active { cursor: grabbing; }
+        .safe-door-outline { width: 90%; height: 85%; border: 1px solid #555; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #3a3a3a, #1a1a1a); }
+        .safe-dial { width: 50px; height: 50px; background: #111; border-radius: 50%; border: 2px solid #666; box-shadow: 0 3px 6px black; position: relative; margin-bottom: 10px; }
+        .safe-dial::before { content: ''; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 2px; height: 8px; background: red; }
+        .safe-handle { width: 40px; height: 8px; background: #ccc; border-radius: 4px; box-shadow: 0 2px 3px black; }
+
+        /* --- LAMPE TORCHE (Cachée) --- */
+        #item-flashlight {
+            width: 130px; height: 35px; background: #111; border-radius: 10px; border: 1px solid #333;
+            /* Positionnée exactement sous le coffre, sans rotation pour ne pas dépasser */
+            position: absolute; top: 68%; left: 30%; transform: translate(-50%, -50%);
+            z-index: 5; /* Derrière le coffre */
+            display: flex; align-items: center; justify-content: space-between; padding: 0 5px;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.7);
+            pointer-events: auto; /* IMPORTANT pour le clic */
+        }
+        #item-flashlight::before { content: ''; width: 25px; height: 40px; background: #222; border-right: 2px solid #444; border-radius: 4px; }
+        #item-flashlight::after { content: ''; width: 70px; height: 20px; background: repeating-linear-gradient(90deg, #111, #111 2px, #222 2px, #222 4px); }
+
+        /* --- LETTRE --- */
+        .item-letter {
+            width: 200px; height: 140px; background: #fff; background-image: var(--paper-texture);
+            padding: 15px; color: #111; transform: rotate(3deg); box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .letter-blur { font-family: var(--font-messy); font-size: 0.6rem; line-height: 1; filter: blur(0.7px); opacity: 0.7; overflow: hidden; height: 100%; user-select: none; }
+
+        /* --- TICKET --- */
+        .item-receipt {
+            width: 130px; height: 260px; background: #fff; padding: 10px; font-family: var(--font-tech);
+            font-size: 0.55rem; color: #333; transform: rotate(-5deg);
+            background-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.02));
+            mask-image: linear-gradient(to bottom, transparent 1%, black 2%, black 98%, transparent 99%);
+            border-top: 1px dotted #ccc; border-bottom: 1px dotted #ccc;
+        }
+        .receipt-header { text-align: center; margin-bottom: 15px; }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 3px;}
+        .receipt-total { margin-top: 15px; border-top: 2px dashed #000; padding-top: 5px; font-weight: bold; font-size: 0.7rem; display: flex; justify-content: space-between; }
+        .hidden-price { background: #111; color: #111; padding: 0 3px; }
+        .receipt-stain { position: absolute; bottom: 60px; left: 20px; width: 40px; height: 40px; background: rgba(160, 100, 30, 0.2); border-radius: 50%; filter: blur(8px); pointer-events: none; }
+
+        /* --- MENU --- */
+        .item-menu {
+            width: 170px; height: 260px; background: #1b1b1b; border: 2px solid var(--accent-gold);
+            color: #ddd; padding: 12px; font-family: 'Times New Roman', serif; transform: rotate(-3deg);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6);
+        }
+        .menu-title { text-align: center; font-family: var(--font-ui); font-weight:900; color: var(--accent-gold); margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid #444; letter-spacing: 1px; }
+        .menu-list { font-size: 0.7rem; line-height: 2; }
+        .menu-item { display: flex; justify-content: space-between; border-bottom: 1px dotted #444; }
+
+        /* --- POLAROID --- */
+        .item-photo { width: 140px; height: 170px; background: #fff; padding: 8px 8px 40px 8px; transform: rotate(8deg); box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+        .photo-inner { width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .photo-inner img { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) sepia(0.2); }
+        .photo-text { position: absolute; bottom: 8px; width: 100%; text-align: center; font-family: var(--font-hand); color: #222; font-weight: bold; font-size: 1.1rem; }
+
+        /* --- SOUS-BOCK --- */
+        .item-coaster {
+            width: 120px; height: 120px; border-radius: 50%; background: #d7ccc8;
+            border: 4px solid #5d4037; display: flex; align-items: center; justify-content: center; text-align: center;
+            transform: rotate(20deg); padding: 10px; background-image: var(--cardboard-texture); box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+        .coaster-logo { font-family: var(--font-type); color: #3e2723; font-weight: bold; line-height: 1.2; }
+
+        /* ================================= LUMIÈRE & UV ================================= */
+        .uv-hidden-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.1s; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+        .uv-text-style { font-family: var(--font-hand); font-weight: bold; color: var(--text-uv); text-shadow: 0 0 5px var(--text-uv); text-align: center; }
+        .uv-revealable.is-lit .uv-hidden-layer { opacity: 1; }
+
+        #light-mask-normal, #light-mask-uv { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; transition: opacity 0.2s; will-change: opacity; }
+        #light-mask-normal { z-index: 900; mix-blend-mode: soft-light; background: radial-gradient(circle 220px at var(--lx, 50%) var(--ly, 50%), rgba(255, 220, 180, 0.4) 0%, rgba(0,0,0,0.6) 70%); }
+        #light-mask-uv { z-index: 900; mix-blend-mode: color-dodge; background: radial-gradient(circle 180px at var(--lx, 50%) var(--ly, 50%), rgba(80, 0, 255, 0.5) 0%, rgba(10, 0, 40, 0.8) 70%); }
+        body.flash-on.mode-normal #light-mask-normal { opacity: 1; }
+        body.flash-on.mode-uv #light-mask-uv { opacity: 1; }
+
+        /* ================================= HUD ================================= */
+        #hud-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; display: flex; flex-direction: column; justify-content: space-between; }
+        .hud-header { background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); padding: 20px; text-align: center; }
+        .hud-title { font-family: var(--font-type); color: var(--accent-gold); font-size: 1.4rem; margin: 0; letter-spacing: 2px; text-shadow: 0 2px 4px black; }
+        .hud-footer { padding: 20px; display: flex; justify-content: center; align-items: flex-end; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); min-height: 120px; pointer-events: auto; }
+
+        #flashlight-ui { display: none; align-items: center; gap: 15px; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 40px; border: 1px solid #333; }
+        .btn-flash-power {
+            width: 70px; height: 70px; border-radius: 50%; background: #222; border: 3px solid #444; color: #555;
+            font-size: 2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: all 0.2s; position: relative;
+        }
+        .btn-flash-power.active { background: #ddd; color: #111; border-color: #fff; box-shadow: 0 0 20px rgba(255,255,255,0.5); }
+        .btn-flash-power.active.uv-mode { background: var(--accent-uv); color: #fff; box-shadow: 0 0 25px var(--accent-uv); }
+        
+        #uv-secret-switch {
+            position: absolute; bottom: 5px; right: 5px; width: 15px; height: 15px; background: #111;
+            border-radius: 50%; border: 1px solid #333; background-image: linear-gradient(45deg, transparent 45%, #555 45%, #555 55%, transparent 55%); cursor: pointer; z-index: 10;
+        }
+
+        /* ================================= MODALES ================================= */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 3000;
+            display: none; align-items: center; justify-content: center; flex-direction: column; perspective: 1500px;
+        }
+        .modal-overlay.open { display: flex; }
+
+        .flip-wrapper { width: 90vw; max-width: 350px; aspect-ratio: 3/4; position: relative; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; margin-bottom: 20px; }
+        .flip-wrapper.flipped { transform: rotateY(180deg); }
+        .flip-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; }
+        .flip-back { transform: rotateY(180deg); }
+
+        .modal-buttons { display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 300px; z-index: 3005; }
+        .btn-modal { padding: 15px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; font-family: var(--font-ui); font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: background 0.2s; }
+        .btn-modal:active { background: #333; transform: scale(0.98); }
+        .btn-flip { background: var(--ink-blue); border-color: #1a237e; display: none; }
+        .btn-close { background: #c62828; border-color: #b71c1c; }
+
+        /* Contenu Zoom */
+        .zoom-letter-content { background: #fff; padding: 25px; color: #111; font-family: var(--font-hand); font-size: 1.3rem; line-height: 1.4; transform: rotate(-1deg); width: 100%; height: auto; min-height: 60%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-cloned-item { position: relative !important; transform: scale(1.3) rotate(0deg) !important; top: auto !important; left: auto !important; }
+
+        /* Digicode */
+        #keypad-container { background: #1a1a1a; padding: 25px; border-radius: 15px; border: 2px solid #333; box-shadow: 0 20px 50px black; width: 90%; max-width: 350px; }
+        #keypad-screen { background: #000; color: #d32f2f; font-family: var(--font-tech); font-size: 2.5rem; text-align: center; padding: 15px; margin-bottom: 20px; border: 2px inset #333; letter-spacing: 8px; text-shadow: 0 0 10px rgba(211, 47, 47, 0.5); }
+        .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .key { height: 65px; background: #333; border: 1px solid #444; border-radius: 8px; color: #eee; font-family: var(--font-tech); font-size: 1.8rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 0 #111; }
+        .key:active { transform: translateY(4px); box-shadow: none; }
+        .key-ok { background: #1b5e20; border-color: #2e7d32; }
+        .key-clear { background: #b71c1c; border-color: #c62828; }
+        .shake-error { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
+
+    </style>
 </head>
 <body>
-    
+
+    <div id="hud-layer">
+        <div class="hud-header"><h1 class="hud-title">L'ÉNIGME DU PATRON</h1></div>
+        <div class="hud-footer">
+            <div id="flashlight-ui">
+                <div class="btn-flash-power" id="flash-btn" onclick="Engine.togglePower()">
+                    💡
+                    <div id="uv-secret-switch" onclick="Engine.toggleUV(event)"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="light-mask-normal"></div>
+    <div id="light-mask-uv"></div>
+
+    <div id="game-stage">
+        <div id="stage-overlay"></div>
+
+        <div class="table-item item-letter" style="top:18%; left:10%;" onclick="Engine.inspect('letter')">
+            <div class="letter-blur">Salut les Piliers. Bon courage pour le code. C'est une histoire de prix et de dates. La bouteille est au frais.</div>
+        </div>
+
+        <div class="table-item item-receipt" style="top:42%; left:58%;" onclick="Engine.inspect('receipt')">
+            <div class="receipt-header">LE SAINT FOY'S<br>CLUNY 71250<br><span style="font-size:0.5rem">Srv: Adanars 108</span></div>
+            <div style="border-bottom:1px dashed #aaa; margin-bottom:5px;"></div>
+            <div class="receipt-body">
+                <div class="receipt-row"><span>2 Pinte "Comme d'hab"</span><span class="hidden-price">??.??€</span></div>
+                <div class="receipt-row"><span>1 Saucisson Sec</span><span class="hidden-price">??.??€</span></div>
+                <div class="receipt-row"><span>1 Cacahuètes</span><span>OFFERT</span></div>
+            </div>
+            <div style="border-bottom:1px dashed #aaa; margin-top:15px;"></div>
+            <div class="receipt-total"><span>TOTAL</span><span class="hidden-price">??.??€</span></div>
+            <div class="receipt-stain"></div>
+        </div>
+
+        <div class="table-item item-menu uv-revealable" style="bottom:12%; right:5%;" onclick="Engine.inspect('menu')">
+            <div class="menu-title">CARTE</div>
+            <div class="menu-list">
+                <div class="menu-item"><span>Pinte Blonde (50cl)</span><span>8 €</span></div>
+                <div class="menu-item"><span>Demi (25cl)</span><span>4 €</span></div>
+                <div class="menu-item"><span>Pinte IPA</span><span>9 €</span></div>
+                <div class="menu-item"><span>Saucisson</span><span>6 €</span></div>
+                <div class="menu-item"><span>Planche Mixte</span><span>15 €</span></div>
+            </div>
+            <div class="uv-hidden-layer" style="align-items: flex-end; padding-bottom: 10px;">
+                <div class="uv-text-style" style="font-size:0.8rem; transform:rotate(-3deg); width:100%;">TARIF PILIERS : PINTE = 5 €</div>
+            </div>
+        </div>
+
+        <div class="table-item item-photo" style="top:12%; right:22%;" onclick="Engine.inspect('photo')">
+            <div class="photo-inner"><img src="Temps/sam&anthe.jpg" alt="Photo"></div>
+            <div class="photo-text">30 Janvier ❤️</div>
+        </div>
+
+        <div class="table-item item-coaster" style="bottom:28%; left:12%;" onclick="Engine.inspect('coaster')">
+            <div class="coaster-logo"><b>SAINT FOY'S</b><br>BAR</div>
+        </div>
+
+        <div class="table-item" id="item-safe" style="top:68%; left:30%;">
+            <div class="safe-door-outline"><div class="safe-dial"></div><div class="safe-handle"></div></div>
+        </div>
+
+        <div class="table-item" id="item-flashlight" style="top:68%; left:30%; z-index:5;" onclick="Engine.pickupFlashlight()"></div>
+    </div>
+
+    <div class="modal-overlay" id="modal-inspect">
+        <div class="flip-wrapper" id="zoom-flipper">
+            <div class="flip-face" id="zoom-front"></div>
+            <div class="flip-face flip-back" id="zoom-back"></div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-close" onclick="Engine.closeModals()">POSER L'OBJET</button>
+            <button class="btn-modal btn-flip" id="btn-flip-card" onclick="Engine.flipCard()">RETOURNER ↻</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-keypad">
+        <div id="keypad-container">
+             <div style="color:#aaa; font-family:var(--font-type); text-align:center; margin-bottom:15px;">SÉCURITÉ</div>
+             <div id="keypad-screen">_ _ _ _</div>
+             <div class="keypad-grid">
+                <div class="key" onclick="Keypad.press(1)">1</div><div class="key" onclick="Keypad.press(2)">2</div><div class="key" onclick="Keypad.press(3)">3</div>
+                <div class="key" onclick="Keypad.press(4)">4</div><div class="key" onclick="Keypad.press(5)">5</div><div class="key" onclick="Keypad.press(6)">6</div>
+                <div class="key" onclick="Keypad.press(7)">7</div><div class="key" onclick="Keypad.press(8)">8</div><div class="key" onclick="Keypad.press(9)">9</div>
+                <div class="key key-clear" onclick="Keypad.clear()">C</div><div class="key" onclick="Keypad.press(0)">0</div><div class="key key-ok" onclick="Keypad.check()">OK</div>
+            </div>
+            <button class="btn-modal btn-close" style="width:100%; margin-top:20px;" onclick="Engine.closeModals()">RETOUR</button>
+        </div>
+    </div>
+
+    <script>
+        const Engine = {
+            state: { hasFlashlight: false, isFlashOn: false, isUV: false, dragging: null, dragStart: {x:0, y:0}, dragOffset: {x:0, y:0}, wasDragging: false },
+            
+            init: function() {
+                ['mousemove', 'touchmove'].forEach(e => document.addEventListener(e, this.trackLight.bind(this), {passive:false}));
+                const safe = document.getElementById('item-safe');
+                ['mousedown', 'touchstart'].forEach(e => safe.addEventListener(e, this.dragStart.bind(this), {passive:false}));
+                ['mouseup', 'touchend'].forEach(e => document.addEventListener(e, this.dragEnd.bind(this)));
+                ['mousemove', 'touchmove'].forEach(e => document.addEventListener(e, this.dragMove.bind(this), {passive:false}));
+                safe.addEventListener('click', e => { if(!this.state.wasDragging) this.openKeypad(); });
+                setInterval(this.checkUV.bind(this), 100);
+            },
+
+            pickupFlashlight: function() {
+                document.getElementById('item-flashlight').style.display = 'none';
+                document.getElementById('flashlight-ui').style.display = 'flex';
+                this.state.hasFlashlight = true;
+            },
+            togglePower: function() {
+                if(!this.state.hasFlashlight) return;
+                this.state.isFlashOn = !this.state.isFlashOn;
+                this.updateLightUI();
+            },
+            toggleUV: function(e) {
+                if(e) e.stopPropagation();
+                this.state.isUV = !this.state.isUV;
+                this.updateLightUI();
+            },
+            updateLightUI: function() {
+                const body = document.body; const btn = document.getElementById('flash-btn');
+                body.classList.remove('flash-on', 'mode-normal', 'mode-uv'); btn.classList.remove('active', 'uv-mode');
+                if(this.state.isFlashOn) {
+                    body.classList.add('flash-on'); btn.classList.add('active');
+                    this.state.isUV ? (body.classList.add('mode-uv'), btn.classList.add('uv-mode')) : body.classList.add('mode-normal');
+                }
+            },
+            trackLight: function(e) {
+                if(!this.state.isFlashOn) return;
+                const x = e.touches ? e.touches[0].clientX : e.clientX; const y = e.touches ? e.touches[0].clientY : e.clientY;
+                document.body.style.setProperty('--lx', x + 'px'); document.body.style.setProperty('--ly', y + 'px');
+                this.state.lightPos = {x, y};
+            },
+            checkUV: function() {
+                if(!this.state.isFlashOn || !this.state.isUV) { document.querySelectorAll('.uv-revealable').forEach(el => el.classList.remove('is-lit')); return; }
+                document.querySelectorAll('.uv-revealable').forEach(item => {
+                    const r = item.getBoundingClientRect(); const lx = this.state.lightPos.x, ly = this.state.lightPos.y; const m = 15;
+                    (lx > r.left+m && lx < r.right-m && ly > r.top+m && ly < r.bottom-m) ? item.classList.add('is-lit') : item.classList.remove('is-lit');
+                });
+            },
+
+            inspect: function(id) {
+                if(this.state.wasDragging) return;
+                const modal = document.getElementById('modal-inspect');
+                const flipper = document.getElementById('zoom-flipper');
+                const front = document.getElementById('zoom-front');
+                const back = document.getElementById('zoom-back');
+                const btnFlip = document.getElementById('btn-flip-card');
+                
+                flipper.classList.remove('flipped'); front.innerHTML=''; back.innerHTML=''; btnFlip.style.display='none';
+
+                switch(id) {
+                    case 'letter':
+                        front.innerHTML = `<div class="zoom-letter-content"><p><b>Salut les Piliers,</b></p><p>Comme promis, j'ai mis votre bouteille dans le coffre pour pas qu'on vous la pique.</p><p>Le code ? C'est simple logique. C'est une histoire de <b>prix</b> et de <b>dates</b>...</p><p><i>PS: N'oubliez pas votre privilège...</i></p><p style="text-align:right; margin-top:30px;">- Le Patron</p></div>`; break;
+                    case 'receipt':
+                        const r = document.querySelector('.item-receipt').cloneNode(true);
+                        r.classList.add('modal-cloned-item'); front.appendChild(r); break;
+                    case 'menu':
+                        const m = document.querySelector('.item-menu').cloneNode(true);
+                        m.classList.add('modal-cloned-item'); front.appendChild(m); break;
+                    case 'photo':
+                        btnFlip.style.display='block';
+                        front.innerHTML = `<div style="background:#fff; padding:15px 15px 50px 15px; box-shadow:0 10px 30px rgba(0,0,0,0.5);"><div style="background:#000; width:260px; height:260px; overflow:hidden;"><img src="Temps/sam&anthe.jpg" style="width:100%; height:100%; object-fit:cover; filter:sepia(0.3);"></div><div style="font-family:var(--font-hand); font-size:2rem; margin-top:15px; text-align:center; color:#222; font-weight:bold;">30 Janvier ❤️</div></div>`;
+                        back.innerHTML = `<div style="width:290px; height:350px; background:#e0e0e0; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);"><div style="font-family:var(--font-hand); font-size:4rem; color:#333; transform:rotate(-5deg);">Table N°4</div></div>`; break;
+                    case 'coaster':
+                        btnFlip.style.display='block';
+                        front.innerHTML = `<div style="width:260px; height:260px; border-radius:50%; background:#d7ccc8; border:8px solid #5d4037; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(0,0,0,0.5); background-image:var(--cardboard-texture);"><div style="text-align:center; font-family:var(--font-type); font-size:2rem; color:#5d4037; font-weight:bold;">SAINT FOY'S<br>BAR</div></div>`;
+                        back.innerHTML = `<div class="uv-revealable" style="width:260px; height:260px; border-radius:50%; background:#bcaaa4; border:8px solid #5d4037; display:flex; align-items:center; justify-content:center; background-image:var(--cardboard-texture); position:relative; overflow:hidden;"><div class="uv-hidden-layer"><div class="uv-text-style" style="font-size:1.5rem; border:4px dashed var(--text-uv); padding:20px; border-radius:50%; transform:rotate(-5deg);">FORMULE :<br>( TOTAL x TABLE )<br>+ JOUR</div></div><div style="font-size:0.8rem; color:#666; position:absolute; bottom:40px;">(Dos du sous-bock)</div></div>`; break;
+                }
+                modal.classList.add('open');
+            },
+            flipCard: function() { document.getElementById('zoom-flipper').classList.toggle('flipped'); },
+            closeModals: function() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open')); },
+            openKeypad: function() { document.getElementById('modal-keypad').classList.add('open'); Keypad.clear(); },
+
+            dragStart: function(e) {
+                const t = e.target.closest('#item-safe'); if(!t)return; this.state.dragging=t; this.state.wasDragging=false;
+                const cx=e.touches?e.touches[0].clientX:e.clientX; const cy=e.touches?e.touches[0].clientY:e.clientY;
+                const r=t.getBoundingClientRect(); this.state.dragOffset={x:cx-r.left, y:cy-r.top}; this.state.dragStart={x:cx, y:cy}; t.style.zIndex=1000;
+            },
+            dragMove: function(e) {
+                if(!this.state.dragging)return; e.preventDefault();
+                const cx=e.touches?e.touches[0].clientX:e.clientX; const cy=e.touches?e.touches[0].clientY:e.clientY;
+                if(Math.abs(cx-this.state.dragStart.x)>5||Math.abs(cy-this.state.dragStart.y)>5) this.state.wasDragging=true;
+                this.state.dragging.style.left=(cx-this.state.dragOffset.x)+'px'; this.state.dragging.style.top=(cy-this.state.dragOffset.y)+'px'; this.state.dragging.style.transform='none';
+            },
+            dragEnd: function() { if(this.state.dragging)this.state.dragging.style.zIndex=100; this.state.dragging=null; }
+        };
+
+        const Keypad = {
+            code: "", solution: "0094",
+            press: function(n) { if(this.code.length<4) { this.code+=n; this.update(); if(navigator.vibrate) navigator.vibrate(20); } },
+            clear: function() { this.code=""; this.update(); if(navigator.vibrate) navigator.vibrate(50); },
+            update: function() { document.getElementById('keypad-screen').innerText = this.code.padEnd(4,'_').split('').join(' '); },
+            check: function() {
+                const s = document.getElementById('keypad-screen');
+                if(this.code === this.solution) {
+                    s.style.color='#66bb6a'; s.innerText="OPEN"; if(navigator.vibrate) navigator.vibrate([100,50,200]);
+                    setTimeout(() => window.location.href="apero4.html", 1500);
+                } else {
+                    s.innerText="ERR"; document.getElementById('keypad-container').classList.add('shake-error');
+                    if(navigator.vibrate) navigator.vibrate(400);
+                    setTimeout(() => { document.getElementById('keypad-container').classList.remove('shake-error'); this.clear(); s.style.color='#d32f2f';}, 600);
+                }
+            }
+        };
+        Engine.init();
+    </script>
 </body>
 </html>
