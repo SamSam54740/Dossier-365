@@ -21,14 +21,15 @@
             background-color: #050505;
             color: white;
             margin: 0; padding: 0;
-            height: 80vh; width: 100vw;
+            height: 80vh; /* Demande précédente */
+            width: 100vw;
             display: flex; align-items: center; justify-content: center;
             overflow: hidden;
         }
 
-        /* CADRE DE JEU (80vh) */
+        /* CADRE DE JEU */
         #game-wrapper {
-            width: 100%; max-width: 450px; height: 80vh;
+            width: 100%; max-width: 450px; height: 100%; /* Prend toute la hauteur du body */
             background: radial-gradient(circle at center, #1a1a2e 0%, #000000 90%);
             border: 2px solid #333;
             border-top: 4px solid var(--neon-blue);
@@ -129,11 +130,13 @@
         }
         .math-btn:active { background: var(--neon-purple); }
         .math-btn.wrong { background: red !important; border-color: red; }
+        .math-btn.correct { background: #2ecc71 !important; border-color: #2ecc71; color: black; } /* Style VERT */
 
         /* STATUS TEXT */
         #status-overlay {
             position: absolute; top: 40%; width: 100%; text-align: center;
-            font-size: 2.5rem; font-weight: 900; text-transform: uppercase;
+            font-size: 2rem; /* Réduit un peu (2.5 -> 2) */
+            font-weight: 900; text-transform: uppercase;
             text-shadow: 0 0 20px black; pointer-events: none; z-index: 50; display: none;
         }
 
@@ -273,9 +276,9 @@
         let state = 'INTRO'; 
         let animId;
         
-        // Variables Tir
-        let dirPos = 0, dirSpeed = 2; 
-        let powPos = 0, powSpeed = 3;
+        // Variables Tir (DIFFICULTE AJUSTEE)
+        let dirPos = 0, dirSpeed = 3; // Plus rapide
+        let powPos = 0, powSpeed = 4; // Plus rapide
 
         // Variables Boire
         let gulpSize = 0;
@@ -303,8 +306,8 @@
             document.getElementById('aim-step-text').innerText = "DIRECTION";
             document.getElementById('power-bar').style.opacity = "0.3";
             
-            // Randomize targets
-            const targetW = 15 + Math.random() * 15;
+            // Randomize targets (PLUS PETIT = PLUS DUR)
+            const targetW = 10 + Math.random() * 10; // Cible plus petite (10-20%)
             const targetL = 20 + Math.random() * 60;
             document.getElementById('dir-target').style.width = targetW + "%";
             document.getElementById('dir-target').style.left = targetL + "%";
@@ -475,7 +478,7 @@
             generateMathProblem();
 
             enemyDrinkingInterval = setInterval(() => {
-                removeBeer('enemy', 3); 
+                removeBeer('enemy', 4); // IA BOIT PLUS VITE
             }, 100);
         }
 
@@ -503,15 +506,20 @@
 
         function checkMath(val, correct, btn) {
             if(val === correct) {
+                // VICTOIRE : BOUTON VERT
+                btn.classList.add('correct');
                 clearInterval(enemyDrinkingInterval);
                 showStatus("SAUVÉ !", "white");
-                setTimeout(resetAim, 1500);
+                
+                setTimeout(() => {
+                    resetAim();
+                }, 800); // Petite pause pour voir le vert
             } else {
-                // FEEDBACK ERREUR
+                // ERREUR : BOUTON ROUGE
                 btn.classList.add('wrong');
                 setTimeout(() => {
                     generateMathProblem(); 
-                }, 800); // Pause de 800ms pour voir l'erreur
+                }, 800);
             }
         }
 
