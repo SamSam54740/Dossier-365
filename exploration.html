@@ -159,15 +159,78 @@
         }
 
         /* TIMELINE */
-        .timeline-container { display: flex; flex-direction: column; gap: 6px; width: 100%; }
-        .timeline-card {
-            background: white; padding: 4px; border-radius: 6px;
-            cursor: pointer; display: flex; align-items: center;
-            border: 2px solid transparent; transition: all 0.2s;
+        .timeline-container { 
+            display: flex; flex-direction: column; gap: 10px; width: 100%; 
+            overflow-y: auto; padding-bottom: 10px;
         }
-        .timeline-card img { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; pointer-events: none;}
-        .timeline-card span { color: #333; margin-left: 10px; font-size: 0.9rem; font-weight: bold; }
-        .timeline-card.selected { border-color: var(--accent); transform: scale(1.02); background: #e0f7fa; }
+        
+        .timeline-card {
+            background: white; padding: 8px; border-radius: 12px;
+            cursor: pointer; 
+            display: flex; 
+            flex-direction: row; 
+            align-items: center; 
+            justify-content: space-between; /* Répartit l'espace : Image gauche, Texte droite */
+            
+            border: 3px solid #eee; 
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        /* Conteneur de l'image pour gérer le clic zoom */
+        .timeline-img-wrapper {
+            position: relative;
+            width: 40%; /* Prend 40% de la largeur de la carte */
+            height: 100px;
+            flex-shrink: 0;
+        }
+
+        .timeline-img-wrapper img { 
+            width: 100%; height: 100%; 
+            object-fit: cover; /* Remplissage propre de la vignette */
+            border-radius: 8px; 
+            border: 2px solid #333;
+            /* Indique qu'on peut cliquer pour zoomer */
+            cursor: zoom-in; 
+        }
+        
+        /* Petite loupe pour indiquer le zoom */
+        .zoom-hint {
+            position: absolute; bottom: 5px; right: 5px;
+            background: rgba(0,0,0,0.6); color: white;
+            border-radius: 50%; width: 20px; height: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; pointer-events: none;
+        }
+        
+        .timeline-card span { 
+            color: #2c3e50; 
+            font-size: 2.5rem; /* Numéro très gros */
+            font-weight: 900; 
+            flex-grow: 1; /* Prend tout l'espace restant */
+            text-align: center; /* Centre le numéro dans l'espace vide */
+        }
+        
+        .timeline-card.selected { 
+            border-color: var(--accent); background: #e0f7fa; 
+            transform: scale(1.02);
+        }
+
+        /* STYLE DU ZOOM PLEIN ECRAN */
+        #zoom-overlay {
+            display: none; /* Caché par défaut */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 1000;
+            align-items: center; justify-content: center; flex-direction: column;
+            animation: fadeIn 0.3s;
+        }
+        #zoom-img {
+            max-width: 95%; max-height: 80vh;
+            border: 2px solid white; border-radius: 5px;
+            object-fit: contain; /* L'image sera ENTIERE ici */
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
 
         .validate-btn {
             background: var(--accent); color: #000; border: none;
@@ -218,6 +281,11 @@
         <div class="level-title" id="lvl-title">MODULE 1</div>
         <div class="level-desc" id="lvl-desc">...</div>
         <div style="font-size: 0.8rem; opacity: 0.7;">(Tape pour continuer)</div>
+    </div>
+
+    <div id="zoom-overlay" onclick="closeZoom()">
+        <img id="zoom-img" src="" alt="Zoom">
+        <div style="position:absolute; bottom:30px; color:white; font-size:0.9rem;">(Touche pour fermer)</div>
     </div>
 
     <div id="end-screen">
@@ -274,17 +342,17 @@
             { type: 'video', q: "Entre Qui & Qui cette UAI Pian'sss ?", src: "Temps/vid9.mp4", pauseAt: 2, mode: 'choice', options: ["PIMPON VS RUPIN", "LACHNALI VS TUTT", "SAMSAM VS GOYAVE", "ALLAIRE VS BLONDEL"], answer: 3 },
             { type: 'video', q: "Qui gagne ?", src: "Temps/vid10.mp4", pauseAt: 2, mode: 'input', answer: "BLONDEL" },
 
-            // --- BLOC 4 : TIMELINE ---
-            { type: 'timeline', q: "Remets dans l'ordre", items: ["t1_1.jpg", "t1_2.jpg", "t1_3.jpg", "t1_4.jpg"] },
-            { type: 'timeline', q: "Chronologie soirée", items: ["t2_1.jpg", "t2_2.jpg", "t2_3.jpg", "t2_4.jpg"] },
-            { type: 'timeline', q: "Coupes de cheveux", items: ["t3_1.jpg", "t3_2.jpg", "t3_3.jpg", "t3_4.jpg"] },
-            { type: 'timeline', q: "Nos repas", items: ["t4_1.jpg", "t4_2.jpg", "t4_3.jpg", "t4_4.jpg"] },
-            { type: 'timeline', q: "L'HISTOIRE DE NOUS", items: ["final_1.jpg", "final_2.jpg", "final_3.jpg", "final_4.jpg"] }
+            // --- BLOC 4 : TIMELINE --- 
+            { type: 'timeline', q: "Classe ses images dans l'ordre chronologique", items: ["Temps/t1_1.jpg", "Temps/t1_2.jpg", "Temps/t1_3.jpg", "Temps/t1_4.jpg"] },
+            { type: 'timeline', q: "Classe ses images dans l'ordre chronologique", items: ["Temps/t2_1.jpg", "Temps/t2_2.jpg", "Temps/t2_3.jpg", "Temps/t2_4.jpg"] },
+            { type: 'timeline', q: "Classe ses images dans l'ordre chronologique", items: ["Temps/t3_1.jpg", "Temps/t3_2.jpg", "Temps/t3_3.jpg", "Temps/t3_4.jpg"] },
+            { type: 'timeline', q: "Classe ses images dans l'ordre chronologique", items: ["Temps/t4_1.jpg", "Temps/t4_2.jpg", "Temps/t4_3.jpg", "Temps/t4_4.jpg"] },
+            { type: 'timeline', q: "Classe ses images dans l'ordre chronologique", items: ["Temps/t5_1.jpg", "Temps/t5_2.jpg", "Temps/t5_3.jpg", "Temps/t5_4.jpg"] }
         ];
 
         // ==========================================================
 
-        let currentLevelIdx = 24;
+        let currentLevelIdx = 35;
         const container = document.getElementById('dynamic-content');
         const mapContainer = document.getElementById('map-container');
         const mapBtn = document.getElementById('map-validate-btn');
@@ -669,15 +737,49 @@
                 let card = document.createElement('div');
                 card.className = 'timeline-card';
                 if (idx === selectedIdx) card.classList.add('selected');
+                
+                // Clic sur la CARTE (partie blanche) = Sélectionner pour échanger
                 card.onclick = () => handleSwap(idx);
+
+                // Conteneur Image + Loupe
+                let imgWrapper = document.createElement('div');
+                imgWrapper.className = 'timeline-img-wrapper';
+                
                 let img = document.createElement('img');
                 img.src = src;
+                
+                // Clic sur l'IMAGE = ZOOMER (On bloque l'échange avec stopPropagation)
+                img.onclick = (e) => {
+                    e.stopPropagation(); // Empêche de sélectionner la carte
+                    openZoom(src);
+                };
+
+                let hint = document.createElement('div');
+                hint.className = 'zoom-hint';
+                hint.innerHTML = '🔍';
+
+                imgWrapper.appendChild(img);
+                imgWrapper.appendChild(hint);
+
                 let txt = document.createElement('span');
                 txt.innerText = "# " + (idx + 1);
-                card.appendChild(img);
+
+                card.appendChild(imgWrapper);
                 card.appendChild(txt);
                 gridElement.appendChild(card);
             });
+        }
+
+        // --- FONCTIONS ZOOM ---
+        function openZoom(src) {
+            const overlay = document.getElementById('zoom-overlay');
+            const img = document.getElementById('zoom-img');
+            img.src = src;
+            overlay.style.display = 'flex';
+        }
+
+        function closeZoom() {
+            document.getElementById('zoom-overlay').style.display = 'none';
         }
 
         function handleSwap(idx) {
@@ -731,6 +833,4 @@
         init();
     </script>
 </body>
-
 </html>
-
