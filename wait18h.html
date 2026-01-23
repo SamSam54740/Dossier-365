@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ATTENTE APÉRO</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #f1c40f; /* Jaune Doré / Bière */
+            font-family: 'Courier New', Courier, monospace;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 80vh; margin: 0; text-align: center; overflow: hidden;
+        }
+
+        h1 { font-size: 1.5rem; letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase; animation: blink 2s infinite; }
+        
+        .icon { font-size: 4rem; margin-bottom: 20px; }
+
+        #countdown {
+            font-size: 3.5rem; font-weight: bold;
+            border: 2px solid #f1c40f; padding: 20px; border-radius: 10px;
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.3); 
+            margin-bottom: 30px; width: 80%; max-width: 350px;
+            background: rgba(0,0,0,0.5);
+        }
+
+        p { color: #888; font-size: 0.9rem; max-width: 300px; line-height: 1.5; margin-bottom: 30px;}
+
+        #unlock-btn {
+            display: none; padding: 20px 40px;
+            background: #f1c40f; color: #000; font-size: 1.2rem; font-weight: bold; text-decoration: none;
+            border-radius: 50px; box-shadow: 0 0 30px #f1c40f; animation: pulse 1s infinite;
+            cursor: pointer; border: none; text-transform: uppercase;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div class="icon">🍺</div>
+    <h1 id="status-text">PROTOCOLE APÉRO</h1>
+
+    <div id="countdown">--:--:--</div>
+
+    <p id="info-text">Les fûts sont en cours de pressurisation.<br>Ouverture des vannes prévue à 16h00.</p>
+
+    <a href="apero.html" id="unlock-btn">ENTRER DANS LE BAR</a>
+
+    <script>
+        // === CONFIGURATION : 30 Janvier à 16h00 ===
+        const targetYear = 2026;
+        const targetMonth = 1;  // 0 = Janvier
+        const targetDay = 23;   
+        const targetHour = 16;  // 16h00
+        const targetMinute = 48; 
+        
+        function updateTimer() {
+            const now = new Date();
+            const target = new Date(targetYear, targetMonth - 1, targetDay, targetHour, targetMinute, 0);
+            let diff = target - now;
+
+            // SI TU VEUX TESTER SANS ATTENDRE : Décommente la ligne ci-dessous
+            // diff = -1; 
+
+            if (diff <= 0) {
+                unlockPhase();
+            } else {
+                const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const m = Math.floor((diff / (1000 * 60)) % 60);
+                const s = Math.floor((diff / 1000) % 60);
+                document.getElementById('countdown').innerText = 
+                    `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+        }
+
+        function unlockPhase() {
+            const count = document.getElementById('countdown');
+            count.innerText = "00:00:00";
+            count.style.borderColor = "white"; count.style.color = "white";
+            
+            document.getElementById('status-text').innerText = "BAR OUVERT";
+            document.getElementById('status-text').style.color = "white";
+            
+            document.getElementById('info-text').innerText = "La température est idéale.\nServez-vous.";
+            
+            document.querySelector('.icon').innerText = "🍻";
+            document.getElementById('unlock-btn').style.display = "inline-block";
+            
+            if(timerInterval) clearInterval(timerInterval);
+        }
+
+        const timerInterval = setInterval(updateTimer, 1000);
+        updateTimer();
+    </script>
+</body>
+</html>
