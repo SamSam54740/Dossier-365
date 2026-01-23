@@ -249,11 +249,17 @@
 
         #end-screen { 
             display: none; 
+            position: fixed; /* C'est ça qui change tout : ça sort du flux */
+            top: 0; 
+            left: 0;
             width: 100%; 
-            height: 80vh; /* Hauteur demandée */
+            height: 80vh; /* Prend tout l'écran */
+            background-color: var(--bg-color); /* On remet la couleur de fond pour cacher le reste */
+            z-index: 200; /* On passe au-dessus de tout */
+            
             flex-direction: column; 
             align-items: center; 
-            justify-content: center; /* Centre le contenu verticalement */
+            justify-content: center; /* Centre verticalement */
         }
 
         .shake { animation: shake 0.4s; }
