@@ -160,17 +160,19 @@
 
         /* TIMELINE */
         .timeline-container { 
-            display: flex; flex-direction: column; gap: 10px; width: 100%; 
+            display: flex; flex-direction: column; gap: 8px; /* Gap réduit */
+            width: 80%; margin: 0 auto; /* 80% centré */
             overflow-y: auto; padding-bottom: 10px;
         }
         
         .timeline-card {
-            background: white; padding: 8px; border-radius: 12px;
+            background: white; padding: 6px; /* Padding réduit */
+            border-radius: 12px;
             cursor: pointer; 
             display: flex; 
             flex-direction: row; 
             align-items: center; 
-            justify-content: space-between; /* Répartit l'espace : Image gauche, Texte droite */
+            justify-content: space-between; 
             
             border: 3px solid #eee; 
             transition: all 0.2s;
@@ -181,35 +183,34 @@
         /* Conteneur de l'image pour gérer le clic zoom */
         .timeline-img-wrapper {
             position: relative;
-            width: 40%; /* Prend 40% de la largeur de la carte */
-            height: 100px;
+            width: 40%; 
+            height: 80px; /* Hauteur RÉDUITE (était 100px) */
             flex-shrink: 0;
         }
 
         .timeline-img-wrapper img { 
             width: 100%; height: 100%; 
-            object-fit: cover; /* Remplissage propre de la vignette */
+            object-fit: cover; 
             border-radius: 8px; 
             border: 2px solid #333;
-            /* Indique qu'on peut cliquer pour zoomer */
             cursor: zoom-in; 
         }
         
         /* Petite loupe pour indiquer le zoom */
         .zoom-hint {
-            position: absolute; bottom: 5px; right: 5px;
+            position: absolute; bottom: 3px; right: 3px;
             background: rgba(0,0,0,0.6); color: white;
-            border-radius: 50%; width: 20px; height: 20px;
+            border-radius: 50%; width: 18px; height: 18px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.7rem; pointer-events: none;
+            font-size: 0.6rem; pointer-events: none;
         }
         
         .timeline-card span { 
             color: #2c3e50; 
-            font-size: 2.5rem; /* Numéro très gros */
+            font-size: 2rem; 
             font-weight: 900; 
-            flex-grow: 1; /* Prend tout l'espace restant */
-            text-align: center; /* Centre le numéro dans l'espace vide */
+            flex-grow: 1; 
+            text-align: center; 
         }
         
         .timeline-card.selected { 
@@ -217,10 +218,9 @@
             transform: scale(1.02);
         }
 
-        /* STYLE DU ZOOM PLEIN ECRAN */
+        /* STYLE DU ZOOM PLEIN ECRAN (Inchangé) */
         #zoom-overlay {
-            display: none; /* Caché par défaut */
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); z-index: 1000;
             align-items: center; justify-content: center; flex-direction: column;
             animation: fadeIn 0.3s;
@@ -228,7 +228,7 @@
         #zoom-img {
             max-width: 95%; max-height: 80vh;
             border: 2px solid white; border-radius: 5px;
-            object-fit: contain; /* L'image sera ENTIERE ici */
+            object-fit: contain; 
             box-shadow: 0 0 20px rgba(255,255,255,0.2);
         }
 
