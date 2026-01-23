@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LE FOY'S - PLOMBERIE</title>
+    <title>LE SAINT FOY'S - PLOMBERIE</title>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -22,14 +22,13 @@
             background-color: var(--bg-color);
             color: white;
             margin: 0; padding: 0;
-            /* Fix pour les hauteurs mobiles capricieuses */
             height: 100vh; height: 100dvh; 
             width: 100vw;
             display: flex; flex-direction: column; 
             overflow: hidden;
         }
 
-        /* 1. HEADER (Taille fixe petite) */
+        /* 1. HEADER */
         #top-ui {
             flex: 0 0 auto;
             width: 100%; 
@@ -39,8 +38,17 @@
             z-index: 10;
         }
         
-        h1 { margin: 0; font-size: 1.1rem; color: var(--beer-gold); letter-spacing: 1px; text-transform: uppercase; }
-        .subtitle { font-size: 0.7rem; color: #888; margin: 2px 0; font-family: sans-serif;}
+        h1 { margin: 0; font-size: 1.2rem; color: var(--beer-gold); letter-spacing: 1px; text-transform: uppercase; }
+        
+        /* Sous-titre long qui s'adapte */
+        .subtitle { 
+            font-size: 0.6rem; 
+            color: #aaa; 
+            margin: 5px 10px; 
+            font-family: sans-serif; 
+            line-height: 1.2;
+            white-space: normal; /* Permet le retour à la ligne si besoin */
+        }
 
         #pressure-container {
             width: 80%; margin: 5px auto 0; height: 10px; background: #222;
@@ -53,26 +61,25 @@
             transition: width 0.2s linear;
         }
 
-        /* 2. BOARD (Prend l'espace et centre) */
+        /* 2. BOARD */
         #game-board {
-            flex: 1; /* Remplit l'espace central */
+            flex: 1; 
             width: 100%; 
             display: flex; align-items: center; justify-content: center;
             position: relative; 
-            padding: 20px; /* Marge de sécurité autour du carré */
-            overflow: hidden;
+            padding: 20px; 
+            overflow: visible; /* Important pour voir les marqueurs qui dépassent */
         }
 
         #grid-container {
             position: relative;
-            /* LA SOLUTION : On prend la plus petite dimension dispo pour faire le carré */
-            /* 95% de la largeur OU 65% de la hauteur totale */
-            width: min(95vw, 65vh);
-            height: min(95vw, 65vh);
-            aspect-ratio: 1 / 1; /* Force le carré parfait */
+            /* Grille carrée optimisée */
+            width: min(90vw, 60vh);
+            height: min(90vw, 60vh);
+            aspect-ratio: 1 / 1; 
             
             display: flex; justify-content: center; align-items: center;
-            margin: auto; /* Centrage */
+            margin: auto; 
         }
 
         #grid {
@@ -85,7 +92,7 @@
             width: 100%; height: 100%;
         }
 
-        /* MARQUEURS (Plus espacés et avec flèches) */
+        /* MARQUEURS (Repositionnés) */
         .marker {
             position: absolute; 
             font-size: 0.8rem; 
@@ -95,25 +102,29 @@
             display: flex; align-items: center; gap: 5px;
             white-space: nowrap;
         }
-        /* Flèche d'entrée */
-        #start-marker { 
-            top: -35px; left: 0; 
-            flex-direction: column; align-items: flex-start; gap: 0;
-        }
-        #start-marker .arrow { font-size: 1.2rem; margin-left: 15px; color: var(--neon-blue); animation: bounceDown 1s infinite;}
         
-        /* Flèche de sortie */
-        #end-marker { 
-            bottom: -35px; right: 0;
-            flex-direction: column-reverse; align-items: flex-end; gap: 0;
+        /* Entrée : Centrée sur la 1ère colonne (5%) */
+        #start-marker { 
+            top: -50px; /* Plus d'espace */
+            left: 5%;   /* Milieu de la colonne 1 */
+            transform: translateX(-50%); /* Centrage précis */
+            flex-direction: column; align-items: center; gap: 0;
         }
-        #end-marker .arrow { font-size: 1.2rem; margin-right: 15px; color: var(--neon-blue); animation: bounceDown 1s infinite;}
+        #start-marker .arrow { font-size: 1.5rem; color: var(--neon-blue); animation: bounceDown 1s infinite; margin-top: -5px;}
+        
+        /* Sortie : Centrée sur la dernière colonne (95% ou right 5%) */
+        #end-marker { 
+            bottom: -50px; /* Plus d'espace */
+            right: 5%;     /* Milieu de la dernière colonne */
+            transform: translateX(50%); /* Centrage précis */
+            flex-direction: column-reverse; align-items: center; gap: 0;
+        }
+        #end-marker .arrow { font-size: 1.5rem; color: var(--neon-blue); animation: bounceDown 1s infinite; margin-bottom: -5px;}
 
         @keyframes bounceDown {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(5px); }
         }
-
 
         /* TUILES & TUYAUX */
         .tile {
@@ -140,10 +151,10 @@
         .tile.filled .arm, .tile.filled .center-hub { background: var(--beer-gold); box-shadow: 0 0 5px var(--beer-gold); }
         .tile.error .arm, .tile.error .center-hub { background: var(--neon-alert); box-shadow: 0 0 5px red; }
 
-        /* 3. FOOTER (Taille fixe petite) */
+        /* 3. FOOTER */
         #controls {
             flex: 0 0 auto;
-            width: 100%; padding: 15px;
+            width: 100%; padding: 10px;
             display: flex; justify-content: center; align-items: center;
             background: #111; border-top: 1px solid #333;
         }
@@ -177,8 +188,8 @@
 <body>
 
     <div id="top-ui">
-        <h1>LE FOY'S BAR</h1>
-        <div class="subtitle">MISSION : LES PILIERS</div>
+        <h1>LE SAINT FOY'S</h1>
+        <div class="subtitle">MISSION : CONNECTE LA COMME D'HAB À LA TIREUSE POUR LES PILIERS DE BAR !!!</div>
         <div id="pressure-container">
             <div id="pressure-bar"></div>
         </div>
@@ -194,8 +205,8 @@
             <div id="grid"></div>
             
             <div class="marker" id="end-marker">
+                <div class="arrow">⬇️</div>
                 <div>TIREUSE FOY'S 🍺</div>
-                <div class="arrow">⬆️</div>
             </div>
         </div>
     </div>
@@ -208,7 +219,7 @@
         <h1 style="color:var(--beer-gold); font-size:2.5rem; margin-bottom:10px;">ÉTAPE 2</h1>
         <p style="font-size:1.1rem; color:#ccc;">CONNECTE LA "COMME D'HAB"</p>
         <div style="background:#222; padding:15px; margin:20px 0; border:1px solid #444; text-align:left; font-size:0.95rem; border-radius: 8px; font-family: sans-serif;">
-            <p>1. Les Piliers ont soif</p>
+            <p>1. Les Piliers ont soif...</p>
             <p>2. Connecte le <b>Fût</b> (Haut) à la <b>Tireuse</b> (Bas)</p>
             <p>3. Attention : La pression monte <b>VITE</b></p>
             <p style="color:red; text-align:center; font-weight:bold; margin-top:10px;">FUITE = PÉNALITÉ !</p>
@@ -377,7 +388,8 @@
         }
 
         function gameLoop() {
-            if(!isPlaying) return;
+            // STOP LA PRESSION SI ON VERIFIE (isChecking)
+            if(!isPlaying || isChecking) return;
             
             pressure += 0.25; 
             
@@ -407,7 +419,7 @@
         // --- ANIMATION ---
         async function checkWin() {
             if(!isPlaying || isChecking) return;
-            isChecking = true; 
+            isChecking = true; // CA STOPPE LE JEU
             
             const pathData = calculateFlow();
             const flowPath = pathData.path;
@@ -433,7 +445,7 @@
                 
                 await new Promise(r => setTimeout(r, 1000));
                 document.querySelectorAll('.tile').forEach(e => e.classList.remove('filled', 'error'));
-                isChecking = false; 
+                isChecking = false; // REPREND LE JEU
             }
         }
 
