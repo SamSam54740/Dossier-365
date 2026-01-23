@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PLOMBERIE ENFER</title>
+    <title>LE FOY'S - PLOMBERIE</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #050505;
             --neon-blue: #00f3ff;
             --neon-alert: #ff0055;
-            --beer-gold: #ffaa00;
-            --pipe-dark: #2a2a2a; /* Plus sombre pour contraste */
-            --pipe-width: 8px; /* Très fin pour 10x10 */
+            --beer-gold: #ffcc00;
+            --pipe-dark: #222;
+            --pipe-width: 8px; 
         }
 
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -23,120 +23,123 @@
             color: white;
             margin: 0; padding: 0;
             height: 100vh; width: 100vw;
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            /* Layout vertical strict pour mobile */
+            display: flex; flex-direction: column; 
             overflow: hidden;
         }
 
-        /* HEADER & JAUGE */
+        /* 1. HEADER (Compact) */
         #top-ui {
-            width: 100%; padding: 5px 10px; text-align: center;
+            flex-shrink: 0; /* Ne rétrécit pas */
+            width: 100%; padding: 10px; text-align: center;
             background: #111; border-bottom: 2px solid #333;
-            z-index: 10; height: 12vh;
-            display: flex; flex-direction: column; justify-content: center;
+            z-index: 10;
         }
         
-        h1 { margin: 0; font-size: 1rem; color: var(--neon-alert); }
+        h1 { margin: 0; font-size: 1rem; color: var(--beer-gold); letter-spacing: 2px; }
+        .subtitle { font-size: 0.7rem; color: #888; margin-bottom: 5px; }
 
         #pressure-container {
             width: 100%; height: 15px; background: #222;
             border: 1px solid #555; border-radius: 10px;
-            margin-top: 5px; position: relative; overflow: hidden;
+            position: relative; overflow: hidden;
         }
         
         #pressure-bar {
             width: 0%; height: 100%; background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
             transition: width 0.2s linear;
         }
-        
-        #shout-box {
-            height: 15px; margin-top: 2px; color: var(--neon-blue);
-            font-size: 0.7rem; font-style: italic; white-space: nowrap; overflow: hidden;
+
+        /* 2. BOARD (Prend tout l'espace restant) */
+        #game-board {
+            flex-grow: 1; /* Prend l'espace libre */
+            width: 100%; 
+            display: flex; align-items: center; justify-content: center;
+            position: relative; 
+            padding: 10px; /* Marge de sécurité */
         }
 
-        /* GRILLE DE JEU */
-        #game-board {
-            height: 78vh; width: 100%; 
-            display: flex; align-items: center; justify-content: center;
-            position: relative; padding: 2px;
+        #grid-container {
+            position: relative;
+            width: 95vw; /* Max largeur mobile */
+            height: 95vw; /* Carré */
+            max-height: 65vh; /* Ne pas dépasser la hauteur dispo */
+            max-width: 65vh;  /* Garder le carré */
         }
 
         #grid {
             display: grid;
-            /* 10x10 Grille */
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
             gap: 0; 
             background: #000;
-            border: 1px solid #333;
-            width: 100%;
-            aspect-ratio: 1 / 1; 
-            max-width: 600px;
+            border: 2px solid #444;
+            width: 100%; height: 100%;
         }
 
-        /* TUILE (CASE) */
+        /* MARQUEURS (Collés à la grille) */
+        .marker {
+            position: absolute; 
+            font-size: 0.8rem; font-weight: bold; 
+            color: var(--beer-gold); 
+            background: #111; border: 1px solid #333; padding: 2px 5px; border-radius: 4px;
+            z-index: 20; pointer-events: none;
+            display: flex; align-items: center; gap: 5px;
+            white-space: nowrap;
+        }
+        #start-marker { 
+            top: -25px; left: 0; 
+        }
+        #end-marker { 
+            bottom: -25px; right: 0; 
+        }
+
+        /* TUILES & TUYAUX */
         .tile {
             width: 100%; height: 100%;
-            position: relative;
-            cursor: pointer;
+            position: relative; cursor: pointer;
+            background: #151515; border: 0.5px solid #222;
             transition: transform 0.1s linear; 
-            background: #111;
-            border: 0.5px solid #1a1a1a;
         }
-        /* Hitbox plus large pour les doigts */
-        .tile::after {
-            content: ''; position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
-        }
-
-        /* SYSTÈME DE TUYAUX (ARMS) */
-        .arm { position: absolute; background: var(--pipe-dark); transition: background 0.3s; }
+        
+        .arm { position: absolute; background: var(--pipe-dark); transition: background 0.2s; }
         .center-hub {
             position: absolute; top: 50%; left: 50%;
             width: var(--pipe-width); height: var(--pipe-width);
             background: var(--pipe-dark);
-            transform: translate(-50%, -50%);
-            border-radius: 50%;
-            transition: background 0.3s;
+            transform: translate(-50%, -50%); border-radius: 50%;
+            transition: background 0.2s;
         }
         .arm.top { top: 0; left: 50%; width: var(--pipe-width); height: 50%; transform: translateX(-50%); }
         .arm.bottom { bottom: 0; left: 50%; width: var(--pipe-width); height: 50%; transform: translateX(-50%); }
         .arm.left { left: 0; top: 50%; width: 50%; height: var(--pipe-width); transform: translateY(-50%); }
         .arm.right { right: 0; top: 50%; width: 50%; height: var(--pipe-width); transform: translateY(-50%); }
 
-        /* MARQUEURS */
-        .marker {
-            position: absolute; font-size: 1.2rem; z-index: 20; pointer-events: none;
-        }
-        #start-marker { top: -20px; left: 0; }
-        #end-marker { bottom: -20px; right: 0; }
+        /* ETATS LIQUIDE */
+        .tile.filled .arm, .tile.filled .center-hub { background: var(--beer-gold); box-shadow: 0 0 5px var(--beer-gold); }
+        .tile.error .arm, .tile.error .center-hub { background: var(--neon-alert); box-shadow: 0 0 5px red; }
 
-        /* ETATS */
-        .tile.filled .arm, .tile.filled .center-hub {
-            background: var(--beer-gold);
-            box-shadow: 0 0 2px var(--beer-gold);
-        }
-        .tile.error .arm, .tile.error .center-hub {
-            background: var(--neon-alert);
-            box-shadow: 0 0 5px red;
-        }
-
-        /* BOUTON TEST */
+        /* 3. FOOTER (Bouton accessible) */
         #controls {
-            height: 10vh; width: 100%; padding: 5px;
+            flex-shrink: 0;
+            width: 100%; padding: 15px;
             display: flex; justify-content: center; align-items: center;
             background: #111; border-top: 1px solid #333;
         }
         #btn-check {
-            padding: 12px 30px; border-radius: 30px; border: none;
+            width: 100%; max-width: 300px;
+            padding: 15px 0; border-radius: 50px; border: none;
             background: var(--beer-gold); color: black;
-            font-weight: 900; font-size: 1rem; cursor: pointer;
-            box-shadow: 0 0 15px rgba(255, 170, 0, 0.3);
-            animation: pulse 1s infinite;
+            font-weight: 900; font-size: 1.1rem; cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
+            animation: pulse 1.5s infinite;
+            text-transform: uppercase;
         }
 
         /* OVERLAYS */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 100;
+            background: rgba(0,0,0,0.98); z-index: 100;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; padding: 20px;
         }
@@ -146,24 +149,28 @@
         
         .shake { animation: shake 0.5s infinite; }
         @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -2px); } 100% { transform: translate(1px, -2px); } }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
 
     </style>
 </head>
 <body>
 
     <div id="top-ui">
-        <h1>NIVEAU : ENFER (10x10)</h1>
+        <h1>LE FOY'S BAR</h1>
+        <div class="subtitle">MISSION : LES PILIERS</div>
         <div id="pressure-container">
             <div id="pressure-bar"></div>
         </div>
-        <div id="shout-box">"Impossible que tu y arrives..."</div>
     </div>
 
     <div id="game-board">
-        <div id="grid">
-            <div class="marker" id="start-marker">🛢️</div>
-            <div class="marker" id="end-marker">🍺</div>
+        <div id="grid-container">
+            <div class="marker" id="start-marker">🛢️ COMME D'HAB</div>
+            
+            <div id="grid">
+                </div>
+
+            <div class="marker" id="end-marker">TIREUSE FOY'S 🍺</div>
         </div>
     </div>
 
@@ -173,19 +180,19 @@
 
     <div id="intro-overlay" class="overlay">
         <h1 style="color:var(--beer-gold); font-size:2.5rem;">ÉTAPE 2</h1>
-        <p style="font-size:1rem; color:#ccc;">LE SPAGHETTI (10x10)</p>
+        <p style="font-size:1rem; color:#ccc;">CONNECTE LA "COMME D'HAB"</p>
         <div style="background:#222; padding:15px; margin:20px; border:1px solid #444; text-align:left; font-size:0.9rem;">
-            <p>1. Grille de 100 tuiles.</p>
-            <p>2. Connecte Haut-Gauche à Bas-Droite.</p>
-            <p>3. <b>ATTENTION :</b> Il y a plein de faux chemins.</p>
-            <p style="color:red; text-align:center; font-weight:bold;">FUITE = +30% PRESSION !</p>
+            <p>1. Les Piliers ont soif.</p>
+            <p>2. Connecte le <b>Fût</b> (Haut) à la <b>Tireuse</b> (Bas).</p>
+            <p>3. Attention : La pression monte <b>VITE</b>.</p>
+            <p style="color:red; text-align:center; font-weight:bold;">FUITE = PÉNALITÉ !</p>
         </div>
-        <button id="btn-check" onclick="startLevel()">J'AI MES LUNETTES</button>
+        <button id="btn-check" onclick="startLevel()">JE GÈRE</button>
     </div>
 
     <div id="explode-overlay" class="overlay hidden">
         <h1 style="font-size:4rem; margin:0;">BOUM !</h1>
-        <p style="font-size:1.5rem; font-weight:bold;">T'AS NOYÉ LE BAR</p>
+        <p style="font-size:1.5rem; font-weight:bold;">QUEL GÂCHIS...</p>
         <div style="border:4px solid black; padding:20px; font-weight:bold; margin-top:20px; transform:rotate(-2deg); font-size:1.5rem; background:white;">
             PÉNALITÉ : 3 GORGÉES
         </div>
@@ -193,18 +200,16 @@
     </div>
 
     <div id="win-overlay" class="overlay hidden">
-        <h1 style="color:var(--neon-blue); font-size:3rem;">GÉNIE</h1>
-        <p>Tu m'as impressionné.</p>
+        <h1 style="color:var(--neon-blue); font-size:3rem;">SANTÉ !</h1>
+        <p>Service impeccable.</p>
         <button id="btn-check" onclick="nextStep()">ÉTAPE 3</button>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
         const ROWS = 10;
         const COLS = 10;
         const NB_TILES = 100;
 
-        // Connexions à rotation 0: [Haut, Droite, Bas, Gauche]
         const TILES_DEF = {
             'I': [1, 0, 1, 0], 
             'L': [1, 1, 0, 0]
@@ -214,43 +219,37 @@
         let pressure = 0;
         let gameInterval;
         let isPlaying = false;
-        
-        const shouts = [
-            "C'est un plat de nouilles !", "Regarde bien...", "Ça fuit d'avance...", 
-            "Connecte le vrai chemin !", "Ne te perds pas...", "Tic tac..."
-        ];
+        let isChecking = false; // Bloque le jeu pendant l'animation
 
         function startLevel() {
             document.getElementById('intro-overlay').classList.add('hidden');
             generateLevel();
             pressure = 0;
             isPlaying = true;
-            gameInterval = setInterval(gameLoop, 200);
+            gameInterval = setInterval(gameLoop, 100); // 100ms
         }
 
-        // --- GÉNÉRATEUR SPAGHETTI ---
+        // --- GENERATEUR SPAGHETTI (Chemin unique + leurres) ---
         function generateLevel() {
             const grid = document.getElementById('grid');
-            grid.innerHTML = '<div class="marker" id="start-marker">🛢️</div><div class="marker" id="end-marker">🍺</div>';
+            grid.innerHTML = '';
             tiles = new Array(NB_TILES).fill(null);
 
-            // 1. Créer le vrai chemin (Snake)
+            // 1. Snake Path
             let visited = new Set();
-            let mainPathIndices = createSnakePath(0, 99, visited);
+            createSnakePath(0, 99, visited);
             
-            // 2. Remplir TOUT le reste avec des leurres (Faux chemins)
+            // 2. Decoyst
             fillWithDecoys(visited);
 
-            // 3. Rendu DOM
+            // 3. Render
             for(let i=0; i<NB_TILES; i++) {
                 const data = tiles[i];
                 const el = document.createElement('div');
                 el.className = 'tile';
                 el.id = `tile-${i}`;
                 
-                // Rotation Random
                 const startRot = Math.floor(Math.random() * 4) * 90;
-                
                 createVisuals(el, data.type);
                 
                 el.style.transform = `rotate(${startRot}deg)`;
@@ -258,7 +257,6 @@
                 
                 grid.appendChild(el);
                 
-                // Update data with visual element and rotation
                 tiles[i].el = el;
                 tiles[i].visualRot = startRot;
                 tiles[i].baseConn = TILES_DEF[data.type];
@@ -266,12 +264,7 @@
         }
 
         function createSnakePath(start, end, visited) {
-            // Algorithme de chemin aléatoire contraint
-            // Doit atteindre la fin. 
-            // Pour 10x10, on force un chemin d'au moins 25 étapes pour que ce soit dur.
             let success = false;
-            let finalPathMap = new Map();
-
             while(!success) {
                 visited.clear();
                 let path = [start];
@@ -283,14 +276,9 @@
                     let neighbors = getNeighbors(curr);
                     let validNeighbors = neighbors.filter(n => !visited.has(n));
                     
-                    // Heuristique : tendre vers la fin, mais avec du bruit
                     if(validNeighbors.length > 0) {
-                        // Tri pour favoriser ceux qui rapprochent de la fin (un peu)
                         validNeighbors.sort((a,b) => dist(a, end) - dist(b, end) + (Math.random()*10 - 5));
-                        
-                        // Pick random best
                         let next = validNeighbors[0];
-                        // Parfois on prend un moins bon pour faire des détours
                         if(Math.random() > 0.6 && validNeighbors.length > 1) next = validNeighbors[1];
 
                         visited.add(next);
@@ -301,32 +289,25 @@
                     }
                 }
 
-                if(curr === end && path.length > 20) { // Chemin valide et assez long
+                if(curr === end && path.length > 25) { // Min 25 cases pour que ce soit long
                     success = true;
-                    // Définir les types
                     for(let i=0; i<path.length; i++) {
                         let c = path[i];
-                        let p = (i===0) ? (c-10) : path[i-1]; // Start virtual Top
-                        let n = (i===path.length-1) ? (c+10) : path[i+1]; // End virtual Bottom
+                        let p = (i===0) ? (c-10) : path[i-1];
+                        let n = (i===path.length-1) ? (c+10) : path[i+1];
                         
                         let d1 = getDir(c, p);
                         let d2 = getDir(c, n);
-                        // Opposés (0-2 ou 1-3) => I, sinon L
                         let type = (Math.abs(d1 - d2) === 2) ? 'I' : 'L';
                         tiles[c] = { type: type };
                     }
                 }
             }
-            return visited;
         }
 
         function fillWithDecoys(visitedMain) {
-            // Pour chaque case vide, on lance un mini-snake
             for(let i=0; i<NB_TILES; i++) {
                 if(!visitedMain.has(i)) {
-                    // C'est un leurre. On génère aléatoirement, 
-                    // mais on essaie de faire des chaines.
-                    // Simplification : Random I/L suffit car la densité crée l'illusion
                     tiles[i] = { type: (Math.random() > 0.5 ? 'I' : 'L') };
                 }
             }
@@ -334,12 +315,11 @@
 
         function getNeighbors(idx) {
             let n = [];
-            let r = Math.floor(idx/10);
-            let c = idx%10;
-            if(r>0) n.push(idx-10); // Top
-            if(c<9) n.push(idx+1);  // Right
-            if(r<9) n.push(idx+10); // Bottom
-            if(c>0) n.push(idx-1);  // Left
+            let r = Math.floor(idx/10), c = idx%10;
+            if(r>0) n.push(idx-10);
+            if(c<9) n.push(idx+1);
+            if(r<9) n.push(idx+10);
+            if(c>0) n.push(idx-1);
             return n;
         }
 
@@ -350,10 +330,10 @@
         }
 
         function getDir(from, to) {
-            if(to === from - 10) return 0; // Top
-            if(to === from + 1) return 1;  // Right
-            if(to === from + 10) return 2; // Bottom
-            if(to === from - 1) return 3;  // Left
+            if(to === from - 10) return 0;
+            if(to === from + 1) return 1;
+            if(to === from + 10) return 2;
+            if(to === from - 1) return 3;
             return -1;
         }
 
@@ -367,7 +347,7 @@
         }
 
         function rotateTile(idx) {
-            if(!isPlaying) return;
+            if(!isPlaying || isChecking) return;
             const t = tiles[idx];
             t.visualRot += 90; 
             t.el.style.transform = `rotate(${t.visualRot}deg)`;
@@ -376,11 +356,11 @@
 
         function gameLoop() {
             if(!isPlaying) return;
-            pressure += 0.1; // Lent mais constant
+            // Difficulté : Pression monte de 0.25% toutes les 100ms
+            pressure += 0.25; 
+            
             document.getElementById('pressure-bar').style.width = Math.min(pressure, 100) + "%";
             
-            if(Math.random() < 0.02) document.getElementById('shout-box').innerText = shouts[Math.floor(Math.random() * shouts.length)];
-
             if(pressure > 85) {
                 document.body.classList.add('shake');
                 document.getElementById('pressure-bar').style.background = "red";
@@ -402,60 +382,96 @@
             startLevel();
         }
 
-        // --- VALIDATION ---
-        function checkWin() {
-            if(!isPlaying) return;
+        // --- ANIMATION DE FLUX ---
+        async function checkWin() {
+            if(!isPlaying || isChecking) return;
+            isChecking = true; // Bloque les clics
             
-            const visited = new Set();
-            let flowPath = [];
-            let success = false;
-            
-            // Flood Fill depuis index 0, entrée par HAUT (0)
-            function flood(curr, from) {
-                if(visited.has(curr)) return;
-                
-                const t = tiles[curr];
-                const logicRot = t.visualRot % 360;
-                const realConns = getRealConnections(t.type, logicRot); // [T, R, B, L]
-                
-                if(!realConns[from]) return;
+            // Calculer le chemin
+            const pathData = calculateFlow();
+            const flowPath = pathData.path;
+            const success = pathData.success;
 
-                visited.add(curr);
-                flowPath.push(curr);
-
-                // VICTOIRE : Index 99, Sortie BAS (2) ou DROITE (1)
-                if(curr === 99 && (realConns[2] || realConns[1])) {
-                    success = true;
-                    return;
-                }
-
-                // Voisins
-                if(realConns[0] && from !== 0 && curr >= 10) flood(curr - 10, 2);
-                if(realConns[1] && from !== 1 && curr % 10 !== 9) flood(curr + 1, 3);
-                if(realConns[2] && from !== 2 && curr < 90) flood(curr + 10, 0);
-                if(realConns[3] && from !== 3 && curr % 10 !== 0) flood(curr - 1, 1);
+            // Animation du flux
+            for (let i = 0; i < flowPath.length; i++) {
+                tiles[flowPath[i]].el.classList.add('filled');
+                // Petit délai pour l'effet liquide
+                await new Promise(r => setTimeout(r, 50)); 
             }
 
-            flood(0, 0);
-
-            flowPath.forEach(idx => tiles[idx].el.classList.add('filled'));
-
+            // Résultat
             if(success) {
                 isPlaying = false;
                 clearInterval(gameInterval);
                 document.body.classList.remove('shake');
                 setTimeout(() => document.getElementById('win-overlay').classList.remove('hidden'), 500);
             } else {
+                // Erreur
                 if(flowPath.length > 0) tiles[flowPath[flowPath.length-1]].el.classList.add('error');
                 else tiles[0].el.classList.add('error');
                 
-                pressure += 30; // BOUM
-                document.getElementById('shout-box').innerText = "FUITE ! +30% PRESSION !";
-                document.getElementById('shout-box').style.color = "red";
+                pressure += 25; // Grosse pénalité
                 document.getElementById('pressure-container').classList.add('shake');
                 setTimeout(() => document.getElementById('pressure-container').classList.remove('shake'), 500);
-                setTimeout(() => document.querySelectorAll('.tile').forEach(e => e.classList.remove('filled', 'error')), 1000);
+                
+                await new Promise(r => setTimeout(r, 1000));
+                document.querySelectorAll('.tile').forEach(e => e.classList.remove('filled', 'error'));
+                isChecking = false; // Débloque
             }
+        }
+
+        function calculateFlow() {
+            const visited = new Set();
+            let flowPath = [];
+            let success = false;
+            
+            // Stack pour flood recursif (mais on le fait iteratif pour simplifier l'enregistrement du chemin unique)
+            // Ici on suit le flux. Si bifurcation, on prend le premier valide.
+            // Vu que c'est des tuyaux simples, il n'y a qu'une sortie max par entrée.
+            
+            let curr = 0;
+            let from = 0; // Entrée HAUT
+            let flowing = true;
+
+            while(flowing) {
+                if(visited.has(curr)) break; // Boucle
+                
+                const t = tiles[curr];
+                const logicRot = t.visualRot % 360;
+                const realConns = getRealConnections(t.type, logicRot);
+                
+                if(!realConns[from]) { flowing = false; break; } // Bloqué à l'entrée
+
+                visited.add(curr);
+                flowPath.push(curr);
+
+                if(curr === 99 && (realConns[2] || realConns[1])) {
+                    success = true;
+                    flowing = false;
+                    break;
+                }
+
+                // Trouver la sortie
+                let next = -1;
+                let nextFrom = -1;
+
+                // Haut
+                if(realConns[0] && from !== 0 && curr >= 10) { next = curr - 10; nextFrom = 2; }
+                // Droite
+                else if(realConns[1] && from !== 1 && curr % 10 !== 9) { next = curr + 1; nextFrom = 3; }
+                // Bas
+                else if(realConns[2] && from !== 2 && curr < 90) { next = curr + 10; nextFrom = 0; }
+                // Gauche
+                else if(realConns[3] && from !== 3 && curr % 10 !== 0) { next = curr - 1; nextFrom = 1; }
+
+                if(next !== -1) {
+                    curr = next;
+                    from = nextFrom;
+                } else {
+                    flowing = false; // Cul de sac
+                }
+            }
+            return { path: flowPath, success: success };
         }
 
         function getRealConnections(type, rot) {
