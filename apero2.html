@@ -18,30 +18,32 @@
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
 
         body {
-            font-family: 'Russo One', sans-serif; /* Nouvelle police */
+            font-family: 'Russo One', sans-serif;
             background-color: var(--bg-color);
             color: white;
             margin: 0; padding: 0;
-            height: 100vh; width: 100vw;
+            /* Fix pour les hauteurs mobiles capricieuses */
+            height: 100vh; height: 100dvh; 
+            width: 100vw;
             display: flex; flex-direction: column; 
             overflow: hidden;
         }
 
-        /* 1. HEADER ULTRA COMPACT (Haut) */
+        /* 1. HEADER (Taille fixe petite) */
         #top-ui {
-            flex: 0 0 auto; /* Ne s'étire pas */
+            flex: 0 0 auto;
             width: 100%; 
-            padding: 5px 10px; 
+            padding: 10px 5px; 
             text-align: center;
             background: #111; border-bottom: 2px solid #333;
             z-index: 10;
         }
         
-        h1 { margin: 0; font-size: 1.2rem; color: var(--beer-gold); letter-spacing: 1px; text-transform: uppercase; line-height: 1.2;}
-        .subtitle { font-size: 0.7rem; color: #888; margin: 0 0 5px 0; font-family: sans-serif;}
+        h1 { margin: 0; font-size: 1.1rem; color: var(--beer-gold); letter-spacing: 1px; text-transform: uppercase; }
+        .subtitle { font-size: 0.7rem; color: #888; margin: 2px 0; font-family: sans-serif;}
 
         #pressure-container {
-            width: 100%; height: 10px; background: #222;
+            width: 80%; margin: 5px auto 0; height: 10px; background: #222;
             border: 1px solid #555; border-radius: 5px;
             position: relative; overflow: hidden;
         }
@@ -51,24 +53,26 @@
             transition: width 0.2s linear;
         }
 
-        /* 2. BOARD (Flexible et centré) */
+        /* 2. BOARD (Prend l'espace et centre) */
         #game-board {
-            flex: 1 1 auto; /* Prend toute la place disponible */
+            flex: 1; /* Remplit l'espace central */
             width: 100%; 
             display: flex; align-items: center; justify-content: center;
             position: relative; 
-            padding: 5px;
-            overflow: hidden; 
+            padding: 20px; /* Marge de sécurité autour du carré */
+            overflow: hidden;
         }
 
         #grid-container {
             position: relative;
-            /* ASTUCE MOBILE : La grille ne dépasse jamais 95% de la largeur OU 55% de la hauteur */
-            /* Cela garantit qu'il reste de la place pour le header et le bouton */
-            width: min(95vw, 55vh); 
-            height: min(95vw, 55vh);
-            /* Aspect ratio carré */
-            aspect-ratio: 1/1;
+            /* LA SOLUTION : On prend la plus petite dimension dispo pour faire le carré */
+            /* 95% de la largeur OU 65% de la hauteur totale */
+            width: min(95vw, 65vh);
+            height: min(95vw, 65vh);
+            aspect-ratio: 1 / 1; /* Force le carré parfait */
+            
+            display: flex; justify-content: center; align-items: center;
+            margin: auto; /* Centrage */
         }
 
         #grid {
@@ -81,18 +85,35 @@
             width: 100%; height: 100%;
         }
 
-        /* MARQUEURS */
+        /* MARQUEURS (Plus espacés et avec flèches) */
         .marker {
             position: absolute; 
             font-size: 0.8rem; 
             color: var(--beer-gold); 
-            text-shadow: 1px 1px 0 #000;
+            text-shadow: 1px 1px 2px #000;
             z-index: 20; pointer-events: none;
             display: flex; align-items: center; gap: 5px;
             white-space: nowrap;
         }
-        #start-marker { top: -20px; left: 0; }
-        #end-marker { bottom: -20px; right: 0; }
+        /* Flèche d'entrée */
+        #start-marker { 
+            top: -35px; left: 0; 
+            flex-direction: column; align-items: flex-start; gap: 0;
+        }
+        #start-marker .arrow { font-size: 1.2rem; margin-left: 15px; color: var(--neon-blue); animation: bounceDown 1s infinite;}
+        
+        /* Flèche de sortie */
+        #end-marker { 
+            bottom: -35px; right: 0;
+            flex-direction: column-reverse; align-items: flex-end; gap: 0;
+        }
+        #end-marker .arrow { font-size: 1.2rem; margin-right: 15px; color: var(--neon-blue); animation: bounceDown 1s infinite;}
+
+        @keyframes bounceDown {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(5px); }
+        }
+
 
         /* TUILES & TUYAUX */
         .tile {
@@ -110,7 +131,6 @@
             transform: translate(-50%, -50%); border-radius: 50%;
             transition: background 0.2s;
         }
-        /* Ajustement fin des tuyaux pour qu'ils se touchent bien */
         .arm.top { top: -1px; left: 50%; width: var(--pipe-width); height: 55%; transform: translateX(-50%); }
         .arm.bottom { bottom: -1px; left: 50%; width: var(--pipe-width); height: 55%; transform: translateX(-50%); }
         .arm.left { left: -1px; top: 50%; width: 55%; height: var(--pipe-width); transform: translateY(-50%); }
@@ -120,10 +140,10 @@
         .tile.filled .arm, .tile.filled .center-hub { background: var(--beer-gold); box-shadow: 0 0 5px var(--beer-gold); }
         .tile.error .arm, .tile.error .center-hub { background: var(--neon-alert); box-shadow: 0 0 5px red; }
 
-        /* 3. FOOTER (Collé au jeu) */
+        /* 3. FOOTER (Taille fixe petite) */
         #controls {
-            flex: 0 0 auto; /* Ne s'étire pas */
-            width: 100%; padding: 10px 20px 20px 20px;
+            flex: 0 0 auto;
+            width: 100%; padding: 15px;
             display: flex; justify-content: center; align-items: center;
             background: #111; border-top: 1px solid #333;
         }
@@ -132,15 +152,12 @@
             padding: 12px 0; border-radius: 8px; border: none;
             background: var(--beer-gold); color: black;
             font-family: 'Russo One', sans-serif;
-            font-size: 1.2rem; cursor: pointer;
-            box-shadow: 0 4px 0 #b38f00; /* Effet bouton 3D */
+            font-size: 1.1rem; cursor: pointer;
+            box-shadow: 0 4px 0 #b38f00; 
             transition: transform 0.1s, box-shadow 0.1s;
             text-transform: uppercase;
         }
-        #btn-check:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 #b38f00;
-        }
+        #btn-check:active { transform: translateY(4px); box-shadow: 0 0 0 #b38f00; }
 
         /* OVERLAYS */
         .overlay {
@@ -169,9 +186,17 @@
 
     <div id="game-board">
         <div id="grid-container">
-            <div class="marker" id="start-marker">🛢️ COMME D'HAB</div>
+            <div class="marker" id="start-marker">
+                <div>🛢️ COMME D'HAB</div>
+                <div class="arrow">⬇️</div>
+            </div>
+            
             <div id="grid"></div>
-            <div class="marker" id="end-marker">TIREUSE FOY'S 🍺</div>
+            
+            <div class="marker" id="end-marker">
+                <div>TIREUSE FOY'S 🍺</div>
+                <div class="arrow">⬆️</div>
+            </div>
         </div>
     </div>
 
@@ -183,9 +208,9 @@
         <h1 style="color:var(--beer-gold); font-size:2.5rem; margin-bottom:10px;">ÉTAPE 2</h1>
         <p style="font-size:1.1rem; color:#ccc;">CONNECTE LA "COMME D'HAB"</p>
         <div style="background:#222; padding:15px; margin:20px 0; border:1px solid #444; text-align:left; font-size:0.95rem; border-radius: 8px; font-family: sans-serif;">
-            <p>1. Les Piliers ont soif.</p>
-            <p>2. Connecte le <b>Fût</b> (Haut) à la <b>Tireuse</b> (Bas).</p>
-            <p>3. Attention : La pression monte <b>VITE</b>.</p>
+            <p>1. Les Piliers ont soif</p>
+            <p>2. Connecte le <b>Fût</b> (Haut) à la <b>Tireuse</b> (Bas)</p>
+            <p>3. Attention : La pression monte <b>VITE</b></p>
             <p style="color:red; text-align:center; font-weight:bold; margin-top:10px;">FUITE = PÉNALITÉ !</p>
         </div>
         <button id="btn-check" onclick="startLevel()">JE GÈRE</button>
@@ -194,11 +219,9 @@
     <div id="explode-overlay" class="overlay hidden">
         <h1 style="color:red; font-size:4rem; margin:0; text-shadow: 2px 2px 0px black;">BOUM !</h1>
         <p style="font-size:1.5rem; font-weight:bold; margin-top:10px;">QUEL GÂCHIS...</p>
-        
         <div style="border:4px solid black; padding:20px; font-weight:bold; margin-top:20px; transform:rotate(-2deg); font-size:1.5rem; background:white; color:black;">
             PÉNALITÉ :<br>3 GORGÉES
         </div>
-        
         <button id="btn-check" style="margin-top:30px; background:black; color:white; border:2px solid white;" onclick="retryLevel()">J'AI BU, JE RÉESSAYE</button>
     </div>
 
@@ -356,7 +379,6 @@
         function gameLoop() {
             if(!isPlaying) return;
             
-            // PRESSION (Vitesse x2 par rapport au dernier)
             pressure += 0.25; 
             
             document.getElementById('pressure-bar').style.width = Math.min(pressure, 100) + "%";
@@ -391,7 +413,6 @@
             const flowPath = pathData.path;
             const success = pathData.success;
 
-            // Anim case par case
             for (let i = 0; i < flowPath.length; i++) {
                 tiles[flowPath[i]].el.classList.add('filled');
                 await new Promise(r => setTimeout(r, 40)); 
