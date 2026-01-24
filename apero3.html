@@ -16,8 +16,6 @@
             --wood-texture: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
             --paper-texture: url('https://www.transparenttextures.com/patterns/cream-paper.png');
             --cardboard-texture: url('https://www.transparenttextures.com/patterns/cardboard.png');
-            --ink-black: #1a1a1a;
-            --ink-blue: #1a237e;
             --accent-gold: #ffc107;
             --accent-uv: #6200ea;
             --text-uv: rgba(100, 255, 50, 0.95);
@@ -36,7 +34,7 @@
             position: relative; width: 100%; height: 100%;
             background-color: #2e1a0f; background-image: var(--wood-texture);
             box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
-            /* CORRECTION BUG : On désactive les clics sur le fond */
+            /* Optimisation interaction */
             pointer-events: none;
         }
         #stage-overlay {
@@ -45,16 +43,15 @@
             pointer-events: none !important;
         }
 
-        /* ================================= ITEMS (TAILLES RÉDUITES) ================================= */
+        /* ================================= ITEMS ================================= */
         .table-item {
             position: absolute; cursor: pointer; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
             transition: transform 0.1s ease-out, filter 0.1s; transform-origin: center; will-change: transform, left, top; z-index: 10;
-            /* CORRECTION BUG : On réactive les clics UNIQUEMENT sur les objets */
-            pointer-events: auto;
+            pointer-events: auto; /* Rétablit les clics sur les objets */
         }
         .table-item:active { transform: scale(0.97) !important; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
 
-        /* --- COFFRE --- */
+        /* --- COFFRE (Bas Gauche, ne chevauche plus le ticket) --- */
         #item-safe {
             width: 140px; height: 110px; background: linear-gradient(180deg, #444, #222);
             border: 2px solid #111; border-radius: 6px; box-shadow: 0 12px 25px rgba(0,0,0,0.9);
@@ -67,76 +64,79 @@
         .safe-dial::before { content: ''; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 2px; height: 8px; background: red; }
         .safe-handle { width: 35px; height: 6px; background: #ccc; border-radius: 4px; box-shadow: 0 2px 3px black; }
 
-        /* --- LAMPE TORCHE --- */
+        /* --- LAMPE TORCHE (Cachée derrière coffre) --- */
         #item-flashlight {
-            width: 110px; height: 30px; background: #111; border-radius: 8px; border: 1px solid #333;
+            width: 110px; height: 30px; background: #111; border-radius: 10px; border: 1px solid #333;
+            /* Position dynamique gérée par le HTML initial pour correspondre au coffre */
             z-index: 5;
             display: flex; align-items: center; justify-content: space-between; padding: 0 4px;
-            box-shadow: inset 0 0 8px black; 
+            box-shadow: inset 0 0 8px black; pointer-events: auto;
         }
-        #item-flashlight::before { content: ''; position: absolute; top: -20px; left: -20px; right: -20px; bottom: -20px; z-index: 6; }
+        #item-flashlight::before { content: ''; position: absolute; top: -30px; left: -30px; right: -30px; bottom: -30px; z-index: 6; }
         .flash-head { width: 20px; height: 34px; background: #222; border-right: 2px solid #444; border-radius: 3px; pointer-events: none; }
         .flash-body { width: 60px; height: 18px; background: repeating-linear-gradient(90deg, #111, #111 2px, #222 2px, #222 4px); pointer-events: none; }
 
-        /* --- LETTRE --- */
+        /* --- LETTRE (Haut Gauche) --- */
         .item-letter {
-            width: 160px; height: 110px; background: #fff; background-image: var(--paper-texture);
-            padding: 12px; color: #111; transform: rotate(3deg); box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            width: 150px; height: 100px; background: #fff; background-image: var(--paper-texture);
+            padding: 10px; color: #111; transform: rotate(3deg); box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
-        .letter-blur { font-family: var(--font-messy); font-size: 0.6rem; line-height: 1; filter: blur(0.6px); opacity: 0.7; overflow: hidden; height: 100%; user-select: none; color: #333; pointer-events: none; }
+        .letter-blur { font-family: var(--font-messy); font-size: 0.55rem; line-height: 1; filter: blur(0.6px); opacity: 0.7; overflow: hidden; height: 100%; user-select: none; color: #333; pointer-events: none; }
 
-        /* --- TICKET --- */
+        /* --- TICKET (Milieu Gauche) --- */
         .item-receipt {
-            width: 110px; height: 210px; background: #fff; padding: 8px; font-family: var(--font-tech);
-            font-size: 0.5rem; color: #333; transform: rotate(-5deg);
+            width: 100px; height: 190px; background: #fff; padding: 8px; font-family: var(--font-tech);
+            font-size: 0.45rem; color: #333; transform: rotate(-5deg);
             background-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.02));
             mask-image: linear-gradient(to bottom, transparent 1%, black 2%, black 98%, transparent 99%);
             border-top: 1px dotted #ccc; border-bottom: 1px dotted #ccc;
         }
-        .receipt-header { text-align: center; margin-bottom: 10px; }
+        .receipt-header { text-align: center; margin-bottom: 8px; }
         .receipt-row { display: flex; justify-content: space-between; margin-bottom: 2px;}
-        .receipt-total { margin-top: 12px; border-top: 2px dashed #000; padding-top: 5px; font-weight: bold; font-size: 0.6rem; display: flex; justify-content: space-between; }
+        .receipt-total { margin-top: 10px; border-top: 2px dashed #000; padding-top: 4px; font-weight: bold; font-size: 0.55rem; display: flex; justify-content: space-between; }
         .hidden-price { background: #111; color: #111; padding: 0 2px; }
-        .receipt-stain { position: absolute; bottom: 40px; left: 15px; width: 35px; height: 35px; background: rgba(160, 100, 30, 0.2); border-radius: 50%; filter: blur(6px); pointer-events: none; }
+        .receipt-stain { position: absolute; bottom: 30px; left: 10px; width: 30px; height: 30px; background: rgba(160, 100, 30, 0.2); border-radius: 50%; filter: blur(5px); pointer-events: none; }
 
-        /* --- MENU --- */
+        /* --- MENU (Bas Droite) --- */
         .item-menu {
-            width: 140px; height: 210px; background: #1b1b1b; border: 2px solid var(--accent-gold);
+            width: 130px; height: 190px; background: #1b1b1b; border: 2px solid var(--accent-gold);
             color: #ddd; padding: 10px; font-family: 'Times New Roman', serif; transform: rotate(-3deg);
             box-shadow: 0 5px 12px rgba(0,0,0,0.6);
         }
-        .menu-title { text-align: center; font-family: var(--font-ui); font-weight:900; color: var(--accent-gold); margin-bottom: 12px; padding-bottom: 4px; border-bottom: 1px solid #444; letter-spacing: 1px; font-size: 0.9rem; }
-        .menu-list { font-size: 0.6rem; line-height: 1.8; }
+        .menu-title { text-align: center; font-family: var(--font-ui); font-weight:900; color: var(--accent-gold); margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #444; letter-spacing: 1px; font-size: 0.8rem; }
+        .menu-list { font-size: 0.55rem; line-height: 1.8; }
         .menu-item { display: flex; justify-content: space-between; border-bottom: 1px dotted #444; }
 
-        /* --- POLAROID --- */
-        .item-photo { width: 120px; height: 150px; background: #fff; padding: 6px 6px 35px 6px; transform: rotate(8deg); box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
+        /* --- POLAROID (Haut Droite) --- */
+        .item-photo { width: 110px; height: 140px; background: #fff; padding: 6px 6px 30px 6px; transform: rotate(8deg); box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
         .photo-inner { width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .photo-inner img { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) sepia(0.2); }
-        .photo-text { position: absolute; bottom: 6px; width: 100%; text-align: center; font-family: var(--font-hand); color: #222; font-weight: bold; font-size: 1rem; }
+        .photo-text { position: absolute; bottom: 6px; width: 100%; text-align: center; font-family: var(--font-hand); color: #222; font-weight: bold; font-size: 0.9rem; }
 
-        /* --- SOUS-BOCK --- */
+        /* --- SOUS-BOCK (Milieu Droite) --- */
         .item-coaster {
-            width: 100px; height: 100px; border-radius: 50%; background: #d7ccc8;
+            width: 90px; height: 90px; border-radius: 50%; background: #d7ccc8;
             border: 3px solid #5d4037; display: flex; align-items: center; justify-content: center; text-align: center;
-            transform: rotate(20deg); padding: 8px; background-image: var(--cardboard-texture); box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+            transform: rotate(20deg); padding: 5px; background-image: var(--cardboard-texture); box-shadow: 0 3px 6px rgba(0,0,0,0.5);
         }
-        .coaster-logo { font-family: var(--font-type); color: #3e2723; font-weight: bold; line-height: 1.1; font-size: 0.9rem; }
+        .coaster-logo { font-family: var(--font-type); color: #3e2723; font-weight: bold; line-height: 1.1; font-size: 0.7rem; }
 
         /* ================================= LUMIÈRE & UV ================================= */
         .uv-hidden-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.1s; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+        /* Police UV réduite pour le sous-bock */
         .uv-text-style { font-family: var(--font-hand); font-weight: bold; color: var(--text-uv); text-shadow: 0 0 5px var(--text-uv); text-align: center; }
         .uv-revealable.is-lit .uv-hidden-layer { opacity: 1; }
 
         #light-mask-normal, #light-mask-uv { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none !important; opacity: 0; transition: opacity 0.2s; will-change: opacity; }
-        #light-mask-normal { z-index: 900; mix-blend-mode: soft-light; background: radial-gradient(circle 200px at var(--lx, 50%) var(--ly, 50%), rgba(255, 220, 180, 0.4) 0%, rgba(0,0,0,0.6) 70%); }
-        #light-mask-uv { z-index: 900; mix-blend-mode: color-dodge; background: radial-gradient(circle 160px at var(--lx, 50%) var(--ly, 50%), rgba(80, 0, 255, 0.5) 0%, rgba(10, 0, 40, 0.8) 70%); }
+        #light-mask-normal { z-index: 900; mix-blend-mode: soft-light; background: radial-gradient(circle 220px at var(--lx, 50%) var(--ly, 50%), rgba(255, 220, 180, 0.4) 0%, rgba(0,0,0,0.6) 70%); }
+        #light-mask-uv { z-index: 900; mix-blend-mode: color-dodge; background: radial-gradient(circle 180px at var(--lx, 50%) var(--ly, 50%), rgba(80, 0, 255, 0.5) 0%, rgba(10, 0, 40, 0.8) 70%); }
         body.flash-on.mode-normal #light-mask-normal { opacity: 1; }
         body.flash-on.mode-uv #light-mask-uv { opacity: 1; }
 
         /* ================================= HUD ================================= */
         #hud-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; display: flex; flex-direction: column; justify-content: space-between; }
         .hud-header { background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); padding: 15px; text-align: center; }
+        /* Titre grossi */
         .hud-title { font-family: var(--font-type); color: var(--accent-gold); font-size: 1.6rem; margin: 0; letter-spacing: 2px; text-shadow: 0 2px 4px black; }
         .hud-footer { padding: 15px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); min-height: 120px; pointer-events: auto; }
         
@@ -169,13 +169,13 @@
 
         .modal-content-centered { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
 
-        .modal-buttons { display: flex; flex-direction: column; gap: 10px; width: 80%; max-width: 280px; z-index: 3005; pointer-events: auto; }
-        .btn-modal { padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; font-family: var(--font-ui); font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: background 0.2s; font-size: 0.9rem;}
+        .modal-buttons { display: flex; flex-direction: column; gap: 10px; width: 80%; max-width: 250px; z-index: 3005; }
+        .btn-modal { padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; font-family: var(--font-ui); font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: background 0.2s; font-size: 0.8rem;}
         .btn-modal:active { background: #333; transform: scale(0.98); }
         .btn-flip { background: var(--ink-blue); border-color: #1a237e; display: none; }
         .btn-close { background: #c62828; border-color: #b71c1c; }
 
-        .zoom-letter-content { background: #fff; padding: 20px; color: #111; font-family: var(--font-hand); font-size: 1.2rem; line-height: 1.3; transform: rotate(-1deg); width: 100%; height: auto; min-height: 60%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: left; }
+        .zoom-letter-container { background: #fff; padding: 20px; color: #111; font-family: var(--font-hand); font-size: 1.2rem; line-height: 1.3; transform: rotate(-1deg); width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: left; }
         .modal-cloned-item { position: relative !important; transform: scale(1.3) rotate(0deg) !important; top: auto !important; left: auto !important; margin: auto; }
 
         /* Digicode */
@@ -212,14 +212,14 @@
     <div id="game-stage">
         <div id="stage-overlay"></div>
 
-        <div class="table-item item-letter" style="top:15%; left:15%;" onclick="Engine.inspect('letter')">
+        <div class="table-item item-letter" style="top:12%; left:5%;" onclick="Engine.inspect('letter')">
             <div class="letter-blur">
                 Salut les Piliers. Bon courage pour le code.<br><br>
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt.
             </div>
         </div>
 
-        <div class="table-item item-receipt" style="top:45%; left:15%;" onclick="Engine.inspect('receipt')">
+        <div class="table-item item-receipt" style="top:38%; left:8%;" onclick="Engine.inspect('receipt')">
             <div class="receipt-header">LE SAINT FOY'S<br>CLUNY 71250<br><span style="font-size:0.45rem">Srv: Adanars 108</span></div>
             <div style="border-bottom:1px dashed #aaa; margin-bottom:5px;"></div>
             <div class="receipt-body">
@@ -232,16 +232,16 @@
             <div class="receipt-stain"></div>
         </div>
 
-        <div class="table-item item-photo" style="top:15%; left:75%;" onclick="Engine.inspect('photo')">
+        <div class="table-item item-photo" style="top:12%; left:65%;" onclick="Engine.inspect('photo')">
             <div class="photo-inner"><img src="Temps/sam&anthe.jpg" alt="Photo"></div>
             <div class="photo-text">30 Janvier ❤️</div>
         </div>
 
-        <div class="table-item item-coaster" style="top:45%; left:75%;" onclick="Engine.inspect('coaster')">
+        <div class="table-item item-coaster" style="top:40%; left:65%;" onclick="Engine.inspect('coaster')">
             <div class="coaster-logo"><b>SAINT FOY'S</b><br>BAR</div>
         </div>
 
-        <div class="table-item item-menu uv-revealable" style="top:70%; left:70%;" onclick="Engine.inspect('menu')">
+        <div class="table-item item-menu uv-revealable" style="top:65%; left:60%;" onclick="Engine.inspect('menu')">
             <div class="menu-title">CARTE</div>
             <div class="menu-list">
                 <div class="menu-item"><span>Pinte Blonde (50cl)</span><span>8 €</span></div>
@@ -255,11 +255,11 @@
             </div>
         </div>
 
-        <div class="table-item" id="item-safe" style="top:70%; left:30%; transform: translate(-50%, -50%);">
+        <div class="table-item" id="item-safe" style="top:82%; left:20%; transform: translate(-50%, -50%);">
             <div class="safe-door-outline"><div class="safe-dial"></div><div class="safe-handle"></div></div>
         </div>
 
-        <div class="table-item" id="item-flashlight" style="top:70%; left:30%; transform: translate(-50%, -50%) rotate(10deg);" onclick="Engine.pickupFlashlight()">
+        <div class="table-item" id="item-flashlight" style="top:82%; left:20%; transform: translate(-50%, -50%) rotate(10deg);" onclick="Engine.pickupFlashlight(event)">
             <div class="flash-head"></div><div class="flash-body"></div>
         </div>
     </div>
@@ -309,7 +309,8 @@
                 setTimeout(() => el.style.opacity = 0, 3000);
             },
 
-            pickupFlashlight: function() {
+            pickupFlashlight: function(e) {
+                if(e) e.stopPropagation(); // Stop propagation
                 document.getElementById('item-flashlight').style.display = 'none';
                 document.getElementById('flashlight-ui').style.display = 'flex';
                 this.state.hasFlashlight = true;
@@ -348,7 +349,9 @@
             },
 
             inspect: function(id) {
+                // Vérification si on est en train de glisser (Drag)
                 if(this.state.wasDragging) return;
+                
                 const modal = document.getElementById('modal-inspect');
                 const flipper = document.getElementById('zoom-flipper');
                 const front = document.getElementById('zoom-front');
@@ -376,9 +379,9 @@
                         back.innerHTML = `<div class="modal-content-centered"><div style="width:240px; height:280px; background:#e0e0e0; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);"><div style="font-family:var(--font-hand); font-size:3.5rem; color:#333; transform:rotate(-5deg);">Table N°59</div></div></div>`; break;
                     case 'coaster':
                         btnFlip.style.display='block';
-                        // TEXTE UV REDUIT ICI (font-size:0.95rem)
-                        front.innerHTML = `<div class="modal-content-centered"><div style="width:220px; height:220px; border-radius:50%; background:#d7ccc8; border:6px solid #5d4037; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(0,0,0,0.5); background-image:var(--cardboard-texture);"><div style="text-align:center; font-family:var(--font-type); font-size:1.8rem; color:#5d4037; font-weight:bold;">SAINT FOY'S<br>BAR</div></div></div>`;
-                        back.innerHTML = `<div class="modal-content-centered"><div class="uv-revealable" style="width:220px; height:220px; border-radius:50%; background:#bcaaa4; border:6px solid #5d4037; display:flex; align-items:center; justify-content:center; background-image:var(--cardboard-texture); position:relative; overflow:hidden;"><div class="uv-hidden-layer"><div class="uv-text-style" style="font-size:0.95rem; border:3px dashed var(--text-uv); padding:15px; border-radius:50%; transform:rotate(-5deg);">( PRIX BIÈRES + TABLE )<br>x JOUR</div></div><div style="font-size:0.7rem; color:#666; position:absolute; bottom:30px;">(Dos du sous-bock)</div></div></div>`; break;
+                        front.innerHTML = `<div class="modal-content-centered"><div style="width:220px; height:220px; border-radius:50%; background:#d7ccc8; border:8px solid #5d4037; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(0,0,0,0.5); background-image:var(--cardboard-texture);"><div style="text-align:center; font-family:var(--font-type); font-size:1.8rem; color:#5d4037; font-weight:bold;">SAINT FOY'S<br>BAR</div></div></div>`;
+                        // TEXTE UV REDUIT (font-size:0.9rem)
+                        back.innerHTML = `<div class="modal-content-centered"><div class="uv-revealable" style="width:220px; height:220px; border-radius:50%; background:#bcaaa4; border:8px solid #5d4037; display:flex; align-items:center; justify-content:center; background-image:var(--cardboard-texture); position:relative; overflow:hidden;"><div class="uv-hidden-layer"><div class="uv-text-style" style="font-size:0.9rem; border:3px dashed var(--text-uv); padding:15px; border-radius:50%; transform:rotate(-5deg);">( PRIX BIÈRES + TABLE )<br>x JOUR</div></div><div style="font-size:0.7rem; color:#666; position:absolute; bottom:30px;">(Dos du sous-bock)</div></div></div>`; break;
                 }
                 modal.classList.add('open');
             },
@@ -397,7 +400,12 @@
                 if(Math.abs(cx-this.state.dragStart.x)>5||Math.abs(cy-this.state.dragStart.y)>5) this.state.wasDragging=true;
                 this.state.dragging.style.left=(cx-this.state.dragOffset.x)+'px'; this.state.dragging.style.top=(cy-this.state.dragOffset.y)+'px'; this.state.dragging.style.transform='none';
             },
-            dragEnd: function() { if(this.state.dragging)this.state.dragging.style.zIndex=50; this.state.dragging=null; }
+            // FIX BUG : Reset wasDragging après un court délai pour libérer le clic
+            dragEnd: function() { 
+                if(this.state.dragging) this.state.dragging.style.zIndex=100; 
+                this.state.dragging=null;
+                setTimeout(() => { this.state.wasDragging = false; }, 50);
+            }
         };
 
         const Keypad = {
