@@ -31,59 +31,17 @@
         * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: var(--bg-color); overflow: hidden; font-family: var(--font-ui); color: white; }
 
-        /* ================================= ECRANS INTRO / SUCCESS ================================= */
-        .screen-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #0a0a0a; z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 20px; transition: opacity 0.8s ease-out;
-        }
-        .screen-overlay.hidden { opacity: 0; pointer-events: none; }
-
-        /* INTRO */
-        .intro-folder { border: 2px solid #333; padding: 20px; max-width: 400px; background: #111; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
-        .intro-title { font-family: var(--font-type); font-size: 2rem; color: var(--accent-gold); margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .intro-text { font-family: var(--font-type); font-size: 0.9rem; color: #ccc; line-height: 1.6; margin-bottom: 30px; text-align: left; }
-        .btn-start {
-            background: var(--accent-gold); color: #000; font-family: var(--font-ui); font-weight: 900;
-            border: none; padding: 12px 25px; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
-            box-shadow: 0 0 20px rgba(255, 193, 7, 0.4); animation: pulse 2s infinite;
-        }
-
-        /* SUCCESS (VICTOIRE) */
-        #success-screen { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
-        .success-content { 
-            border: 4px solid var(--accent-gold); padding: 40px; background: #000; 
-            box-shadow: 0 0 80px rgba(255, 193, 7, 0.3); transform: scale(0.8); opacity: 0; 
-            transition: all 0.5s ease-out;
-        }
-        #success-screen.visible .success-content { transform: scale(1); opacity: 1; }
-        .success-title { font-family: var(--font-ui); font-weight: 900; font-size: 2.5rem; color: var(--accent-gold); margin-bottom: 10px; text-shadow: 0 0 20px var(--accent-gold); }
-        .success-text { font-family: var(--font-ui); font-size: 1rem; color: #fff; margin-bottom: 30px; }
-        .btn-next {
-            background: transparent; border: 2px solid #fff; color: #fff; font-family: var(--font-ui); font-weight: bold;
-            padding: 15px 40px; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
-            transition: all 0.3s;
-        }
-        .btn-next:active { background: #fff; color: #000; }
-
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-
         /* ================================= ENVIRONNEMENT ================================= */
         #game-stage {
             position: relative; width: 100%; height: 100%;
             background-color: #2e1a0f; background-image: var(--wood-texture);
             box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
             pointer-events: none; /* Clics fond désactivés */
-            transition: transform 1s ease-in-out; /* Pour le zoom final */
-            transform-origin: 30% 75%; /* Focus sur le coffre */
         }
-        #game-stage.zoomed { transform: scale(2.5); }
-
         #stage-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.5) 100%); 
-            pointer-events: none !important; z-index: 20;
+            pointer-events: none !important;
         }
 
         /* ================================= ITEMS ================================= */
@@ -92,15 +50,14 @@
             transition: transform 0.1s ease-out, filter 0.1s; transform-origin: center; will-change: transform, left, top; z-index: 10;
             pointer-events: auto; /* Clics objets activés */
         }
-        .table-item:active { transform: scale(0.95) !important; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .table-item:active { transform: scale(0.97) !important; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
 
-        /* --- COFFRE-FORT 3D ANIMÉ --- */
+        /* --- COFFRE (Plus bas) --- */
         #item-safe {
-            width: 130px; height: 100px;
-            perspective: 800px; /* Active la 3D */
+            width: 140px; height: 110px;
+            /* 3D Properties */
+            perspective: 800px; 
             cursor: grab; z-index: 100;
-            /* Position */
-            top: 75%; left: 30%; transform: translate(-50%, -50%);
         }
         #item-safe:active { cursor: grabbing; }
 
@@ -112,78 +69,60 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.9);
             position: relative;
         }
-
-        /* Intérieur du coffre (caché par la porte) */
+        /* Intérieur + Bouteille */
         .safe-interior {
             position: absolute; top: 5%; left: 5%; width: 90%; height: 90%;
             background: #000; box-shadow: inset 0 0 10px #000;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
-        /* La Bouteille Légendaire (Cachée) */
         .safe-bottle {
             font-size: 3rem; filter: drop-shadow(0 0 10px gold);
             opacity: 0; transform: scale(0.5); transition: all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        /* Effet d'apparition */
         #item-safe.open .safe-bottle { opacity: 1; transform: scale(1.2); }
 
-        /* Porte du coffre */
+        /* Porte */
         .safe-door {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #3a3a3a, #1a1a1a);
             border: 1px solid #555; border-radius: 4px;
-            transform-origin: left; /* Charnière à gauche */
-            transition: transform 1.5s ease-in-out;
+            transform-origin: left; transition: transform 1.5s ease-in-out;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            /* Face arrière de la porte (optionnel mais propre) */
             backface-visibility: hidden;
         }
-        /* Animation d'ouverture */
         #item-safe.open .safe-door { transform: rotateY(-130deg); }
 
         .safe-dial { width: 45px; height: 45px; background: #111; border-radius: 50%; border: 2px solid #666; box-shadow: 0 3px 6px black; position: relative; margin-bottom: 8px; }
         .safe-dial::before { content: ''; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 2px; height: 8px; background: red; }
         .safe-handle { width: 35px; height: 6px; background: #ccc; border-radius: 4px; box-shadow: 0 2px 3px black; }
 
-
         /* --- LAMPE TORCHE --- */
         #item-flashlight {
             width: 110px; height: 30px; background: #111; border-radius: 10px; border: 1px solid #333;
-            /* Position exacte sous le coffre */
-            position: absolute; top: 75%; left: 30%; transform: translate(-50%, -50%) rotate(10deg);
-            z-index: 5; /* Derrière */
+            z-index: 5; /* Derrière le coffre */
             display: flex; align-items: center; justify-content: space-between; padding: 0 4px;
             box-shadow: inset 0 0 8px black; pointer-events: auto;
         }
-        /* Hitbox invisible pour faciliter la prise */
+        /* Hitbox étendue */
         #item-flashlight::before { content: ''; position: absolute; top: -30px; left: -30px; right: -30px; bottom: -30px; z-index: 6; }
         .flash-head { width: 20px; height: 34px; background: #222; border-right: 2px solid #444; border-radius: 3px; pointer-events: none; }
         .flash-body { width: 60px; height: 18px; background: repeating-linear-gradient(90deg, #111, #111 2px, #222 2px, #222 4px); pointer-events: none; }
 
-        /* --- LETTRE --- */
+        /* --- LETTRE (AVEC BLUR) --- */
         .item-letter {
-            width: 150px; height: 100px; background: #fff; 
-            background-image: var(--paper-texture);
-            padding: 12px; color: #111; 
-            transform: rotate(3deg); 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            overflow: hidden;
+            width: 150px; height: 100px; background: #fff; background-image: var(--paper-texture);
+            padding: 10px; color: #111; transform: rotate(3deg); box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
-        /* Texte illisible sur la table : on utilise la police brouillon en très petit sans flou */
+        /* RETOUR DU FLOU */
         .letter-blur { 
-            font-family: var(--font-messy); 
-            font-size: 0.5rem; 
-            line-height: 0.9; 
-            color: #555;
-            user-select: none; 
-            pointer-events: none;
-            white-space: wrap; /* Garde la structure du texte */
+            font-family: var(--font-messy); font-size: 0.55rem; line-height: 1; 
+            filter: blur(0.7px); opacity: 0.7; overflow: hidden; height: 100%; 
+            user-select: none; color: #333; pointer-events: none; 
         }
 
         /* --- TICKET --- */
         .item-receipt {
-            width: 100px; height: 180px; background: #fff; padding: 8px; font-family: var(--font-tech);
+            width: 100px; height: 190px; background: #fff; padding: 8px; font-family: var(--font-tech);
             font-size: 0.45rem; color: #333; transform: rotate(-5deg);
             background-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.02));
             mask-image: linear-gradient(to bottom, transparent 1%, black 2%, black 98%, transparent 99%);
@@ -233,6 +172,7 @@
         /* ================================= HUD ================================= */
         #hud-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; display: flex; flex-direction: column; justify-content: space-between; }
         .hud-header { background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); padding: 15px; text-align: center; }
+        /* TITRE 1.6REM */
         .hud-title { font-family: var(--font-type); color: var(--accent-gold); font-size: 1.6rem; margin: 0; letter-spacing: 2px; text-shadow: 0 2px 4px black; }
         .hud-footer { padding: 15px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); min-height: 120px; pointer-events: auto; }
         
@@ -258,7 +198,7 @@
         }
         .modal-overlay.open { display: flex; }
 
-        .flip-wrapper { width: 90vw; max-width: 320px; aspect-ratio: 3/4; position: relative; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; margin-bottom: 15px; }
+        .flip-wrapper { width: 90vw; max-width: 300px; aspect-ratio: 3/4; position: relative; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; margin-bottom: 15px; }
         .flip-wrapper.flipped { transform: rotateY(180deg); }
         .flip-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; }
         .flip-back { transform: rotateY(180deg); }
@@ -285,13 +225,29 @@
         .shake-error { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
 
+        /* SCREENS */
+        .screen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0a0a0a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; transition: opacity 0.8s ease-out; }
+        .screen-overlay.hidden { opacity: 0; pointer-events: none; }
+        .intro-folder { border: 2px solid #333; padding: 20px; max-width: 400px; background: #111; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        .intro-title { font-family: var(--font-type); font-size: 2rem; color: var(--accent-gold); margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .intro-text { font-family: var(--font-type); font-size: 0.9rem; color: #ccc; line-height: 1.6; margin-bottom: 30px; text-align: left; }
+        .btn-start { background: var(--accent-gold); color: #000; font-family: var(--font-ui); font-weight: 900; border: none; padding: 12px 25px; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 0 20px rgba(255, 193, 7, 0.4); animation: pulse 2s infinite; }
+        #success-screen { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
+        .success-content { border: 4px solid var(--accent-gold); padding: 40px; background: #000; box-shadow: 0 0 80px rgba(255, 193, 7, 0.3); transform: scale(0.8); opacity: 0; transition: all 0.5s ease-out; }
+        #success-screen.visible .success-content { transform: scale(1); opacity: 1; }
+        .success-title { font-family: var(--font-ui); font-weight: 900; font-size: 2.5rem; color: var(--accent-gold); margin-bottom: 10px; text-shadow: 0 0 20px var(--accent-gold); }
+        .success-text { font-family: var(--font-ui); font-size: 1rem; color: #fff; margin-bottom: 30px; }
+        .btn-next { background: transparent; border: 2px solid #fff; color: #fff; font-family: var(--font-ui); font-weight: bold; padding: 15px 40px; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s; }
+        .btn-next:active { background: #fff; color: #000; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
     </style>
 </head>
 <body>
 
     <div id="intro-screen" class="screen-overlay">
         <div class="intro-folder">
-            <div class="intro-title">ENQUÊTE DETECTIVE BOX (de wish)</div>
+            <div class="intro-title">ENQUÊTE BOX (version wish)</div>
             <p style="color:var(--accent-gold); letter-spacing:3px; margin-bottom:20px;">L'ÉNIGME DU PATRON</p>
             <div class="intro-text">
                 MISSION :<br>
@@ -333,10 +289,8 @@
 
         <div class="table-item item-letter" style="top:12%; left:5%;" onclick="Engine.inspect('letter')">
             <div class="letter-blur">
-                Salut les Piliers... blablabla... code... prix... dates...
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-                Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                Ut enim ad minim veniam.
+                Salut les Piliers. Bon courage pour le code.<br><br>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt.
             </div>
         </div>
 
@@ -376,7 +330,7 @@
             </div>
         </div>
 
-        <div class="table-item" id="item-safe" style="top:75%; left:20%; transform: translate(-50%, -50%);">
+        <div class="table-item" id="item-safe" style="top:85%; left:20%; transform: translate(-50%, -50%);">
             <div class="safe-body">
                 <div class="safe-interior"><div class="safe-bottle">🍺</div></div>
                 <div class="safe-door">
@@ -386,7 +340,7 @@
             </div>
         </div>
 
-        <div class="table-item" id="item-flashlight" style="top:75%; left:20%; transform: translate(-50%, -50%) rotate(10deg);" onclick="Engine.pickupFlashlight(event)">
+        <div class="table-item" id="item-flashlight" style="top:85%; left:20%; transform: translate(-50%, -50%) rotate(10deg);" onclick="Engine.pickupFlashlight(event)">
             <div class="flash-head"></div><div class="flash-body"></div>
         </div>
     </div>
@@ -426,10 +380,12 @@
             init: function() {
                 ['mousemove', 'touchmove'].forEach(e => document.addEventListener(e, this.trackLight.bind(this), {passive:false}));
                 const safe = document.getElementById('item-safe');
+                
+                // DRAG LOGIC FIX
                 ['mousedown', 'touchstart'].forEach(e => safe.addEventListener(e, this.dragStart.bind(this), {passive:false}));
                 ['mouseup', 'touchend'].forEach(e => document.addEventListener(e, this.dragEnd.bind(this)));
                 ['mousemove', 'touchmove'].forEach(e => document.addEventListener(e, this.dragMove.bind(this), {passive:false}));
-                safe.addEventListener('click', e => { if(!this.state.wasDragging) this.openKeypad(); });
+                
                 setInterval(this.checkUV.bind(this), 100);
             },
 
@@ -479,7 +435,9 @@
             },
 
             inspect: function(id) {
+                // Bloque l'inspection UNIQUEMENT si on est en train de glisser le coffre
                 if(this.state.wasDragging) return;
+                
                 const modal = document.getElementById('modal-inspect');
                 const flipper = document.getElementById('zoom-flipper');
                 const front = document.getElementById('zoom-front');
@@ -490,17 +448,7 @@
 
                 switch(id) {
                     case 'letter':
-                        front.innerHTML = `
-                        <div class="modal-content-centered">
-                            <div class="zoom-letter-container">
-                                <p><b>Salut les Piliers,</b></p>
-                                <p>Comme promis, j'ai mis votre bouteille dans le coffre pour pas qu'on vous la pique.</p>
-                                <p>Le code ? C'est simple logique. C'est une histoire de <b>prix</b> et de <b>dates</b>...</p>
-                                <p><i>PS: N'oubliez pas votre privilège...</i></p>
-                                <p style="text-align:right; margin-top:30px;">- Le Patron</p>
-                            </div>
-                        </div>`; 
-                        break;
+                        front.innerHTML = `<div class="modal-content-centered"><div class="zoom-letter-container"><p><b>Salut les Piliers,</b></p><p>Comme promis, j'ai mis votre bouteille dans le coffre pour pas qu'on vous la pique.</p><p>Le code ? C'est simple logique. C'est une histoire de <b>prix</b> et de <b>dates</b>...</p><p><i>PS: N'oubliez pas votre privilège...</i></p><p style="text-align:right; margin-top:30px;">- Le Patron</p></div></div>`; break;
                     case 'receipt':
                         const r = document.querySelector('.item-receipt').cloneNode(true);
                         r.classList.add('modal-cloned-item'); 
@@ -518,7 +466,7 @@
                     case 'coaster':
                         btnFlip.style.display='block';
                         front.innerHTML = `<div class="modal-content-centered"><div style="width:220px; height:220px; border-radius:50%; background:#d7ccc8; border:8px solid #5d4037; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(0,0,0,0.5); background-image:var(--cardboard-texture);"><div style="text-align:center; font-family:var(--font-type); font-size:1.8rem; color:#5d4037; font-weight:bold;">SAINT FOY'S<br>BAR</div></div></div>`;
-                        back.innerHTML = `<div class="modal-content-centered"><div class="uv-revealable" style="width:220px; height:220px; border-radius:50%; background:#bcaaa4; border:8px solid #5d4037; display:flex; align-items:center; justify-content:center; background-image:var(--cardboard-texture); position:relative; overflow:hidden;"><div class="uv-hidden-layer"><div class="uv-text-style" style="font-size:0.8rem; border:3px dashed var(--text-uv); padding:15px; border-radius:50%; transform:rotate(-5deg);">( PRIX BIÈRES + TABLE )<br>x JOUR</div></div><div style="font-size:0.7rem; color:#666; position:absolute; bottom:30px;">(Dos du sous-bock)</div></div></div>`; break;
+                        back.innerHTML = `<div class="modal-content-centered"><div class="uv-revealable" style="width:220px; height:220px; border-radius:50%; background:#bcaaa4; border:8px solid #5d4037; display:flex; align-items:center; justify-content:center; background-image:var(--cardboard-texture); position:relative; overflow:hidden;"><div class="uv-hidden-layer"><div class="uv-text-style" style="font-size:0.9rem; border:3px dashed var(--text-uv); padding:15px; border-radius:50%; transform:rotate(-5deg);">( PRIX BIÈRES + TABLE )<br>x JOUR</div></div><div style="font-size:0.7rem; color:#666; position:absolute; bottom:30px;">(Dos du sous-bock)</div></div></div>`; break;
                 }
                 modal.classList.add('open');
             },
@@ -526,22 +474,42 @@
             closeModals: function() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open')); },
             openKeypad: function() { document.getElementById('modal-keypad').classList.add('open'); Keypad.clear(); },
 
+            // DRAG FIXED LOGIC
             dragStart: function(e) {
                 const t = e.target.closest('#item-safe'); if(!t)return; this.state.dragging=t; this.state.wasDragging=false;
                 const cx=e.touches?e.touches[0].clientX:e.clientX; const cy=e.touches?e.touches[0].clientY:e.clientY;
-                const r=t.getBoundingClientRect(); this.state.dragOffset={x:cx-r.left, y:cy-r.top}; this.state.dragStart={x:cx, y:cy}; t.style.zIndex=500;
+                const r=t.getBoundingClientRect(); 
+                this.state.dragStart = {x:cx, y:cy}; // Store start pos
+                this.state.dragOffset={x:cx-r.left, y:cy-r.top}; 
+                t.style.zIndex=500;
             },
             dragMove: function(e) {
                 if(!this.state.dragging)return; e.preventDefault();
                 const cx=e.touches?e.touches[0].clientX:e.clientX; const cy=e.touches?e.touches[0].clientY:e.clientY;
-                if(Math.abs(cx-this.state.dragStart.x)>5||Math.abs(cy-this.state.dragStart.y)>5) this.state.wasDragging=true;
-                this.state.dragging.style.left=(cx-this.state.dragOffset.x)+'px'; this.state.dragging.style.top=(cy-this.state.dragOffset.y)+'px'; this.state.dragging.style.transform='none';
+                
+                // If moved more than 5px, it is a DRAG
+                if(Math.hypot(cx - this.state.dragStart.x, cy - this.state.dragStart.y) > 5) {
+                    this.state.wasDragging = true;
+                }
+
+                if(this.state.wasDragging) {
+                    this.state.dragging.style.left=(cx-this.state.dragOffset.x)+'px'; 
+                    this.state.dragging.style.top=(cy-this.state.dragOffset.y)+'px'; 
+                    this.state.dragging.style.transform='none';
+                }
             },
-            // FIX DEFINITIF BUG : On remet wasDragging à false après un délai pour libérer les clics
             dragEnd: function() { 
-                if(this.state.dragging) this.state.dragging.style.zIndex=100; 
+                if(!this.state.dragging) return;
+                
+                // If it wasn't a drag (just a click), open keypad
+                if(!this.state.wasDragging) {
+                    this.openKeypad();
+                }
+
+                this.state.dragging.style.zIndex=100; 
                 this.state.dragging=null;
-                setTimeout(() => { this.state.wasDragging = false; }, 100);
+                // Force reset immediately
+                this.state.wasDragging = false; 
             }
         };
 
@@ -556,11 +524,11 @@
                     s.style.color='#66bb6a'; s.innerText="OPEN"; if(navigator.vibrate) navigator.vibrate([100,50,200]);
                     Engine.closeModals(); // Ferme le clavier
                     document.getElementById('item-safe').classList.add('open'); // Ouvre le coffre visuellement
-                    document.getElementById('game-stage').classList.add('zoomed'); // Zoom caméra
+                    // PAS DE ZOOM CAMERA
                     setTimeout(() => {
                         document.getElementById('success-screen').classList.remove('hidden'); // Affiche succès
                         document.getElementById('success-screen').classList.add('visible');
-                    }, 2500);
+                    }, 1500);
                 } else {
                     s.innerText="ERR"; document.getElementById('keypad-container').classList.add('shake-error');
                     if(navigator.vibrate) navigator.vibrate(400);
@@ -568,6 +536,7 @@
                 }
             }
         };
+        Engine.init();
     </script>
 </body>
 </html>
