@@ -122,12 +122,43 @@
 
         /* --- LETTRE --- */
         .item-letter {
-            width: 150px; height: 100px; background: #fff; background-image: var(--paper-texture);
-            padding: 10px; color: #111; transform: rotate(3deg); box-shadow: 0 2px 5px rgba(0,0,0,0.3); overflow: hidden;
+            width: 150px; 
+            height: 100px; 
+            background: #fff; 
+            background-image: var(--paper-texture);
+            padding: 10px; 
+            color: #111; 
+            transform: rotate(3deg); 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            overflow: hidden; /* Coupe le texte qui dépasse */
         }
+
+        /* L'effet "Texte illisible" */
         .letter-blur { 
-            font-family: var(--font-messy); font-size: 0.5rem; line-height: 0.9; 
-            color: #555; user-select: none; pointer-events: none; white-space: pre-wrap; 
+            font-family: var(--font-messy); /* Police type gribouillage */
+            font-size: 0.5rem; 
+            line-height: 0.9; 
+            color: #444;
+            filter: blur(0.6px); /* LE FLOU QUI REND L'EFFET RÉALISTE */
+            opacity: 0.8; 
+            user-select: none; 
+            pointer-events: none; 
+            white-space: wrap; /* Garde les sauts de ligne */
+        }
+
+        /* --- STYLE DE LA LETTRE ZOOMÉE (LISIBLE) --- */
+        .zoom-letter-container { 
+            background: #fff; 
+            background-image: var(--paper-texture);
+            padding: 25px; 
+            color: #111; 
+            font-family: var(--font-hand); /* Police manuscrite lisible */
+            font-size: 1.3rem; 
+            line-height: 1.4; 
+            transform: rotate(-1deg); 
+            width: 100%; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            text-align: left; 
         }
 
         /* --- TICKET --- */
@@ -341,7 +372,7 @@
             </div>
         </div>
 
-        <div class="table-item" id="item-safe" style="top:82%; left:20%; transform: translate(-50%, -50%);">
+        <div class="table-item" id="item-safe" style="top:75%; left:25%; transform: translate(-50%, -50%);">
             <div class="safe-body">
                 <div class="safe-interior"><div class="safe-bottle">🍺</div></div>
                 <div class="safe-door">
@@ -351,7 +382,7 @@
             </div>
         </div>
 
-        <div class="table-item" id="item-flashlight" style="top:82%; left:20%; transform: translate(-50%, -50%) rotate(10deg);" onclick="Engine.pickupFlashlight(event)">
+        <div class="table-item" id="item-flashlight" style="top:75%; left:25%; transform: translate(-50%, -50%) rotate(10deg);" onclick="Engine.pickupFlashlight(event)">
             <div class="flash-head"></div><div class="flash-body"></div>
         </div>
     </div>
