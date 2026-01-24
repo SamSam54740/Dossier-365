@@ -423,78 +423,75 @@
                 ['mousemove', 'touchmove'].forEach(e => document.addEventListener(e, this.trackLight.bind(this), {passive:false}));
                 const safe = document.getElementById('item-safe');
 
-            
-            const startDrag = (e) => {
-                const t = e.target.closest('#item-safe'); 
-                if(!t) return;
+                // --- NOUVELLE LOGIQUE DRAG & DROP STABLE ---
                 
-                this.state.dragging = t;
-                this.state.hasMoved = false; // On reset le statut de mouvement
-                
-                // Récupération des coordonnées (Souris ou Touch)
-                const cx = e.touches ? e.touches[0].clientX : e.clientX;
-                const cy = e.touches ? e.touches[0].clientY : e.clientY;
-                
-                // 1. CALCUL DE LA POSITION ACTUELLE PRÉCISE
-                // On récupère le rectangle visuel de l'objet
-                const rect = t.getBoundingClientRect();
-                
-                // On calcule son centre actuel en pixels par rapport à la page
-                const centerX = rect.left + (rect.width / 2);
-                const centerY = rect.top + (rect.height / 2);
-                
-                // 2. FIGER LA POSITION
-                // On remplace les % du CSS par des pixels fixes pour éviter le saut
-                t.style.left = centerX + 'px';
-                t.style.top = centerY + 'px';
-                // IMPORTANT : On laisse le CSS transform: translate(-50%, -50%) faire son travail de centrage
-                
-                // 3. ENREGISTRER LE DÉCALAGE (Où a-t-on cliqué par rapport au centre ?)
-                this.state.dragOffset = {
-                    x: cx - centerX,
-                    y: cy - centerY
-                };
-                
-                // Sauvegarde de la position de départ pour calculer la distance parcourue
-                this.state.dragStart = { x: cx, y: cy };
-                
-                t.style.zIndex = 500; // Passe au premier plan
-            }
-
-            const moveDrag = (e) => {
-                if(!this.state.dragging) return;
-                e.preventDefault(); // Empêche le scroll
-                
-                const cx = e.touches ? e.touches[0].clientX : e.clientX;
-                const cy = e.touches ? e.touches[0].clientY : e.clientY;
-                
-                // Calcul de la distance parcourue depuis le clic
-                const dist = Math.hypot(cx - this.state.dragStart.x, cy - this.state.dragStart.y);
-                
-                // Si on a bougé de plus de 10 pixels, on considère que c'est un déplacement volontaire
-                if (dist > 10) {
-                    this.state.hasMoved = true;
+                const startDrag = (e) => {
+                    const t = e.target.closest('#item-safe'); 
+                    if(!t) return;
+                    
+                    this.state.dragging = t;
+                    this.state.hasMoved = false; 
+                    
+                    // Coordonnées souris/doigt
+                    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                    
+                    // 1. FIGER LA POSITION VISUELLE ACTUELLE
+                    // On récupère le rectangle actuel de l'objet
+                    const rect = t.getBoundingClientRect();
+                    const centerX = rect.left + (rect.width / 2);
+                    const centerY = rect.top + (rect.height / 2);
+                    
+                    // On remplace les % CSS par des pixels fixes pour éviter le "saut"
+                    t.style.left = centerX + 'px';
+                    t.style.top = centerY + 'px';
+                    // Le transform translate(-50%, -50%) du CSS continue de gérer le centrage
+                    
+                    // 2. CALCULER LE DÉCALAGE (Où on tient l'objet par rapport à son centre)
+                    this.state.dragOffset = {
+                        x: cx - centerX,
+                        y: cy - centerY
+                    };
+                    
+                    // 3. POINT DE DÉPART (Pour calculer le seuil de mouvement)
+                    this.state.dragStart = { x: cx, y: cy };
+                    
+                    t.style.zIndex = 500;
                 }
 
-                // Application du mouvement (Centre = Position Souris - Décalage initial)
-                this.state.dragging.style.left = (cx - this.state.dragOffset.x) + 'px';
-                this.state.dragging.style.top = (cy - this.state.dragOffset.y) + 'px';
-            }
-
-            const endDrag = (e) => {
-                if(this.state.dragging) {
-                    this.state.dragging.style.zIndex = 100; // Restaure le z-index
+                const moveDrag = (e) => {
+                    if(!this.state.dragging) return;
+                    e.preventDefault(); 
                     
-                    // Si on a à peine bougé (< 10px), c'est considéré comme un CLIC -> On ouvre le code
-                    if (!this.state.hasMoved) {
-                        this.openKeypad();
+                    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                    
+                    // Calcul de la distance parcourue
+                    const dist = Math.hypot(cx - this.state.dragStart.x, cy - this.state.dragStart.y);
+                    
+                    // Si on dépasse 10px, c'est un vrai déplacement
+                    if (dist > 10) {
+                        this.state.hasMoved = true;
+                        
+                        // ON APPLIQUE LE MOUVEMENT SEULEMENT ICI
+                        this.state.dragging.style.left = (cx - this.state.dragOffset.x) + 'px';
+                        this.state.dragging.style.top = (cy - this.state.dragOffset.y) + 'px';
                     }
-                    // Sinon, c'était un déplacement -> On ne fait rien (le coffre reste là où il est)
-                    
-                    this.state.dragging = null;
-                    this.state.hasMoved = false;
                 }
-            }
+
+                const endDrag = (e) => {
+                    if(this.state.dragging) {
+                        this.state.dragging.style.zIndex = 100;
+                        
+                        // Si on n'a pas bougé (ou moins de 10px), c'est un CLIC -> On ouvre
+                        if (!this.state.hasMoved) {
+                            this.openKeypad();
+                        }
+                        
+                        this.state.dragging = null;
+                        this.state.hasMoved = false;
+                    }
+                }
 
                 safe.addEventListener('mousedown', startDrag); safe.addEventListener('touchstart', startDrag, {passive:false});
                 document.addEventListener('mousemove', moveDrag, {passive:false}); document.addEventListener('touchmove', moveDrag, {passive:false});
