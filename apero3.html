@@ -36,7 +36,7 @@
             position: relative; width: 100%; height: 100%;
             background-color: #2e1a0f; background-image: var(--wood-texture);
             box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
-            pointer-events: none; /* Le fond ne bloque pas les clics */
+            pointer-events: none;
         }
         #stage-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -48,29 +48,27 @@
         .table-item {
             position: absolute; cursor: pointer; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
             transition: transform 0.1s ease-out, filter 0.1s; transform-origin: center; will-change: transform, left, top; z-index: 10;
-            pointer-events: auto; /* IMPORTANT */
+            pointer-events: auto;
         }
         .table-item:active { transform: scale(0.97) !important; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
 
         /* --- COFFRE (Bas Gauche) --- */
         #item-safe {
             width: 140px; height: 110px; 
-            perspective: 1000px; /* Pour la 3D */
+            perspective: 1000px;
             cursor: grab; z-index: 100;
-            /* Transition fluide pour le recentrage automatique */
-            transition: transform 0.1s; 
+            /* CRUCIAL POUR MOBILE : Empêche le navigateur de gérer le geste */
+            touch-action: none; 
         }
-        /* Zone de touche étendue pour le drag */
-        #item-safe::after { content:''; position: absolute; top:-20px; bottom:-20px; left:-20px; right:-20px; }
         
         #item-safe:active { cursor: grabbing; }
 
-        /* Animation de centrage et ouverture */
+        /* Animation de centrage */
         #item-safe.move-center {
             top: 50% !important; left: 50% !important;
             transform: translate(-50%, -50%) scale(1.5) !important;
             transition: all 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-            z-index: 15000 !important; /* Devant tout sauf l'écran final */
+            z-index: 15000 !important;
         }
 
         .safe-body {
@@ -89,7 +87,7 @@
         .safe-bottle {
             font-size: 3.5rem; filter: drop-shadow(0 0 20px gold);
             opacity: 0; transform: scale(0.5); 
-            transition: all 1s ease-out 0.5s; /* Délai pour l'apparition */
+            transition: all 1s ease-out 0.5s;
         }
         #item-safe.open-anim .safe-bottle { opacity: 1; transform: scale(1); }
 
@@ -114,7 +112,6 @@
             display: flex; align-items: center; justify-content: space-between; padding: 0 4px;
             box-shadow: inset 0 0 8px black; pointer-events: auto;
         }
-        /* Hitbox GÉANTE invisible pour faciliter la prise */
         #item-flashlight::before { content: ''; position: absolute; top: -50px; left: -50px; right: -50px; bottom: -50px; z-index: 6; }
         
         .flash-head { width: 20px; height: 34px; background: #222; border-right: 2px solid #444; border-radius: 3px; pointer-events: none; }
@@ -122,43 +119,13 @@
 
         /* --- LETTRE --- */
         .item-letter {
-            width: 150px; 
-            height: 100px; 
-            background: #fff; 
-            background-image: var(--paper-texture);
-            padding: 10px; 
-            color: #111; 
-            transform: rotate(3deg); 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            overflow: hidden; /* Coupe le texte qui dépasse */
+            width: 150px; height: 100px; background: #fff; background-image: var(--paper-texture);
+            padding: 10px; color: #111; transform: rotate(3deg); box-shadow: 0 2px 5px rgba(0,0,0,0.3); overflow: hidden;
         }
-
-        /* L'effet "Texte illisible" */
         .letter-blur { 
-            font-family: var(--font-messy); /* Police type gribouillage */
-            font-size: 0.5rem; 
-            line-height: 0.9; 
-            color: #444;
-            filter: blur(0.6px); /* LE FLOU QUI REND L'EFFET RÉALISTE */
-            opacity: 0.8; 
-            user-select: none; 
-            pointer-events: none; 
-            white-space: wrap; /* Garde les sauts de ligne */
-        }
-
-        /* --- STYLE DE LA LETTRE ZOOMÉE (LISIBLE) --- */
-        .zoom-letter-container { 
-            background: #fff; 
-            background-image: var(--paper-texture);
-            padding: 25px; 
-            color: #111; 
-            font-family: var(--font-hand); /* Police manuscrite lisible */
-            font-size: 1.3rem; 
-            line-height: 1.4; 
-            transform: rotate(-1deg); 
-            width: 100%; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            text-align: left; 
+            font-family: var(--font-messy); font-size: 0.5rem; line-height: 0.9; 
+            color: #444; filter: blur(0.6px); opacity: 0.8; 
+            user-select: none; pointer-events: none; white-space: wrap; 
         }
 
         /* --- TICKET --- */
@@ -273,7 +240,6 @@
         .intro-text { font-family: var(--font-type); font-size: 0.9rem; color: #ccc; line-height: 1.6; margin-bottom: 30px; text-align: left; }
         .btn-start { background: var(--accent-gold); color: #000; font-family: var(--font-ui); font-weight: 900; border: none; padding: 12px 25px; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 0 20px rgba(255, 193, 7, 0.4); animation: pulse 2s infinite; }
         
-        /* SUCCESS SCREEN - Z-INDEX 20000 POUR ÊTRE SUR DE PASSER DEVANT LE COFFRE */
         #success-screen { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 20000; }
         .success-content { border: 4px solid var(--accent-gold); padding: 40px; background: #000; box-shadow: 0 0 80px rgba(255, 193, 7, 0.3); transform: scale(0.8); opacity: 0; transition: all 0.5s ease-out; }
         #success-screen.visible .success-content { transform: scale(1); opacity: 1; }
@@ -332,7 +298,8 @@
         <div class="table-item item-letter" style="top:12%; left:5%;" onclick="Engine.inspect('letter')">
             <div class="letter-blur">
                 Salut les Piliers. Bon courage pour le code.<br><br>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt.
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+                Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
             </div>
         </div>
 
@@ -421,7 +388,6 @@
                 hasFlashlight: false, 
                 isFlashOn: false, 
                 isUV: false, 
-                // Variables de Drag précises
                 draggingItem: null,
                 startX: 0,
                 startY: 0,
@@ -436,94 +402,78 @@
                 
                 const safe = document.getElementById('item-safe');
 
-                // --- NOUVEAU MOTEUR DRAG & DROP (TYPE APP MOBILE) ---
+                // --- NOUVEAU MOTEUR DRAG & DROP POINTER EVENTS (100% FLUIDE) ---
 
                 const handleStart = (e) => {
-                    // On ne cible que le coffre
                     const t = e.target.closest('#item-safe');
                     if (!t) return;
 
-                    // On empêche le comportement par défaut (scroll, sélection)
-                    // e.preventDefault(); // Retiré pour laisser le clic passer, géré dans move
+                    // On capture le pointeur pour éviter de le perdre si on sort de l'élément
+                    if (e.pointerId) {
+                        t.setPointerCapture(e.pointerId);
+                    }
 
                     this.state.draggingItem = t;
-                    this.state.isMoving = false; // Par défaut, on considère que c'est un clic
+                    this.state.isMoving = false; 
 
-                    // Coordonnées du pointeur (Souris ou Doigt)
-                    const point = e.touches ? e.touches[0] : e;
-                    this.state.startX = point.clientX;
-                    this.state.startY = point.clientY;
+                    // Coordonnées initiales du pointeur
+                    this.state.startX = e.clientX;
+                    this.state.startY = e.clientY;
 
-                    // On fige la position actuelle de l'objet en pixels pour éviter le "saut"
-                    // On récupère sa position visuelle exacte
+                    // On fige la position visuelle actuelle en pixels
                     const rect = t.getBoundingClientRect();
-                    
-                    // On calcule son centre par rapport au conteneur parent (body/game-stage)
-                    // Le centre X = position gauche + moitié largeur
+                    // On place l'élément en position absolue par rapport au viewport
+                    // Le translate(-50%, -50%) du CSS est toujours actif, donc on doit viser le CENTRE
                     this.state.initialItemX = rect.left + (rect.width / 2);
                     this.state.initialItemY = rect.top + (rect.height / 2);
 
-                    // On passe l'élément au premier plan visuel
+                    t.style.left = this.state.initialItemX + 'px';
+                    t.style.top = this.state.initialItemY + 'px';
                     t.style.zIndex = 500;
                 };
 
                 const handleMove = (e) => {
                     if (!this.state.draggingItem) return;
 
-                    // Coordonnées du pointeur
-                    const point = e.touches ? e.touches[0] : e;
-                    const dx = point.clientX - this.state.startX;
-                    const dy = point.clientY - this.state.startY;
+                    const dx = e.clientX - this.state.startX;
+                    const dy = e.clientY - this.state.startY;
 
-                    // SEUIL DE TOLÉRANCE (15px)
-                    // Si on a bougé de moins de 15px, on ne fait RIEN. C'est toujours un clic potentiel.
-                    if (!this.state.isMoving && Math.sqrt(dx*dx + dy*dy) < 15) {
-                        return;
+                    // SEUIL DE 10px pour différencier clic et drag
+                    if (!this.state.isMoving && Math.sqrt(dx*dx + dy*dy) < 10) {
+                        return; 
                     }
 
-                    // Si on dépasse 15px, on active le mode déplacement
                     this.state.isMoving = true;
-                    e.preventDefault(); // On empêche le scroll de la page maintenant qu'on drag
+                    e.preventDefault(); // Empêche le scroll
 
-                    // On applique le mouvement
-                    // Nouvelle position = Position initiale figée + Déplacement du doigt
+                    // Application du déplacement
                     this.state.draggingItem.style.left = (this.state.initialItemX + dx) + 'px';
                     this.state.draggingItem.style.top = (this.state.initialItemY + dy) + 'px';
-                    
-                    // IMPORTANT : On enlève le transform CSS pour que le left/top pixels prenne le relais sans conflit
-                    // On garde le translate(-50%, -50%) via le style inline si besoin, ou on le gère ici
-                    // Ici, comme on a calculé par rapport au centre, on doit s'assurer que le CSS translate(-50%, -50%) est toujours actif
-                    // ou alors on l'a désactivé. Le plus simple est de ne rien toucher au transform car le CSS le gère.
                 };
 
                 const handleEnd = (e) => {
                     if (!this.state.draggingItem) return;
 
                     this.state.draggingItem.style.zIndex = 100;
+                    if (e.pointerId) {
+                        this.state.draggingItem.releasePointerCapture(e.pointerId);
+                    }
 
-                    // VERDICT : Clic ou Drag ?
+                    // Si pas de mouvement significatif, c'est un CLIC
                     if (!this.state.isMoving) {
-                        // C'était un mouvement minime (<15px), donc c'est un CLIC
                         this.openKeypad();
                     }
-                    // Sinon, c'était un déplacement, l'objet reste là où il est.
 
-                    // Reset
                     this.state.draggingItem = null;
                     this.state.isMoving = false;
                 };
 
-                // Écouteurs d'événements
-                safe.addEventListener('mousedown', handleStart);
-                safe.addEventListener('touchstart', handleStart, {passive: false});
+                // Écouteurs Pointer Events (Gère Souris + Touch nativement)
+                safe.addEventListener('pointerdown', handleStart);
+                window.addEventListener('pointermove', handleMove);
+                window.addEventListener('pointerup', handleEnd);
+                window.addEventListener('pointercancel', handleEnd);
 
-                window.addEventListener('mousemove', handleMove, {passive: false});
-                window.addEventListener('touchmove', handleMove, {passive: false});
-
-                window.addEventListener('mouseup', handleEnd);
-                window.addEventListener('touchend', handleEnd);
-
-                // Boucle pour l'UV
                 setInterval(this.checkUV.bind(this), 100);
             },
 
@@ -573,7 +523,7 @@
             },
 
             inspect: function(id) {
-                // Si on déplace le coffre, on interdit d'inspecter quoi que ce soit d'autre en même temps
+                // Si on déplace le coffre, on bloque l'inspection
                 if(this.state.isMoving) return;
                 
                 const modal = document.getElementById('modal-inspect');
@@ -649,7 +599,7 @@
                 }
             }
         };
-        // L'init est appelé par le bouton startGame
+        // Engine.init() est appelé par le bouton Start
     </script>
 </body>
 </html>
