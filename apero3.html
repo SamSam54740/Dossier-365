@@ -163,10 +163,23 @@
 
         /* --- LETTRE --- */
         .item-letter {
-            width: 140px; height: 100px; background: #fff; background-image: var(--paper-texture);
-            padding: 10px; color: #111; transform: rotate(3deg); box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            width: 150px; height: 100px; background: #fff; 
+            background-image: var(--paper-texture);
+            padding: 12px; color: #111; 
+            transform: rotate(3deg); 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
-        .letter-blur { font-family: var(--font-messy); font-size: 0.55rem; line-height: 1; filter: blur(0.6px); opacity: 0.7; overflow: hidden; height: 100%; user-select: none; color: #333; pointer-events: none; }
+        /* Texte illisible sur la table : on utilise la police brouillon en très petit sans flou */
+        .letter-blur { 
+            font-family: var(--font-messy); 
+            font-size: 0.5rem; 
+            line-height: 0.9; 
+            color: #555;
+            user-select: none; 
+            pointer-events: none;
+            white-space: wrap; /* Garde la structure du texte */
+        }
 
         /* --- TICKET --- */
         .item-receipt {
@@ -320,8 +333,10 @@
 
         <div class="table-item item-letter" style="top:12%; left:5%;" onclick="Engine.inspect('letter')">
             <div class="letter-blur">
-                Salut les Piliers. Bon courage pour le code.<br><br>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt.
+                Salut les Piliers... blablabla... code... prix... dates...
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+                Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                Ut enim ad minim veniam.
             </div>
         </div>
 
@@ -475,7 +490,17 @@
 
                 switch(id) {
                     case 'letter':
-                        front.innerHTML = `<div class="modal-content-centered"><div class="zoom-letter-content"><p><b>Salut les Piliers,</b></p><p>Comme promis, j'ai mis votre bouteille dans le coffre pour pas qu'on vous la pique.</p><p>Le code ? C'est simple logique. C'est une histoire de <b>prix</b> et de <b>dates</b>...</p><p><i>PS: N'oubliez pas votre privilège...</i></p><p style="text-align:right; margin-top:30px;">- Le Patron</p></div></div>`; break;
+                        front.innerHTML = `
+                        <div class="modal-content-centered">
+                            <div class="zoom-letter-container">
+                                <p><b>Salut les Piliers,</b></p>
+                                <p>Comme promis, j'ai mis votre bouteille dans le coffre pour pas qu'on vous la pique.</p>
+                                <p>Le code ? C'est simple logique. C'est une histoire de <b>prix</b> et de <b>dates</b>...</p>
+                                <p><i>PS: N'oubliez pas votre privilège...</i></p>
+                                <p style="text-align:right; margin-top:30px;">- Le Patron</p>
+                            </div>
+                        </div>`; 
+                        break;
                     case 'receipt':
                         const r = document.querySelector('.item-receipt').cloneNode(true);
                         r.classList.add('modal-cloned-item'); 
