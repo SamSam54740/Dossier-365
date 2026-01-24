@@ -12,12 +12,9 @@
     <style>
         /* ================================= VARIABLES ================================= */
         :root {
-            --bg-color: #050505;
             --wood-texture: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
             --paper-texture: url('https://www.transparenttextures.com/patterns/cream-paper.png');
             --cardboard-texture: url('https://www.transparenttextures.com/patterns/cardboard.png');
-            --ink-black: #1a1a1a;
-            --ink-blue: #1a237e;
             --accent-gold: #ffc107;
             --accent-uv: #6200ea;
             --text-uv: rgba(100, 255, 50, 0.95);
@@ -29,55 +26,45 @@
         }
 
         * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: var(--bg-color); overflow: hidden; font-family: var(--font-ui); color: white; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #050505; overflow: hidden; font-family: var(--font-ui); color: white; }
 
         /* ================================= ENVIRONNEMENT ================================= */
         #game-stage {
             position: relative; width: 100%; height: 100%;
             background-color: #2e1a0f; background-image: var(--wood-texture);
             box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
-            pointer-events: none;
+            /* Important : On laisse les events passer */
         }
         #stage-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.5) 100%); 
-            pointer-events: none !important;
+            pointer-events: none;
         }
 
         /* ================================= ITEMS ================================= */
         .table-item {
             position: absolute; cursor: pointer; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
-            transition: transform 0.1s ease-out, filter 0.1s; transform-origin: center; will-change: transform, left, top; z-index: 10;
-            pointer-events: auto;
+            /* Transition légère au survol/clic, mais PAS sur le drag */
+            transition: transform 0.1s, filter 0.1s; 
+            transform-origin: center; will-change: left, top; z-index: 10;
         }
-        .table-item:active { transform: scale(0.97) !important; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .table-item:active { filter: drop-shadow(0 5px 15px rgba(0,0,0,0.6)); }
 
-        /* --- COFFRE (Bas Gauche) --- */
+        /* --- COFFRE (Style) --- */
         #item-safe {
             width: 140px; height: 110px; 
             perspective: 1000px;
-            cursor: grab; z-index: 100;
-            /* CRUCIAL POUR MOBILE : Empêche le navigateur de gérer le geste */
+            z-index: 100;
+            /* CRUCIAL : Désactive le scroll natif du navigateur sur cet objet */
             touch-action: none; 
         }
         
-        #item-safe:active { cursor: grabbing; }
-
-        /* Animation de centrage */
-        #item-safe.move-center {
-            top: 50% !important; left: 50% !important;
-            transform: translate(-50%, -50%) scale(1.5) !important;
-            transition: all 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-            z-index: 15000 !important;
-        }
-
         .safe-body {
             width: 100%; height: 100%;
             background: linear-gradient(180deg, #444, #222);
             border: 2px solid #111; border-radius: 6px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.9);
-            position: relative;
-            transform-style: preserve-3d;
+            position: relative; transform-style: preserve-3d;
         }
         .safe-interior {
             position: absolute; top: 5%; left: 5%; width: 90%; height: 90%;
@@ -86,8 +73,7 @@
         }
         .safe-bottle {
             font-size: 3.5rem; filter: drop-shadow(0 0 20px gold);
-            opacity: 0; transform: scale(0.5); 
-            transition: all 1s ease-out 0.5s;
+            opacity: 0; transform: scale(0.5); transition: all 1s ease-out 0.5s;
         }
         #item-safe.open-anim .safe-bottle { opacity: 1; transform: scale(1); }
 
@@ -100,70 +86,50 @@
             backface-visibility: hidden;
         }
         #item-safe.open-anim .safe-door { transform: rotateY(-140deg); }
-
-        .safe-dial { width: 45px; height: 45px; background: #111; border-radius: 50%; border: 2px solid #666; box-shadow: 0 3px 6px black; position: relative; margin-bottom: 8px; }
+        /* Elements Porte */
+        .safe-dial { width: 45px; height: 45px; background: #111; border-radius: 50%; border: 2px solid #666; box-shadow: 0 3px 6px black; margin-bottom: 8px; position:relative;}
         .safe-dial::before { content: ''; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 2px; height: 8px; background: red; }
         .safe-handle { width: 35px; height: 6px; background: #ccc; border-radius: 4px; box-shadow: 0 2px 3px black; }
 
-        /* --- LAMPE TORCHE --- */
+        /* Animation finale de centrage */
+        #item-safe.move-center {
+            transition: all 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            top: 50% !important; left: 50% !important;
+            transform: translate(-50%, -50%) scale(1.5) !important;
+            z-index: 15000 !important;
+        }
+
+        /* --- AUTRES ITEMS --- */
         #item-flashlight {
             width: 110px; height: 35px; background: #111; border-radius: 10px; border: 1px solid #333;
-            z-index: 5;
-            display: flex; align-items: center; justify-content: space-between; padding: 0 4px;
+            z-index: 5; display: flex; align-items: center; justify-content: space-between; padding: 0 4px;
             box-shadow: inset 0 0 8px black; pointer-events: auto;
         }
-        #item-flashlight::before { content: ''; position: absolute; top: -50px; left: -50px; right: -50px; bottom: -50px; z-index: 6; }
-        
-        .flash-head { width: 20px; height: 34px; background: #222; border-right: 2px solid #444; border-radius: 3px; pointer-events: none; }
-        .flash-body { width: 60px; height: 18px; background: repeating-linear-gradient(90deg, #111, #111 2px, #222 2px, #222 4px); pointer-events: none; }
+        /* Hitbox invisible géante pour la lampe */
+        #item-flashlight::after { content: ''; position: absolute; top: -40px; bottom: -40px; left: -40px; right: -40px; }
+        .flash-head { width: 20px; height: 34px; background: #222; border-right: 2px solid #444; border-radius: 3px; }
+        .flash-body { width: 60px; height: 18px; background: repeating-linear-gradient(90deg, #111, #111 2px, #222 2px, #222 4px); }
 
-        /* --- LETTRE --- */
-        .item-letter {
-            width: 150px; height: 100px; background: #fff; background-image: var(--paper-texture);
-            padding: 10px; color: #111; transform: rotate(3deg); box-shadow: 0 2px 5px rgba(0,0,0,0.3); overflow: hidden;
-        }
-        .letter-blur { 
-            font-family: var(--font-messy); font-size: 0.5rem; line-height: 0.9; 
-            color: #444; filter: blur(0.6px); opacity: 0.8; 
-            user-select: none; pointer-events: none; white-space: wrap; 
-        }
+        .item-letter { width: 150px; height: 100px; background: #fff; background-image: var(--paper-texture); padding: 10px; color: #111; transform: rotate(3deg); box-shadow: 0 2px 5px rgba(0,0,0,0.3); overflow: hidden; }
+        .letter-blur { font-family: var(--font-messy); font-size: 0.5rem; line-height: 0.9; color: #444; filter: blur(0.6px); opacity: 0.8; user-select: none; pointer-events: none; white-space: pre-wrap; }
 
-        /* --- TICKET --- */
-        .item-receipt {
-            width: 100px; height: 190px; background: #fff; padding: 8px; font-family: var(--font-tech);
-            font-size: 0.45rem; color: #333; transform: rotate(-5deg);
-            background-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.02));
-            mask-image: linear-gradient(to bottom, transparent 1%, black 2%, black 98%, transparent 99%);
-            border-top: 1px dotted #ccc; border-bottom: 1px dotted #ccc;
-        }
+        .item-receipt { width: 100px; height: 190px; background: #fff; padding: 8px; font-family: var(--font-tech); font-size: 0.45rem; color: #333; transform: rotate(-5deg); background-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.02)); mask-image: linear-gradient(to bottom, transparent 1%, black 2%, black 98%, transparent 99%); border-top: 1px dotted #ccc; border-bottom: 1px dotted #ccc; }
         .receipt-header { text-align: center; margin-bottom: 8px; }
         .receipt-row { display: flex; justify-content: space-between; margin-bottom: 2px;}
         .receipt-total { margin-top: 10px; border-top: 2px dashed #000; padding-top: 4px; font-weight: bold; font-size: 0.55rem; display: flex; justify-content: space-between; }
-        .hidden-price { background: #111; color: #111; padding: 0 2px; }
         .receipt-stain { position: absolute; bottom: 30px; left: 10px; width: 30px; height: 30px; background: rgba(160, 100, 30, 0.2); border-radius: 50%; filter: blur(5px); pointer-events: none; }
 
-        /* --- MENU --- */
-        .item-menu {
-            width: 130px; height: 190px; background: #1b1b1b; border: 2px solid var(--accent-gold);
-            color: #ddd; padding: 10px; font-family: 'Times New Roman', serif; transform: rotate(-3deg);
-            box-shadow: 0 5px 12px rgba(0,0,0,0.6);
-        }
+        .item-menu { width: 130px; height: 190px; background: #1b1b1b; border: 2px solid var(--accent-gold); color: #ddd; padding: 10px; font-family: 'Times New Roman', serif; transform: rotate(-3deg); box-shadow: 0 5px 12px rgba(0,0,0,0.6); }
         .menu-title { text-align: center; font-family: var(--font-ui); font-weight:900; color: var(--accent-gold); margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #444; letter-spacing: 1px; font-size: 0.8rem; }
         .menu-list { font-size: 0.55rem; line-height: 1.8; }
         .menu-item { display: flex; justify-content: space-between; border-bottom: 1px dotted #444; }
 
-        /* --- POLAROID --- */
         .item-photo { width: 110px; height: 140px; background: #fff; padding: 6px 6px 30px 6px; transform: rotate(8deg); box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
         .photo-inner { width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .photo-inner img { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) sepia(0.2); }
         .photo-text { position: absolute; bottom: 6px; width: 100%; text-align: center; font-family: var(--font-hand); color: #222; font-weight: bold; font-size: 0.9rem; }
 
-        /* --- SOUS-BOCK --- */
-        .item-coaster {
-            width: 90px; height: 90px; border-radius: 50%; background: #d7ccc8;
-            border: 3px solid #5d4037; display: flex; align-items: center; justify-content: center; text-align: center;
-            transform: rotate(20deg); padding: 5px; background-image: var(--cardboard-texture); box-shadow: 0 3px 6px rgba(0,0,0,0.5);
-        }
+        .item-coaster { width: 90px; height: 90px; border-radius: 50%; background: #d7ccc8; border: 3px solid #5d4037; display: flex; align-items: center; justify-content: center; text-align: center; transform: rotate(20deg); padding: 5px; background-image: var(--cardboard-texture); box-shadow: 0 3px 6px rgba(0,0,0,0.5); }
         .coaster-logo { font-family: var(--font-type); color: #3e2723; font-weight: bold; line-height: 1.1; font-size: 0.7rem; }
 
         /* ================================= LUMIÈRE & UV ================================= */
@@ -177,47 +143,30 @@
         body.flash-on.mode-normal #light-mask-normal { opacity: 1; }
         body.flash-on.mode-uv #light-mask-uv { opacity: 1; }
 
-        /* ================================= HUD ================================= */
+        /* ================================= HUD & MODALES ================================= */
         #hud-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; display: flex; flex-direction: column; justify-content: space-between; }
         .hud-header { background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); padding: 15px; text-align: center; }
         .hud-title { font-family: var(--font-type); color: var(--accent-gold); font-size: 1.6rem; margin: 0; letter-spacing: 2px; text-shadow: 0 2px 4px black; }
         .hud-footer { padding: 15px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); min-height: 120px; pointer-events: auto; }
-        
         #game-message { opacity: 0; color: #fff; font-family: var(--font-ui); font-size: 0.8rem; margin-bottom: 10px; transition: opacity 0.5s; text-align: center; background: rgba(0,0,0,0.8); padding: 6px 12px; border-radius: 20px; }
-
         #flashlight-ui { display: none; align-items: center; gap: 15px; background: rgba(0,0,0,0.5); padding: 8px 16px; border-radius: 40px; border: 1px solid #333; }
-        .btn-flash-power {
-            width: 60px; height: 60px; border-radius: 50%; background: #222; border: 3px solid #444; color: #555;
-            font-size: 1.8rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: all 0.2s; position: relative;
-        }
+        .btn-flash-power { width: 60px; height: 60px; border-radius: 50%; background: #222; border: 3px solid #444; color: #555; font-size: 1.8rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: all 0.2s; position: relative; }
         .btn-flash-power.active { background: #ddd; color: #111; border-color: #fff; box-shadow: 0 0 20px rgba(255,255,255,0.5); }
         .btn-flash-power.active.uv-mode { background: var(--accent-uv); color: #fff; box-shadow: 0 0 25px var(--accent-uv); }
-        
-        #uv-secret-switch {
-            position: absolute; bottom: 4px; right: 4px; width: 12px; height: 12px; background: #111;
-            border-radius: 50%; border: 1px solid #333; background-image: linear-gradient(45deg, transparent 45%, #555 45%, #555 55%, transparent 55%); cursor: pointer; z-index: 10;
-        }
+        #uv-secret-switch { position: absolute; bottom: 4px; right: 4px; width: 12px; height: 12px; background: #111; border-radius: 50%; border: 1px solid #333; background-image: linear-gradient(45deg, transparent 45%, #555 45%, #555 55%, transparent 55%); cursor: pointer; z-index: 10; }
 
-        /* ================================= MODALES ================================= */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 3000;
-            display: none; align-items: center; justify-content: center; flex-direction: column; perspective: 1500px;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 3000; display: none; align-items: center; justify-content: center; flex-direction: column; perspective: 1500px; }
         .modal-overlay.open { display: flex; }
-
         .flip-wrapper { width: 90vw; max-width: 320px; aspect-ratio: 3/4; position: relative; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; margin-bottom: 15px; }
         .flip-wrapper.flipped { transform: rotateY(180deg); }
         .flip-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; }
         .flip-back { transform: rotateY(180deg); }
-
         .modal-content-centered { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
-
         .modal-buttons { display: flex; flex-direction: column; gap: 10px; width: 80%; max-width: 250px; z-index: 3005; pointer-events: auto; }
-        .btn-modal { padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; font-family: var(--font-ui); font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: background 0.2s; font-size: 0.8rem;}
+        .btn-modal { padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; font-family: var(--font-ui); font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: background 0.2s; font-size: 0.9rem;}
         .btn-modal:active { background: #333; transform: scale(0.98); }
         .btn-flip { background: var(--ink-blue); border-color: #1a237e; display: none; }
         .btn-close { background: #c62828; border-color: #b71c1c; }
-
         .zoom-letter-container { background: #fff; padding: 20px; color: #111; font-family: var(--font-hand); font-size: 1.2rem; line-height: 1.3; transform: rotate(-1deg); width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: left; }
         .modal-cloned-item { position: relative !important; transform: scale(1.3) rotate(0deg) !important; top: auto !important; left: auto !important; margin: auto; }
 
@@ -232,14 +181,13 @@
         .shake-error { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
 
-        /* SCREENS */
+        /* Screens */
         .screen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0a0a0a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; transition: opacity 0.8s ease-out; }
         .screen-overlay.hidden { opacity: 0; pointer-events: none; }
         .intro-folder { border: 2px solid #333; padding: 20px; max-width: 400px; background: #111; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
         .intro-title { font-family: var(--font-type); font-size: 2rem; color: var(--accent-gold); margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .intro-text { font-family: var(--font-type); font-size: 0.9rem; color: #ccc; line-height: 1.6; margin-bottom: 30px; text-align: left; }
         .btn-start { background: var(--accent-gold); color: #000; font-family: var(--font-ui); font-weight: 900; border: none; padding: 12px 25px; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 0 20px rgba(255, 193, 7, 0.4); animation: pulse 2s infinite; }
-        
         #success-screen { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 20000; }
         .success-content { border: 4px solid var(--accent-gold); padding: 40px; background: #000; box-shadow: 0 0 80px rgba(255, 193, 7, 0.3); transform: scale(0.8); opacity: 0; transition: all 0.5s ease-out; }
         #success-screen.visible .success-content { transform: scale(1); opacity: 1; }
@@ -247,8 +195,6 @@
         .success-text { font-family: var(--font-ui); font-size: 1rem; color: #fff; margin-bottom: 30px; }
         .btn-next { background: transparent; border: 2px solid #fff; color: #fff; font-family: var(--font-ui); font-weight: bold; padding: 15px 40px; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s; }
         .btn-next:active { background: #fff; color: #000; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-
     </style>
 </head>
 <body>
@@ -298,7 +244,7 @@
         <div class="table-item item-letter" style="top:12%; left:5%;" onclick="Engine.inspect('letter')">
             <div class="letter-blur">
                 Salut les Piliers. Bon courage pour le code.<br><br>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
                 Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
             </div>
         </div>
@@ -339,7 +285,7 @@
             </div>
         </div>
 
-        <div class="table-item" id="item-safe" style="top:80%; left:25%; transform: translate(-50%, -50%);">
+        <div class="table-item" id="item-safe" style="top:85%; left:20%; transform: translate(-50%, -50%);">
             <div class="safe-body">
                 <div class="safe-interior"><div class="safe-bottle">🍺</div></div>
                 <div class="safe-door">
@@ -349,7 +295,7 @@
             </div>
         </div>
 
-        <div class="table-item" id="item-flashlight" style="top:80%; left:25%; transform: translate(-50%, -50%) rotate(10deg);" onclick="Engine.pickupFlashlight(event)">
+        <div class="table-item" id="item-flashlight" style="top:85%; left:20%; transform: translate(-50%, -50%) rotate(10deg);" onclick="Engine.pickupFlashlight(event)">
             <div class="flash-head"></div><div class="flash-body"></div>
         </div>
     </div>
@@ -385,97 +331,98 @@
 
         const Engine = {
             state: { 
-                hasFlashlight: false, 
-                isFlashOn: false, 
-                isUV: false, 
-                draggingItem: null,
-                startX: 0,
-                startY: 0,
-                initialItemX: 0,
-                initialItemY: 0,
-                isMoving: false
+                hasFlashlight: false, isFlashOn: false, isUV: false, 
+                // Dragging Variables
+                dragItem: null,
+                initialX: 0,
+                initialY: 0,
+                currentX: 0,
+                currentY: 0,
+                xOffset: 0,
+                yOffset: 0,
+                isDragging: false
             },
             
             init: function() {
                 // Tracking lumière
                 ['mousemove', 'touchmove'].forEach(e => document.addEventListener(e, this.trackLight.bind(this), {passive:false}));
                 
+                // STABILISATION DU COFFRE (Conversion % -> Pixels Fixes)
                 const safe = document.getElementById('item-safe');
+                const rect = safe.getBoundingClientRect();
+                
+                // On fixe la position pour éviter le saut lors du premier drag
+                // On utilise transform pour le mouvement (plus fluide)
+                safe.style.top = rect.top + 'px';
+                safe.style.left = rect.left + 'px';
+                safe.style.transform = "none"; // On retire le centrage CSS, maintenant qu'on a les pixels
+                
+                // Initialisation de la position pour le script
+                this.state.xOffset = 0;
+                this.state.yOffset = 0;
+                this.state.initialX = rect.left;
+                this.state.initialY = rect.top;
 
-                // --- NOUVEAU MOTEUR DRAG & DROP POINTER EVENTS (100% FLUIDE) ---
-
-                const handleStart = (e) => {
-                    const t = e.target.closest('#item-safe');
-                    if (!t) return;
-
-                    // On capture le pointeur pour éviter de le perdre si on sort de l'élément
-                    if (e.pointerId) {
-                        t.setPointerCapture(e.pointerId);
-                    }
-
-                    this.state.draggingItem = t;
-                    this.state.isMoving = false; 
-
-                    // Coordonnées initiales du pointeur
-                    this.state.startX = e.clientX;
-                    this.state.startY = e.clientY;
-
-                    // On fige la position visuelle actuelle en pixels
-                    const rect = t.getBoundingClientRect();
-                    // On place l'élément en position absolue par rapport au viewport
-                    // Le translate(-50%, -50%) du CSS est toujours actif, donc on doit viser le CENTRE
-                    this.state.initialItemX = rect.left + (rect.width / 2);
-                    this.state.initialItemY = rect.top + (rect.height / 2);
-
-                    t.style.left = this.state.initialItemX + 'px';
-                    t.style.top = this.state.initialItemY + 'px';
-                    t.style.zIndex = 500;
-                };
-
-                const handleMove = (e) => {
-                    if (!this.state.draggingItem) return;
-
-                    const dx = e.clientX - this.state.startX;
-                    const dy = e.clientY - this.state.startY;
-
-                    // SEUIL DE 10px pour différencier clic et drag
-                    if (!this.state.isMoving && Math.sqrt(dx*dx + dy*dy) < 10) {
-                        return; 
-                    }
-
-                    this.state.isMoving = true;
-                    e.preventDefault(); // Empêche le scroll
-
-                    // Application du déplacement
-                    this.state.draggingItem.style.left = (this.state.initialItemX + dx) + 'px';
-                    this.state.draggingItem.style.top = (this.state.initialItemY + dy) + 'px';
-                };
-
-                const handleEnd = (e) => {
-                    if (!this.state.draggingItem) return;
-
-                    this.state.draggingItem.style.zIndex = 100;
-                    if (e.pointerId) {
-                        this.state.draggingItem.releasePointerCapture(e.pointerId);
-                    }
-
-                    // Si pas de mouvement significatif, c'est un CLIC
-                    if (!this.state.isMoving) {
-                        this.openKeypad();
-                    }
-
-                    this.state.draggingItem = null;
-                    this.state.isMoving = false;
-                };
-
-                // Écouteurs Pointer Events (Gère Souris + Touch nativement)
-                safe.addEventListener('pointerdown', handleStart);
-                window.addEventListener('pointermove', handleMove);
-                window.addEventListener('pointerup', handleEnd);
-                window.addEventListener('pointercancel', handleEnd);
+                // ATTACHEMENT DES EVENTS DRAG (Pointer Events = Souris + Touch)
+                safe.addEventListener("pointerdown", this.dragStart.bind(this));
+                window.addEventListener("pointerup", this.dragEnd.bind(this));
+                window.addEventListener("pointermove", this.drag.bind(this));
 
                 setInterval(this.checkUV.bind(this), 100);
             },
+
+            // --- NOUVEAU MOTEUR DRAG FLUIDE ---
+            dragStart: function(e) {
+                if (e.target.closest('#item-safe')) {
+                    this.state.initialX = e.clientX - this.state.xOffset;
+                    this.state.initialY = e.clientY - this.state.yOffset;
+                    this.state.dragItem = e.target.closest('#item-safe');
+                    
+                    // Capture le pointeur pour éviter de perdre l'objet si on bouge vite
+                    this.state.dragItem.setPointerCapture(e.pointerId);
+                    this.state.isDragging = false; // On commence par supposer un clic
+                }
+            },
+
+            drag: function(e) {
+                if (this.state.dragItem) {
+                    e.preventDefault();
+
+                    this.state.currentX = e.clientX - this.state.initialX;
+                    this.state.currentY = e.clientY - this.state.initialY;
+
+                    // Si on bouge de plus de 5 pixels, c'est un drag
+                    if(Math.abs(this.state.currentX) > 5 || Math.abs(this.state.currentY) > 5) {
+                        this.state.isDragging = true;
+                    }
+
+                    if(this.state.isDragging) {
+                        this.state.xOffset = this.state.currentX;
+                        this.state.yOffset = this.state.currentY;
+                        this.setTranslate(this.state.currentX, this.state.currentY, this.state.dragItem);
+                    }
+                }
+            },
+
+            dragEnd: function(e) {
+                if(!this.state.dragItem) return;
+
+                this.state.initialX = this.state.currentX;
+                this.state.initialY = this.state.currentY;
+                
+                // Si on a à peine bougé, c'est un clic -> Ouvrir clavier
+                if(!this.state.isDragging) {
+                    this.openKeypad();
+                }
+
+                this.state.dragItem = null;
+                this.state.isDragging = false;
+            },
+
+            setTranslate: function(xPos, yPos, el) {
+                el.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
+            },
+            // ------------------------------------
 
             showMessage: function(msg) {
                 const el = document.getElementById('game-message');
@@ -523,8 +470,7 @@
             },
 
             inspect: function(id) {
-                // Si on déplace le coffre, on bloque l'inspection
-                if(this.state.isMoving) return;
+                if(this.state.isDragging) return; // Sécurité anti-clic pendant drag
                 
                 const modal = document.getElementById('modal-inspect');
                 const flipper = document.getElementById('zoom-flipper');
@@ -599,7 +545,7 @@
                 }
             }
         };
-        // Engine.init() est appelé par le bouton Start
+        // Init lancé par bouton start
     </script>
 </body>
 </html>
