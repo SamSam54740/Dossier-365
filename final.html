@@ -5,31 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>1 AN - NOUS</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;800&family=Dancing+Script:wght@700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
         /* ==================== BASE ==================== */
         :root {
             --bg-color: #050202;
             --text-color: #fdfbf7;
-            --highlight: #e91e63; /* Rose Amour */
-            --gold: #c5a059;
+            --highlight: #e91e63;
+            --gold: #ffd700;
             --font-main: 'Montserrat', sans-serif;
             --font-love: 'Dancing Script', cursive;
             --font-title: 'Playfair Display', serif;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; user-select: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; user-select: none; -webkit-tap-highlight-color: transparent; }
         
         body { 
             background-color: var(--bg-color); 
             color: var(--text-color); 
             font-family: var(--font-main); 
-            height: 100vh; overflow: hidden; 
-            cursor: pointer;
+            height: 100dvh; 
+            width: 100vw;
+            overflow: hidden; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
 
         /* ==================== BACKGROUNDS ==================== */
-        /* Image de fond avec effet Ken Burns (zoom lent) */
         #bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
             opacity: 0.3; transition: opacity 1.5s ease-in-out;
@@ -38,61 +40,80 @@
         }
         #bg-layer.zoom { transform: scale(1.1); transition: transform 20s linear; }
         
-        /* Particules d'ambiance */
-        #particles {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none;
+        #particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+
+        /* ==================== ÉCRAN DE DÉMARRAGE ==================== */
+        #start-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 500;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 1s ease-out;
         }
+        #start-screen.hidden { opacity: 0; pointer-events: none; }
 
         /* ==================== CONTENEUR TEXTE ==================== */
-        #story-container {
-            position: relative; z-index: 10; width: 100%; height: 100%;
+        #story-wrapper {
+            position: relative; z-index: 10; 
+            width: 90%; height: 80vh; 
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 20px; text-align: center;
         }
 
-        /* Styles des Phrases */
         .phrase {
-            font-size: 1.3rem; font-weight: 300; line-height: 1.6;
-            margin: 8px 0; opacity: 0; transform: translateY(30px);
-            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-            max-width: 90%;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            font-size: 1.2rem; font-weight: 400; line-height: 1.6;
+            margin: 10px 0; opacity: 0; transform: translateY(20px);
+            /* Transition plus lente pour la douceur */
+            transition: opacity 0.8s ease, transform 0.8s ease; 
+            max-width: 100%; text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            position: absolute; /* Pour qu'ils se superposent pas pendant la transition */
         }
-        .phrase.visible { opacity: 1; transform: translateY(0); }
-        .phrase.old { opacity: 0; transform: translateY(-30px); filter: blur(4px); transition: all 0.6s ease-in; }
+        .phrase.visible { opacity: 1; transform: translateY(0); position: relative; }
+        .phrase.old { opacity: 0; transform: translateY(-30px); filter: blur(4px); transition: all 0.6s ease-in; pointer-events: none;}
 
-        /* TYPOGRAPHIES SPÉCIALES */
+        /* TYPOGRAPHIES */
         .section-title {
-            font-family: var(--font-title); font-size: 2.5rem; color: var(--gold);
-            text-transform: uppercase; letter-spacing: 4px; margin-bottom: 20px;
-            border-bottom: 1px solid rgba(197, 160, 89, 0.5); padding-bottom: 10px;
+            font-family: var(--font-title); font-size: 2rem; color: var(--gold);
+            text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; margin-top: 10px;
+            display: block; width: 100%; text-align: center;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3); padding-bottom: 15px;
         }
         .love-script {
-            font-family: var(--font-love); font-size: 2.8rem; color: var(--highlight);
+            font-family: var(--font-love); font-size: 2.5rem; color: var(--highlight);
             display: block; margin-top: 20px; transform: rotate(-3deg);
         }
-        .keyword { font-weight: 800; color: #fff; text-transform: uppercase; }
+        .keyword { font-weight: 800; color: var(--gold); text-transform: uppercase; font-size: 1.1em; }
         .quote {
-            font-family: var(--font-title); font-style: italic; font-size: 1.5rem;
-            color: #ccc; margin: 15px 0; display: block;
+            font-family: var(--font-title); font-style: italic; font-size: 1.4rem;
+            color: #ddd; margin: 15px 0; display: block; 
+            background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;
+        }
+        .future-text {
+            font-family: var(--font-title); font-size: 1.6rem; color: #fff;
+            margin: 15px 0; display: block; letter-spacing: 2px; text-transform: uppercase;
         }
 
-        /* GALERIE LISTE (Films, Musiques...) */
         .grid-container {
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px;
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 15px; width: 100%;
         }
         .grid-item {
-            background: rgba(255,255,255,0.08); padding: 8px 16px; border-radius: 20px;
-            font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(4px); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            opacity: 0; transform: scale(0.5);
+            background: rgba(0,0,0,0.6); padding: 8px 14px; border-radius: 20px;
+            font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.2); color: #fff;
+            backdrop-filter: blur(4px); opacity: 0; transform: scale(0.5); 
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        /* ==================== INTERFACE ==================== */
+        /* ANIMATION CARTE */
+        .map-container { width: 100%; display: flex; flex-direction: column; align-items: center; margin: 20px 0; }
+        .map-wrapper { width: 250px; height: 60px; position: relative; display: flex; align-items: center; justify-content: space-between; }
+        .map-dot { width: 14px; height: 14px; background: var(--gold); border-radius: 50%; z-index: 2; box-shadow: 0 0 15px var(--gold); position: relative; }
+        .map-line-bg { position: absolute; left: 5px; top: 29px; width: 240px; height: 2px; background: #444; z-index: 0; }
+        .map-line-fill { position: absolute; left: 5px; top: 29px; height: 2px; background: var(--highlight); z-index: 1; width: 0%; transition: width 3s ease-in-out; box-shadow: 0 0 10px var(--highlight); }
+        .map-label { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; letter-spacing: 1px; color: #fff; white-space: nowrap;}
+
         #tap-hint {
-            position: fixed; bottom: 40px; width: 100%; text-align: center;
-            font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.5);
-            animation: pulse 2s infinite; pointer-events: none; z-index: 100;
+            position: fixed; bottom: 30px; width: 100%; text-align: center;
+            font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.4);
+            animation: pulse 2s infinite; pointer-events: none; z-index: 100; display: none;
         }
 
         /* ECRAN FINAL */
@@ -100,27 +121,65 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at center, #2a0a12 0%, #000000 80%);
             z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center;
-            opacity: 0; transition: opacity 2s ease-in;
+            opacity: 0; transition: opacity 2s ease-in; text-align: center;
         }
         #final-screen.visible { opacity: 1; }
 
         .final-heart { font-size: 5rem; animation: heartbeat 1.5s infinite; margin-bottom: 20px; }
-        .final-btn {
-            margin-top: 40px; padding: 20px 50px; background: transparent;
+        
+        .btn-magic {
+            padding: 15px 30px; background: transparent;
             border: 2px solid var(--gold); color: var(--gold);
-            font-family: var(--font-main); font-weight: 800; font-size: 1.2rem;
+            font-family: var(--font-main); font-weight: 800; font-size: 0.9rem;
             letter-spacing: 2px; text-transform: uppercase; border-radius: 50px;
-            cursor: pointer; transition: all 0.3s;
+            cursor: pointer; transition: all 0.3s; margin-top: 15px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); width: 80%; max-width: 300px;
         }
-        .final-btn:active { background: var(--gold); color: #000; }
+        .btn-magic:active { background: var(--gold); color: #000; }
+        .btn-secondary { border-color: #fff; color: #fff; margin-top: 10px; font-size: 0.8rem; padding: 12px 20px;}
 
-        /* ==================== ANIMATIONS ==================== */
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 0.8; } 100% { opacity: 0.3; } }
+        /* WRAPPED CARD (Caché hors écran pour la génération) */
+        #wrapped-card {
+            position: fixed; left: -9999px; top: 0;
+            width: 1080px; height: 1920px;
+            background: radial-gradient(circle at top right, #4a0018 0%, #000000 100%);
+            color: white; padding: 60px; box-sizing: border-box;
+            display: flex; flex-direction: column;
+            font-family: var(--font-main);
+            border: 20px solid #fff; /* Cadre blanc style photo */
+        }
+
+        .wr-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #fff; padding-bottom: 40px; margin-bottom: 50px; }
+        .wr-date { font-family: var(--font-tech); font-size: 2.5rem; color: #ccc; letter-spacing: 5px; }
+        .wr-badge { background: var(--gold); color: #000; padding: 10px 30px; border-radius: 50px; font-weight: bold; font-size: 2rem; text-transform: uppercase; }
+
+        .wr-header-title { font-family: var(--font-title); font-size: 7rem; line-height: 1; margin-bottom: 20px; color: #fff; text-shadow: 0 0 30px rgba(255,255,255,0.3); }
+        .wr-subtitle { font-family: var(--font-love); font-size: 4rem; color: var(--highlight); margin-bottom: 60px; transform: rotate(-2deg); }
+
+        .wr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 50px; }
+        
+        .wr-box { 
+            background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.2); 
+            border-radius: 30px; padding: 40px; position: relative;
+        }
+        .wr-box-title { font-size: 2rem; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; letter-spacing: 2px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;}
+        .wr-item { font-size: 1.8rem; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; }
+        
+        .wr-big-stat { text-align: center; background: linear-gradient(45deg, var(--highlight), #ff9100); padding: 50px; border-radius: 40px; margin-top: 20px; box-shadow: 0 20px 50px rgba(233, 30, 99, 0.4); }
+        .stat-val { font-size: 6rem; font-weight: 900; line-height: 1; }
+        .stat-lbl { font-size: 2.5rem; text-transform: uppercase; letter-spacing: 3px; }
+
+        .wr-footer { 
+            margin-top: auto; border-top: 4px solid #fff; padding-top: 40px; 
+            display: flex; justify-content: space-between; align-items: flex-end;
+        }
+        .barcode { font-family: 'Courier New', monospace; font-size: 1.5rem; letter-spacing: 10px; opacity: 0.7; }
+        .signature { font-family: var(--font-love); font-size: 5rem; color: #fff; }
+
         @keyframes popIn { to { opacity: 1; transform: scale(1); } }
+        @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 0.8; } 100% { opacity: 0.3; } }
         @keyframes heartbeat { 0% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } 60% { transform: scale(1); } }
         
-        /* Cœur au clic */
         .click-heart {
             position: absolute; pointer-events: none; font-size: 24px; color: var(--highlight);
             animation: flyAndFade 1.5s linear forwards; z-index: 999;
@@ -133,114 +192,181 @@
 
     <img id="bg-layer" src="" alt="">
     <div id="particles"></div>
-    <div id="tap-hint">( CLIQUE POUR CONTINUER... )</div>
+    
+    <div id="start-screen">
+        <h1 class="section-title" style="border:none; margin-bottom: 40px;">NOTRE HISTOIRE</h1>
+        <button class="btn-magic" onclick="startGame()">🎬 LANCER NOTRE FILM</button></button>
+    </div>
 
-    <div id="story-container">
-        </div>
+    <div id="tap-hint">( CLIQUE POUR CONTINUER... )</div>
+    <div id="story-wrapper"></div>
 
     <div id="final-screen">
         <div class="final-heart">❤️</div>
-        <h1 class="love-script" style="color:white; font-size:3.5rem; margin:0;">Je t'aime</h1>
-        <p style="color:#aaa; margin-top:10px; font-size:1.1rem;">Merci pour cette année incroyable.</p>
-        <button class="final-btn" onclick="alert('❤️ À nous. Pour toujours. ❤️')">POUR TOUJOURS</button>
+        <h1 class="love-script" style="color:white; font-size:3rem; margin:0;">Je t'aime</h1>
+        <p style="color:#aaa; margin-top:15px; font-size:1.1rem; margin-bottom:20px;">C'est le début du reste de notre vie.</p>
+        
+        <button class="btn-magic" onclick="alert('❤️ JOYEUX 1 AN MON AMOUR ❤️')">POUR TOUJOURS</button>
+        <button class="btn-magic btn-secondary" onclick="generateWrapped()">📥 TÉLÉCHARGER LE RÉCAP</button>
+    </div>
+
+    <div id="wrapped-card">
+        <div class="wr-top">
+            <div class="wr-date">RECAP 365J</div>
+            <div class="wr-badge">SAISON 1</div>
+        </div>
+
+        <div class="wr-header-title">NOTRE<br>ANNÉE</div>
+        <div class="wr-subtitle">Bibi Chat & Moi ❤️</div>
+
+        <div class="wr-grid">
+            <div class="wr-box">
+                <div class="wr-box-title">🎬 FILMS</div>
+                <div class="wr-item">🍿 Intouchables</div>
+                <div class="wr-item">🏫 Les Profs</div>
+                <div class="wr-item">💊 Limitless</div>
+                <div class="wr-item" style="font-style:italic; opacity:0.7;">+ des heures de rire</div>
+            </div>
+
+            <div class="wr-box">
+                <div class="wr-box-title">🎵 MUSIQUE</div>
+                <div class="wr-item">💿 GIMS</div>
+                <div class="wr-item">💿 NINHO</div>
+                <div class="wr-item">💿 VACRA</div>
+                <div class="wr-item" style="color:var(--highlight); font-weight:bold;">❤️ Show Me Love</div>
+            </div>
+
+            <div class="wr-box">
+                <div class="wr-box-title">🧩 LinkedIn Games</div>
+                <div class="wr-item">🥇 Winner: MOI (toujours)</div>
+                <div class="wr-item">🥈 Looser: TOI (pardon)</div>
+            </div>
+
+            <div class="wr-box">
+                <div class="wr-box-title">💬 Phrase Culte</div>
+                <div style="font-size:2.8rem; font-weight:bold; font-style:italic; line-height:1.2;">
+                    "Mais j'ai faimmmm !!!"
+                </div>
+            </div>
+        </div>
+
+        <div class="wr-big-stat">
+            <div class="stat-val">100%</div>
+            <div class="stat-lbl">COMPATIBLES</div>
+        </div>
+
+        <div class="wr-footer">
+            <div class="barcode">||| || ||| | |||| |||</div>
+            <div class="signature">Pour la vie.</div>
+        </div>
+
+        <div class="wr-footer">Mon Bibi Chat ❤️</div>
     </div>
 
     <script>
         // ================= DONNÉES DE L'HISTOIRE =================
-        // Structure : { text: "HTML", type: 'text'|'title'|'list', bg: 'URL' }
         const story = [
             // INTRO
             { text: "Tout a commencé...", type: 'text', bg: '' },
+            { text: "Il y a un an.", type: 'title' },
             { text: "Il y a 365 jours.", type: 'title' },
-            { text: "Une année entière à construire cette histoire.", type: 'text' },
+            { text: "Une année entière à construire ce que nous sommes.", type: 'text' },
             
             // RENCONTRE
             { text: "Tu te souviens du tout début ?", type: 'text' },
-            { text: "Cette première fois à <span class='keyword'>CLUNY</span>.", type: 'text', bg: 'Photos/rencontre.jpg' },
-            { text: "Je ne savais pas encore à ce moment-là...", type: 'text' },
-            { text: "Que tu allais devenir mon évidence.", type: 'love' },
+            { text: "Cette première fois à <span class='keyword'>CLUNY</span>.", type: 'text', bg: 'Photos/cluny.jpg' },
+            { text: "Je ne savais pas encore...", type: 'text' },
+            { text: "Que tu allais être mon Bibi Chat d'Amour ❤️", type: 'love' },
 
             // CINÉMA
-            { text: "NOS CLASSIQUES CINÉ", type: 'title', bg: '' },
-            { text: "On a passé des heures devant l'écran.", type: 'text' },
-            { text: "À rire devant <b>Les Profs</b> ou <b>Bienvenue chez les Ch'tis</b>.", type: 'text' },
             { 
-                type: 'list', 
-                items: ["Rien à déclarer 👮‍♂️", "Intouchables 🎭", "Limitless 🧠", "Qu'est-ce qu'on a fait au bon dieu ✝️"] 
+                type: 'combined', title: "NOS FILMS", bg: '',
+                items: ["Les Profs 🎓", "Bienvenue chez les Ch'tis ☔", "Rien à déclarer 👮‍♂️", "Intouchables ♿", "Limitless 🧠", "Qu'est-ce qu'on a fait au bon dieu ✝️"] 
             },
-            { text: "Chaque film, un souvenir de plus.", type: 'text' },
+            { text: "Des heures passées ensemble devant l'écran.", type: 'text' },
+            { text: "Chaque film est un petit bout de notre histoire.", type: 'text' },
 
             // MUSIQUE
-            { text: "NOS VIBES MUSICALES", type: 'title', bg: '' },
-            { text: "La bande son de notre année.", type: 'text' },
-            { text: "GIMS, NINHO, VACRA...", type: 'text' },
+            { 
+                type: 'combined', title: "NOTRE MUSIQUE", bg: '',
+                items: ["GIMS 🕶️", "NINHO 🎤", "VACRA 🎵"]
+            },
             { text: "Mais s'il n'y en avait qu'une...", type: 'text' },
             { text: "Show Me Love Your Body 🎵", type: 'love' },
 
-            // LA BOUFFE & POTES
-            { text: "LES BONS MOMENTS", type: 'title', bg: 'Photos/miam.jpg' },
-            { text: "Parce qu'on aime profiter de la vie.", type: 'text' },
-            { text: "Nos bons petits plats.", type: 'text' },
-            { text: "Nos soirées avec Sam, Anthé et les autres...", type: 'text', bg: 'Photos/potes.jpg' },
-            { text: "Ces fous rires qui ne s'arrêtent jamais.", type: 'text' },
+            // LA BOUFFE
+            { text: "NOS BONS MOMENTS", type: 'title', bg: 'Photos/miam.jpg' },
+            { text: "Nos petits plats préparés avec amour.", type: 'text' },
+            { text: "Et nos apéros qui ne finissent jamais.", type: 'text' },
+
+            // POTES
+            { text: "LE CERCLE", type: 'title', bg: 'Photos/potes.jpg' },
+            { text: "Nos soirées avec les copains.", type: 'text' },
+            { text: "Avec Sam, avec Anthé...", type: 'text' },
+            { text: "Ces souvenirs collectifs qu'on s'est créés.", type: 'text' },
 
             // LINKEDIN
-            { text: "NOS RITUELS", type: 'title', bg: 'Photos/linkedin.jpg' },
-            { text: "Chaque jour. Sans exception.", type: 'text' },
-            { text: "Le combat sur LinkedIn.", type: 'text' },
             { 
-                type: 'list', 
+                type: 'combined', title: "JEUX LINKEDIN", styleTitle: "color:#0077b5;", bg: 'Photos/linkedin.jpg',
                 items: ["ZIP", "QUEENS", "TAGO", "SUDOKU"] 
             },
-            { text: "Bon, il faut qu'on soit honnêtes...", type: 'text' },
+            { text: "Notre rituel quotidien.", type: 'text' },
+            { text: "Bon, soyons honnêtes...", type: 'text' },
             { text: "Je te bats tout le temps non ? 😎", type: 'text' },
-            { text: "(Mais c'est parce que tu me laisses gagner... peut-être).", type: 'text' },
-
+            
             // DÉLIRES
             { text: "NOS DÉLIRES", type: 'title', bg: 'Photos/delire.jpg' },
-            { text: "Ces trucs que personne d'autre ne comprend.", type: 'text' },
-            { text: "Quand tu fais ta tête de...", type: 'text' },
             { text: "<span class='quote'>Oh noooonnnnn 😫</span>", type: 'text' },
             { text: "<span class='quote'>Mmmhh ☹️☹️</span>", type: 'text' },
-            { text: "Ou quand tu ne sais jamais ce que tu veux...", type: 'text' },
             { text: "<span class='quote'>Mais je sais passsss....</span>", type: 'text' },
             { text: "<span class='quote'>Mais j'ai faimmmmmm!!!</span>", type: 'text' },
-            { text: "C'est pour ça que je t'aime.", type: 'love' },
+            { text: "C'est tout ça qui fait que je t'aime.", type: 'love' },
 
             // POURQUOI ELLE
-            { text: "MON BIBI CHAT", type: 'title', bg: 'Photos/love.jpg' },
-            { text: "Tu es mon petit nounours tout doux.", type: 'text' },
-            { text: "Tu es super drôle, hyper fun.", type: 'text' },
-            { text: "Avec toi, on ne s'ennuie jamais.", type: 'text' },
-            { text: "Toujours partante pour tout.", type: 'text' },
+            { text: "POURQUOI TOI ?", type: 'title', bg: 'Photos/love.jpg' },
+            { text: "Parce que tu es un petit nounours tout doux.", type: 'text' },
+            { text: "Parce que tu es super drôle et hyper fun.", type: 'text' },
             { text: "Happy happy happy !", type: 'love' },
 
-            // DISTANCE & FUTUR
-            { text: "L'AVENIR", type: 'title', bg: 'Photos/rencontre.jpg' },
-            { text: "Luxembourg ✈️ Dublin", type: 'text' },
-            { text: "La distance, c'est dur parfois.", type: 'text' },
-            { text: "Mais regarde tout ce qu'on a traversé.", type: 'text' },
-            { text: "Regarde tout ce qui nous attend.", type: 'text' },
-            { 
-                type: 'list', 
-                items: ["L'appartement 🏠", "La Maison 🏡", "Le Chien (ou le Chat) 🐶", "La Piscine 🏊‍♂️", "Le Spa & Jacuzzi 🧖‍♀️"] 
-            },
+            // DISTANCE
+            { text: "LA DISTANCE", type: 'title', bg: 'Photos/cluny.jpg' },
+            { type: 'map' }, 
+            { text: "Loin des yeux...", type: 'text' },
+            { text: "Mais tellement près du cœur.", type: 'text' },
+
+            // FUTUR
+            { text: "CE QUI NOUS ATTEND", type: 'title', bg: '' },
+            { text: "L'appartement ensemble.", type: 'future' },
+            { text: "La Maison.", type: 'future' },
+            { text: "Le Chien (ou le Chat).", type: 'future' },
+            { text: "La belle Piscine.", type: 'future' },
+            { text: "Le Spa & Jacuzzi.", type: 'future' },
             { text: "Ce n'est que le début de notre vie.", type: 'text' },
 
             // FINAL
             { text: "Bien joué mon Bibi Chat.", type: 'text', bg: '' },
-            { text: "Tu es arrivée au bout de ce dossier.", type: 'text' },
+            { text: "Tu as tout traversé.", type: 'text' },
             { text: "Mais le plus important...", type: 'text' },
             { text: "C'est que je t'aime plus que tout.", type: 'love' }
         ];
 
-        // ================= MOTEUR DU JEU =================
+        // ================= MOTEUR =================
         let step = 0;
-        const container = document.getElementById('story-container');
+        let isStarted = false;
+        let isAnimating = false; // LOCK POUR EMPECHER LE SPAM CLIC
+        const container = document.getElementById('story-wrapper');
         const bgLayer = document.getElementById('bg-layer');
 
-        // Créer un cœur au clic (Effet visuel)
-        document.addEventListener('click', (e) => {
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('tap-hint').style.display = 'block';
+            isStarted = true;
+            nextStep(); 
+        }
+
+        document.body.addEventListener('click', (e) => {
+            if (!isStarted) return;
+            if (e.target.closest('button')) return; 
             createHeart(e.clientX, e.clientY);
             nextStep();
         });
@@ -249,97 +375,111 @@
             const heart = document.createElement('div');
             heart.className = 'click-heart';
             heart.innerHTML = '❤️';
-            heart.style.left = x + 'px';
-            heart.style.top = y + 'px';
-            // Taille aléatoire
-            const size = Math.random() * 20 + 15;
-            heart.style.fontSize = size + 'px';
-            // Rotation légère aléatoire
+            heart.style.left = x + 'px'; heart.style.top = y + 'px';
+            heart.style.fontSize = (Math.random() * 20 + 15) + 'px';
             heart.style.transform = `rotate(${Math.random() * 40 - 20}deg)`;
             document.body.appendChild(heart);
-            
             setTimeout(() => heart.remove(), 1500);
         }
 
-        function nextStep() {
-            // Fin de l'histoire ?
-            if (step >= story.length) {
-                showFinalScreen();
-                return;
+        // --- NOUVELLE FONCTION AVEC TEMPO ---
+        async function nextStep() {
+            if (isAnimating) return; // Si on anime déjà, on ignore le clic
+            if (step >= story.length) { showFinalScreen(); return; }
+
+            isAnimating = true; // On verrouille
+
+            // 1. PHASE DE DEPART (FADE OUT)
+            const oldElements = document.querySelectorAll('.phrase');
+            let hasOld = oldElements.length > 0;
+            
+            if(hasOld) {
+                oldElements.forEach(el => {
+                    el.classList.remove('visible');
+                    el.classList.add('old');
+                });
+                // On attend que l'animation CSS finisse (0.6s) + le tempo demandé (0.5s)
+                await new Promise(r => setTimeout(r, 600)); 
+                // Nettoyage du DOM
+                oldElements.forEach(el => el.remove());
+                // Petite pause vide (0.5s demandé)
+                await new Promise(r => setTimeout(r, 500));
             }
 
+            // 2. PHASE D'ARRIVÉE
             const data = story[step];
 
-            // 1. Gérer le Fond (Image)
+            // Gestion Image Fond
             if (data.bg !== undefined) {
-                if (data.bg === '') {
-                    bgLayer.style.opacity = 0; // Noir
-                } else {
+                if (data.bg === '') { bgLayer.style.opacity = 0; }
+                else {
                     bgLayer.src = data.bg;
-                    bgLayer.style.opacity = 0.4; // Image visible
+                    bgLayer.style.opacity = 0.4;
                     bgLayer.classList.remove('zoom');
-                    void bgLayer.offsetWidth; // Trigger reflow
+                    void bgLayer.offsetWidth;
                     bgLayer.classList.add('zoom');
                 }
             }
 
-            // 2. Sortie des anciens textes
-            const oldElements = document.querySelectorAll('.phrase');
-            oldElements.forEach(el => {
-                el.classList.remove('visible');
-                el.classList.add('old');
-                setTimeout(() => el.remove(), 600);
-            });
-
-            // 3. Création du nouvel élément
             let newEl;
-
-            if (data.type === 'list') {
+            // Création élément (identique à avant)
+            if (data.type === 'combined') {
                 newEl = document.createElement('div');
-                newEl.className = 'grid-container phrase';
+                newEl.className = 'phrase'; 
+                newEl.style.width = "100%";
+                let titleHtml = `<div class="section-title" style="${data.styleTitle || ''}">${data.title}</div>`;
+                let listHtml = `<div class="grid-container">`;
                 data.items.forEach((item, index) => {
-                    let span = document.createElement('span');
-                    span.className = 'grid-item';
-                    span.innerText = item;
-                    span.style.animationDelay = (index * 0.1) + 's';
-                    newEl.appendChild(span);
+                    listHtml += `<span class="grid-item" style="animation-delay:${index*0.1}s">${item}</span>`;
                 });
+                listHtml += `</div>`;
+                newEl.innerHTML = titleHtml + listHtml;
+            } else if (data.type === 'map') {
+                newEl = document.createElement('div');
+                newEl.className = 'map-container phrase';
+                newEl.innerHTML = `
+                    <div class="map-wrapper">
+                        <div class="map-dot"><span class="map-label">LUXEMBOURG</span></div>
+                        <div class="map-line-bg"></div>
+                        <div class="map-line-fill"></div>
+                        <div class="map-dot"><span class="map-label">DUBLIN</span></div>
+                    </div>`;
+                setTimeout(() => { const fill = newEl.querySelector('.map-line-fill'); if(fill) fill.style.width = '100%'; }, 200);
             } else {
                 newEl = document.createElement('div');
                 newEl.innerHTML = data.text;
-                
-                // Classes CSS selon le type
                 if (data.type === 'title') newEl.className = 'phrase section-title';
                 else if (data.type === 'love') newEl.className = 'phrase love-script';
+                else if (data.type === 'future') newEl.className = 'phrase future-text';
                 else newEl.className = 'phrase';
             }
 
             container.appendChild(newEl);
+            
+            // Force reflow
+            void newEl.offsetWidth; 
+            newEl.classList.add('visible');
 
-            // Apparition douce
-            setTimeout(() => newEl.classList.add('visible'), 50);
-
-            // Vibration (Mobile)
             if (navigator.vibrate) navigator.vibrate(15);
 
             step++;
+            
+            // On déverrouille le clic une fois que le texte est apparu
+            setTimeout(() => { isAnimating = false; }, 800);
         }
 
         function showFinalScreen() {
             document.getElementById('tap-hint').style.display = 'none';
-            document.getElementById('story-container').style.display = 'none';
-            
+            document.getElementById('story-wrapper').style.display = 'none';
             const finalScreen = document.getElementById('final-screen');
             finalScreen.style.display = 'flex';
             setTimeout(() => finalScreen.classList.add('visible'), 100);
             
-            // Explosion de cœurs finale
             setInterval(() => {
                 createHeart(Math.random() * window.innerWidth, window.innerHeight - 50);
             }, 300);
         }
 
-        // Particules de fond (Ambiance)
         const pContainer = document.getElementById('particles');
         for(let i=0; i<30; i++) {
             let p = document.createElement('div');
@@ -354,10 +494,23 @@
             pContainer.appendChild(p);
         }
 
-        // Lancement
-        window.onload = () => {
-            setTimeout(nextStep, 1000);
-        };
+        // GENERATION DU WRAPPED
+        function generateWrapped() {
+            const card = document.getElementById('wrapped-card');
+            
+            // On s'assure que tout est chargé
+            html2canvas(card, {
+                scale: 2, // Meilleure qualité
+                useCORS: true,
+                backgroundColor: null
+            }).then(canvas => {
+                // Création du lien de téléchargement
+                const link = document.createElement('a');
+                link.download = '1_AN_NOUS_RECAP.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
 
     </script>
 </body>
