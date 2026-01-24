@@ -36,7 +36,7 @@
             position: relative; width: 100%; height: 100%;
             background-color: #2e1a0f; background-image: var(--wood-texture);
             box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
-            pointer-events: none; /* Clics fond désactivés */
+            pointer-events: none; /* Le fond ne bloque pas les clics */
         }
         #stage-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -48,24 +48,29 @@
         .table-item {
             position: absolute; cursor: pointer; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
             transition: transform 0.1s ease-out, filter 0.1s; transform-origin: center; will-change: transform, left, top; z-index: 10;
-            pointer-events: auto; /* Clics objets activés */
+            pointer-events: auto; /* IMPORTANT */
         }
         .table-item:active { transform: scale(0.97) !important; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
 
         /* --- COFFRE (Bas Gauche) --- */
         #item-safe {
-            width: 140px; height: 110px;
-            /* 3D pour l'animation */
-            perspective: 1000px; 
+            width: 140px; height: 110px; 
+            perspective: 1000px; /* Pour la 3D */
             cursor: grab; z-index: 100;
-            /* Transition fluide pour l'ouverture */
-            transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            /* Transition fluide pour le recentrage automatique */
+            transition: transform 0.1s; 
         }
+        /* Zone de touche étendue pour le drag */
+        #item-safe::after { content:''; position: absolute; top:-20px; bottom:-20px; left:-20px; right:-20px; }
+        
         #item-safe:active { cursor: grabbing; }
-        /* Effet d'ouverture : on agrandit légèrement le coffre */
-        #item-safe.open-anim {
-            transform: translate(-50%, -50%) scale(1.3) !important; 
-            z-index: 9999 !important; /* Passe devant tout */
+
+        /* Animation de centrage et ouverture */
+        #item-safe.move-center {
+            top: 50% !important; left: 50% !important;
+            transform: translate(-50%, -50%) scale(1.5) !important;
+            transition: all 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            z-index: 15000 !important; /* Devant tout sauf l'écran final */
         }
 
         .safe-body {
@@ -74,32 +79,27 @@
             border: 2px solid #111; border-radius: 6px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.9);
             position: relative;
-            transform-style: preserve-3d; /* Vital pour la 3D */
+            transform-style: preserve-3d;
         }
-
-        /* Intérieur + Bouteille */
         .safe-interior {
             position: absolute; top: 5%; left: 5%; width: 90%; height: 90%;
             background: #000; box-shadow: inset 0 0 15px #000;
             display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
         .safe-bottle {
-            font-size: 3.5rem; 
-            filter: drop-shadow(0 0 20px gold); /* Halo doré */
+            font-size: 3.5rem; filter: drop-shadow(0 0 20px gold);
             opacity: 0; transform: scale(0.5); 
-            transition: all 1.5s cubic-bezier(0.34, 1.56, 0.64, 1); /* Pop élastique */
+            transition: all 1s ease-out 0.5s; /* Délai pour l'apparition */
         }
         #item-safe.open-anim .safe-bottle { opacity: 1; transform: scale(1); }
 
-        /* Porte */
         .safe-door {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #3a3a3a, #1a1a1a);
             border: 1px solid #555; border-radius: 4px;
-            transform-origin: left; 
-            transition: transform 2s ease-in-out;
+            transform-origin: left; transition: transform 2s ease-in-out;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            backface-visibility: hidden; /* Cache le dos de la porte */
+            backface-visibility: hidden;
         }
         #item-safe.open-anim .safe-door { transform: rotateY(-140deg); }
 
@@ -109,58 +109,62 @@
 
         /* --- LAMPE TORCHE --- */
         #item-flashlight {
-            width: 110px; height: 30px; background: #111; border-radius: 10px; border: 1px solid #333;
+            width: 110px; height: 35px; background: #111; border-radius: 10px; border: 1px solid #333;
             z-index: 5;
             display: flex; align-items: center; justify-content: space-between; padding: 0 4px;
             box-shadow: inset 0 0 8px black; pointer-events: auto;
         }
-        /* Hitbox étendue */
-        #item-flashlight::before { content: ''; position: absolute; top: -30px; left: -30px; right: -30px; bottom: -30px; z-index: 6; }
+        /* Hitbox GÉANTE invisible pour faciliter la prise */
+        #item-flashlight::before { content: ''; position: absolute; top: -50px; left: -50px; right: -50px; bottom: -50px; z-index: 6; }
+        
         .flash-head { width: 20px; height: 34px; background: #222; border-right: 2px solid #444; border-radius: 3px; pointer-events: none; }
         .flash-body { width: 60px; height: 18px; background: repeating-linear-gradient(90deg, #111, #111 2px, #222 2px, #222 4px); pointer-events: none; }
 
         /* --- LETTRE --- */
         .item-letter {
-            width: 160px; height: 110px; background: #fff; background-image: var(--paper-texture);
-            padding: 12px; color: #111; transform: rotate(3deg); box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            width: 150px; height: 100px; background: #fff; background-image: var(--paper-texture);
+            padding: 10px; color: #111; transform: rotate(3deg); box-shadow: 0 2px 5px rgba(0,0,0,0.3); overflow: hidden;
         }
-        .letter-blur { font-family: var(--font-messy); font-size: 0.6rem; line-height: 1; filter: blur(0.7px); opacity: 0.7; overflow: hidden; height: 100%; user-select: none; color: #333; pointer-events: none; }
+        .letter-blur { 
+            font-family: var(--font-messy); font-size: 0.5rem; line-height: 0.9; 
+            color: #555; user-select: none; pointer-events: none; white-space: pre-wrap; 
+        }
 
         /* --- TICKET --- */
         .item-receipt {
-            width: 110px; height: 210px; background: #fff; padding: 8px; font-family: var(--font-tech);
-            font-size: 0.5rem; color: #333; transform: rotate(-5deg);
+            width: 100px; height: 190px; background: #fff; padding: 8px; font-family: var(--font-tech);
+            font-size: 0.45rem; color: #333; transform: rotate(-5deg);
             background-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.02));
             mask-image: linear-gradient(to bottom, transparent 1%, black 2%, black 98%, transparent 99%);
             border-top: 1px dotted #ccc; border-bottom: 1px dotted #ccc;
         }
-        .receipt-header { text-align: center; margin-bottom: 10px; }
+        .receipt-header { text-align: center; margin-bottom: 8px; }
         .receipt-row { display: flex; justify-content: space-between; margin-bottom: 2px;}
-        .receipt-total { margin-top: 12px; border-top: 2px dashed #000; padding-top: 5px; font-weight: bold; font-size: 0.6rem; display: flex; justify-content: space-between; }
+        .receipt-total { margin-top: 10px; border-top: 2px dashed #000; padding-top: 4px; font-weight: bold; font-size: 0.55rem; display: flex; justify-content: space-between; }
         .hidden-price { background: #111; color: #111; padding: 0 2px; }
-        .receipt-stain { position: absolute; bottom: 40px; left: 15px; width: 35px; height: 35px; background: rgba(160, 100, 30, 0.2); border-radius: 50%; filter: blur(6px); pointer-events: none; }
+        .receipt-stain { position: absolute; bottom: 30px; left: 10px; width: 30px; height: 30px; background: rgba(160, 100, 30, 0.2); border-radius: 50%; filter: blur(5px); pointer-events: none; }
 
         /* --- MENU --- */
         .item-menu {
-            width: 140px; height: 210px; background: #1b1b1b; border: 2px solid var(--accent-gold);
+            width: 130px; height: 190px; background: #1b1b1b; border: 2px solid var(--accent-gold);
             color: #ddd; padding: 10px; font-family: 'Times New Roman', serif; transform: rotate(-3deg);
             box-shadow: 0 5px 12px rgba(0,0,0,0.6);
         }
-        .menu-title { text-align: center; font-family: var(--font-ui); font-weight:900; color: var(--accent-gold); margin-bottom: 12px; padding-bottom: 4px; border-bottom: 1px solid #444; letter-spacing: 1px; font-size: 0.9rem; }
-        .menu-list { font-size: 0.6rem; line-height: 1.8; }
+        .menu-title { text-align: center; font-family: var(--font-ui); font-weight:900; color: var(--accent-gold); margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #444; letter-spacing: 1px; font-size: 0.8rem; }
+        .menu-list { font-size: 0.55rem; line-height: 1.8; }
         .menu-item { display: flex; justify-content: space-between; border-bottom: 1px dotted #444; }
 
         /* --- POLAROID --- */
-        .item-photo { width: 120px; height: 150px; background: #fff; padding: 6px 6px 35px 6px; transform: rotate(8deg); box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
+        .item-photo { width: 110px; height: 140px; background: #fff; padding: 6px 6px 30px 6px; transform: rotate(8deg); box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
         .photo-inner { width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .photo-inner img { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) sepia(0.2); }
-        .photo-text { position: absolute; bottom: 6px; width: 100%; text-align: center; font-family: var(--font-hand); color: #222; font-weight: bold; font-size: 1rem; }
+        .photo-text { position: absolute; bottom: 6px; width: 100%; text-align: center; font-family: var(--font-hand); color: #222; font-weight: bold; font-size: 0.9rem; }
 
         /* --- SOUS-BOCK --- */
         .item-coaster {
-            width: 100px; height: 100px; border-radius: 50%; background: #d7ccc8;
+            width: 90px; height: 90px; border-radius: 50%; background: #d7ccc8;
             border: 3px solid #5d4037; display: flex; align-items: center; justify-content: center; text-align: center;
-            transform: rotate(20deg); padding: 8px; background-image: var(--cardboard-texture); box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+            transform: rotate(20deg); padding: 5px; background-image: var(--cardboard-texture); box-shadow: 0 3px 6px rgba(0,0,0,0.5);
         }
         .coaster-logo { font-family: var(--font-type); color: #3e2723; font-weight: bold; line-height: 1.1; font-size: 0.7rem; }
 
@@ -211,7 +215,7 @@
         .modal-content-centered { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
 
         .modal-buttons { display: flex; flex-direction: column; gap: 10px; width: 80%; max-width: 250px; z-index: 3005; pointer-events: auto; }
-        .btn-modal { padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; font-family: var(--font-ui); font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: background 0.2s; font-size: 0.9rem;}
+        .btn-modal { padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; font-family: var(--font-ui); font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: background 0.2s; font-size: 0.8rem;}
         .btn-modal:active { background: #333; transform: scale(0.98); }
         .btn-flip { background: var(--ink-blue); border-color: #1a237e; display: none; }
         .btn-close { background: #c62828; border-color: #b71c1c; }
@@ -237,7 +241,9 @@
         .intro-title { font-family: var(--font-type); font-size: 2rem; color: var(--accent-gold); margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .intro-text { font-family: var(--font-type); font-size: 0.9rem; color: #ccc; line-height: 1.6; margin-bottom: 30px; text-align: left; }
         .btn-start { background: var(--accent-gold); color: #000; font-family: var(--font-ui); font-weight: 900; border: none; padding: 12px 25px; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 0 20px rgba(255, 193, 7, 0.4); animation: pulse 2s infinite; }
-        #success-screen { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
+        
+        /* SUCCESS SCREEN - Z-INDEX 20000 POUR ÊTRE SUR DE PASSER DEVANT LE COFFRE */
+        #success-screen { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 20000; }
         .success-content { border: 4px solid var(--accent-gold); padding: 40px; background: #000; box-shadow: 0 0 80px rgba(255, 193, 7, 0.3); transform: scale(0.8); opacity: 0; transition: all 0.5s ease-out; }
         #success-screen.visible .success-content { transform: scale(1); opacity: 1; }
         .success-title { font-family: var(--font-ui); font-weight: 900; font-size: 2.5rem; color: var(--accent-gold); margin-bottom: 10px; text-shadow: 0 0 20px var(--accent-gold); }
@@ -335,7 +341,7 @@
             </div>
         </div>
 
-        <div class="table-item" id="item-safe" style="top:85%; left:20%; transform: translate(-50%, -50%);">
+        <div class="table-item" id="item-safe" style="top:82%; left:20%; transform: translate(-50%, -50%);">
             <div class="safe-body">
                 <div class="safe-interior"><div class="safe-bottle">🍺</div></div>
                 <div class="safe-door">
@@ -345,7 +351,7 @@
             </div>
         </div>
 
-        <div class="table-item" id="item-flashlight" style="top:85%; left:20%; transform: translate(-50%, -50%) rotate(10deg);" onclick="Engine.pickupFlashlight(event)">
+        <div class="table-item" id="item-flashlight" style="top:82%; left:20%; transform: translate(-50%, -50%) rotate(10deg);" onclick="Engine.pickupFlashlight(event)">
             <div class="flash-head"></div><div class="flash-body"></div>
         </div>
     </div>
@@ -380,17 +386,57 @@
         function goToNext() { window.location.href = "apero4.html"; }
 
         const Engine = {
-            state: { hasFlashlight: false, isFlashOn: false, isUV: false, dragging: null, dragStart: {x:0, y:0}, dragOffset: {x:0, y:0}, wasDragging: false },
+            state: { hasFlashlight: false, isFlashOn: false, isUV: false, dragging: null, dragStart: {x:0, y:0}, dragOffset: {x:0, y:0}, isActuallyDragging: false },
             
             init: function() {
                 ['mousemove', 'touchmove'].forEach(e => document.addEventListener(e, this.trackLight.bind(this), {passive:false}));
                 const safe = document.getElementById('item-safe');
                 
-                // DRAG LOGIC FIX
-                ['mousedown', 'touchstart'].forEach(e => safe.addEventListener(e, this.dragStart.bind(this), {passive:false}));
-                ['mouseup', 'touchend'].forEach(e => document.addEventListener(e, this.dragEnd.bind(this)));
-                ['mousemove', 'touchmove'].forEach(e => document.addEventListener(e, this.dragMove.bind(this), {passive:false}));
-                
+                // DRAG LOGIC FIXEE
+                const startDrag = (e) => {
+                    const t = e.target.closest('#item-safe'); if(!t)return;
+                    this.state.dragging = t;
+                    this.state.isActuallyDragging = false; 
+                    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                    const r = t.getBoundingClientRect();
+                    this.state.dragOffset = {x: cx-r.left, y: cy-r.top};
+                    this.state.dragStart = {x: cx, y: cy};
+                    t.style.zIndex = 500;
+                };
+
+                const moveDrag = (e) => {
+                    if(!this.state.dragging) return;
+                    e.preventDefault(); 
+                    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                    
+                    if (Math.abs(cx - this.state.dragStart.x) > 5 || Math.abs(cy - this.state.dragStart.y) > 5) {
+                        this.state.isActuallyDragging = true;
+                    }
+
+                    if (this.state.isActuallyDragging) {
+                        this.state.dragging.style.left = (cx - this.state.dragOffset.x) + 'px';
+                        this.state.dragging.style.top = (cy - this.state.dragOffset.y) + 'px';
+                        this.state.dragging.style.transform = 'none';
+                    }
+                };
+
+                const endDrag = () => {
+                    if (this.state.dragging) {
+                        this.state.dragging.style.zIndex = 100;
+                        if (!this.state.isActuallyDragging) {
+                            this.openKeypad();
+                        }
+                        this.state.dragging = null;
+                        setTimeout(() => { this.state.isActuallyDragging = false; }, 50);
+                    }
+                };
+
+                safe.addEventListener('mousedown', startDrag); safe.addEventListener('touchstart', startDrag, {passive:false});
+                document.addEventListener('mousemove', moveDrag, {passive:false}); document.addEventListener('touchmove', moveDrag, {passive:false});
+                document.addEventListener('mouseup', endDrag); document.addEventListener('touchend', endDrag);
+
                 setInterval(this.checkUV.bind(this), 100);
             },
 
@@ -440,8 +486,7 @@
             },
 
             inspect: function(id) {
-                // Bloque l'inspection UNIQUEMENT si on est en train de glisser le coffre
-                if(this.state.wasDragging) return;
+                if(this.state.isActuallyDragging) return;
                 
                 const modal = document.getElementById('modal-inspect');
                 const flipper = document.getElementById('zoom-flipper');
@@ -471,57 +516,13 @@
                     case 'coaster':
                         btnFlip.style.display='block';
                         front.innerHTML = `<div class="modal-content-centered"><div style="width:220px; height:220px; border-radius:50%; background:#d7ccc8; border:8px solid #5d4037; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(0,0,0,0.5); background-image:var(--cardboard-texture);"><div style="text-align:center; font-family:var(--font-type); font-size:1.8rem; color:#5d4037; font-weight:bold;">SAINT FOY'S<br>BAR</div></div></div>`;
-                        // TEXTE UV AJUSTÉ (0.8rem)
                         back.innerHTML = `<div class="modal-content-centered"><div class="uv-revealable" style="width:220px; height:220px; border-radius:50%; background:#bcaaa4; border:8px solid #5d4037; display:flex; align-items:center; justify-content:center; background-image:var(--cardboard-texture); position:relative; overflow:hidden;"><div class="uv-hidden-layer"><div class="uv-text-style" style="font-size:0.8rem; border:3px dashed var(--text-uv); padding:15px; border-radius:50%; transform:rotate(-5deg);">( PRIX BIÈRES + TABLE )<br>x JOUR</div></div><div style="font-size:0.7rem; color:#666; position:absolute; bottom:30px;">(Dos du sous-bock)</div></div></div>`; break;
                 }
                 modal.classList.add('open');
             },
             flipCard: function() { document.getElementById('zoom-flipper').classList.toggle('flipped'); },
             closeModals: function() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open')); },
-            openKeypad: function() { document.getElementById('modal-keypad').classList.add('open'); Keypad.clear(); },
-
-            // DRAG FIXED LOGIC
-            dragStart: function(e) {
-                const t = e.target.closest('#item-safe'); if(!t)return;
-                this.state.dragging = t;
-                this.state.wasDragging = false; // Reset
-                const cx = e.touches ? e.touches[0].clientX : e.clientX;
-                const cy = e.touches ? e.touches[0].clientY : e.clientY;
-                const r = t.getBoundingClientRect();
-                this.state.dragOffset = {x: cx-r.left, y: cy-r.top};
-                this.state.dragStart = {x: cx, y: cy};
-                t.style.zIndex = 500;
-            },
-            dragMove: function(e) {
-                if(!this.state.dragging) return;
-                e.preventDefault(); // Important pour mobile
-                const cx = e.touches ? e.touches[0].clientX : e.clientX;
-                const cy = e.touches ? e.touches[0].clientY : e.clientY;
-                
-                // Seuil de détection du mouvement (5px)
-                if (Math.abs(cx - this.state.dragStart.x) > 5 || Math.abs(cy - this.state.dragStart.y) > 5) {
-                    this.state.wasDragging = true;
-                }
-
-                if (this.state.wasDragging) {
-                    this.state.dragging.style.left = (cx - this.state.dragOffset.x) + 'px';
-                    this.state.dragging.style.top = (cy - this.state.dragOffset.y) + 'px';
-                    this.state.dragging.style.transform = 'none';
-                }
-            },
-            // FIX DEFINITIF BUG : On remet wasDragging à false après un délai pour libérer les clics
-            dragEnd: function() { 
-                if(this.state.dragging) {
-                    this.state.dragging.style.zIndex=100; 
-                    // Si ce n'était PAS un drag (donc un clic), on ouvre le digicode
-                    if (!this.state.wasDragging) {
-                        this.openKeypad();
-                    }
-                    this.state.dragging = null;
-                    // Reset après un cycle
-                    setTimeout(() => { this.state.wasDragging = false; }, 50);
-                }
-            }
+            openKeypad: function() { document.getElementById('modal-keypad').classList.add('open'); Keypad.clear(); }
         };
 
         const Keypad = {
@@ -533,12 +534,16 @@
                 const s = document.getElementById('keypad-screen');
                 if(this.code === this.solution) {
                     s.style.color='#66bb6a'; s.innerText="OPEN"; if(navigator.vibrate) navigator.vibrate([100,50,200]);
-                    Engine.closeModals(); // Ferme le clavier
-                    document.getElementById('item-safe').classList.add('open-anim'); // Ouvre le coffre visuellement
+                    Engine.closeModals(); 
+                    document.getElementById('item-safe').classList.add('move-center');
+                    
                     setTimeout(() => {
-                        document.getElementById('success-screen').classList.remove('hidden'); // Affiche succès
-                        document.getElementById('success-screen').classList.add('visible');
-                    }, 3500); // 3.5s
+                        document.getElementById('item-safe').classList.add('open-anim');
+                        setTimeout(() => {
+                            document.getElementById('success-screen').classList.remove('hidden');
+                            document.getElementById('success-screen').classList.add('visible');
+                        }, 2500);
+                    }, 1200);
                 } else {
                     s.innerText="ERR"; document.getElementById('keypad-container').classList.add('shake-error');
                     if(navigator.vibrate) navigator.vibrate(400);
