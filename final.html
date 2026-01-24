@@ -186,16 +186,99 @@
         }
         @keyframes flyAndFade { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); } 100% { opacity: 0; transform: translate(-50%, -150px) scale(1.5); } }
 
+        /* ==================== CRYPTEX (LOCK SCREEN) ==================== */
+        #lock-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 2000; /* Au dessus de tout */
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: transform 1s cubic-bezier(0.7, 0, 0.3, 1);
+        }
+        #lock-screen.unlocked { transform: translateY(-100%); }
+
+        .lock-title { 
+            font-family: var(--font-main); color: #ff3333; font-size: 1.2rem; 
+            letter-spacing: 3px; margin-bottom: 40px; text-transform: uppercase; 
+            animation: blinkRed 2s infinite; text-align: center; 
+            border: 1px solid #ff3333; padding: 10px 20px; 
+        }
+        .lock-subtitle { 
+            font-family: var(--font-main); color: #aaa; font-size: 0.9rem; 
+            margin-bottom: 40px; max-width: 80%; text-align: center; line-height: 1.5; 
+        }
+
+        .cryptex-container {
+            display: flex; gap: 15px; perspective: 1000px; margin-bottom: 40px;
+        }
+        
+        .dial-wrapper {
+            width: 70px; height: 100px; cursor: pointer; position: relative;
+            transform-style: preserve-3d; transition: transform 0.3s;
+        }
+        .dial-wrapper:active { transform: scale(0.95); }
+
+        .dial {
+            width: 100%; height: 100%;
+            background: linear-gradient(180deg, #111 0%, #333 40%, #111 100%);
+            border: 2px solid var(--gold); border-radius: 10px;
+            color: var(--gold); font-size: 2.5rem;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+            user-select: none;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s;
+        }
+        
+        .dial-shadow {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none; border-radius: 10px;
+        }
+
+        .dial.spinning { transform: rotateX(360deg); }
+        .dial.correct { background: var(--gold); color: #000; box-shadow: 0 0 30px var(--gold); border-color: #fff; }
+
+        .lock-status {
+            font-family: monospace; color: #555; letter-spacing: 5px; margin-top: 20px; font-size: 0.9rem;
+        }
+        .lock-status.open { color: #00ff00; animation: blink 1s infinite; }
+
+        @keyframes blinkRed { 50% { opacity: 0.5; border-color: transparent; } }
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
+
+    <div id="lock-screen">
+        <div class="lock-title">PROTOCOLE DE SÉCURITÉ</div>
+        <div class="lock-subtitle">Alignez les 4 artefacts dans l'ordre chronologique de votre aventure pour déverrouiller le souvenir final.</div>
+        
+        <div class="cryptex-container">
+            <div class="dial-wrapper" onclick="Cryptex.spin(0)">
+                <div class="dial" id="dial-0">❓</div>
+                <div class="dial-shadow"></div>
+            </div>
+            <div class="dial-wrapper" onclick="Cryptex.spin(1)">
+                <div class="dial" id="dial-1">❓</div>
+                <div class="dial-shadow"></div>
+            </div>
+            <div class="dial-wrapper" onclick="Cryptex.spin(2)">
+                <div class="dial" id="dial-2">❓</div>
+                <div class="dial-shadow"></div>
+            </div>
+            <div class="dial-wrapper" onclick="Cryptex.spin(3)">
+                <div class="dial" id="dial-3">❓</div>
+                <div class="dial-shadow"></div>
+            </div>
+        </div>
+
+        <div class="lock-status" id="lock-msg">VERROUILLÉ</div>
+    </div>
 
     <img id="bg-layer" src="" alt="">
     <div id="particles"></div>
     
     <div id="start-screen">
         <h1 class="section-title" style="border:none; margin-bottom: 40px;">NOTRE HISTOIRE</h1>
-        <button class="btn-magic" onclick="startGame()">🎬 LANCER NOTRE FILM</button></button>
+        <button class="btn-magic" onclick="startGame()">🎬 LANCER NOTRE FILM</button>
     </div>
 
     <div id="tap-hint">( CLIQUE POUR CONTINUER... )</div>
@@ -266,6 +349,68 @@
 
     <script>
         // ================= DONNÉES DE L'HISTOIRE =================
+        // ================= GESTION DU CRYPTEX (MÉCANIQUE) =================
+        const Cryptex = {
+            // Les symboles disponibles sur chaque roue
+            symbols: ['❓', '✈️', '🧩', '🎵', '🍔', '🎬', '🎉', '🐕', '🍺', '❤️'],
+            
+            // L'état actuel de chaque roue (index dans le tableau symbols)
+            current: [0, 0, 0, 0],
+            
+            // La solution : [Puzzle, Burger, Lampe, Bière]
+            // Correspond aux index : Puzzle(2), Burger(4), Lampe(6), Bière(8)
+            solution: [2, 4, 6, 8], 
+
+            spin: function(dialIndex) {
+                const dial = document.getElementById('dial-' + dialIndex);
+                
+                // Animation visuelle (Reset puis Spin)
+                dial.style.transition = 'none';
+                dial.style.transform = 'rotateX(0deg)';
+                
+                setTimeout(() => {
+                    dial.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    dial.style.transform = 'rotateX(360deg)';
+                }, 10);
+
+                if(navigator.vibrate) navigator.vibrate(30);
+
+                // Changement de symbole
+                setTimeout(() => {
+                    this.current[dialIndex] = (this.current[dialIndex] + 1) % this.symbols.length;
+                    dial.innerText = this.symbols[this.current[dialIndex]];
+                    this.check();
+                }, 200);
+            },
+
+            check: function() {
+                let isCorrect = true;
+                for(let i=0; i<4; i++) {
+                    if(this.current[i] !== this.solution[i]) isCorrect = false;
+                }
+
+                if(isCorrect) {
+                    document.getElementById('lock-msg').innerText = "DÉCRYPTAGE...";
+                    document.getElementById('lock-msg').classList.add('open');
+                    
+                    // Effet visuel victoire
+                    for(let i=0; i<4; i++) {
+                        setTimeout(() => {
+                            document.getElementById('dial-'+i).classList.add('correct');
+                            if(navigator.vibrate) navigator.vibrate(50);
+                        }, i * 200);
+                    }
+
+                    // Déverrouillage après délai
+                    setTimeout(() => {
+                        document.getElementById('lock-screen').classList.add('unlocked');
+                        // On ne lance pas le film tout de suite, on affiche le bouton Start
+                        // Assure-toi que #start-screen est visible par défaut derrière ou le rendre visible ici
+                    }, 1500);
+                }
+            }
+        };
+
         const story = [
             // INTRO
             { text: "Tout a commencé...", type: 'text', bg: '' },
@@ -525,4 +670,3 @@
 </body>
 
 </html>
-

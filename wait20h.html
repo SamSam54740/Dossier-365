@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ACCÈS EN ATTENTE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #050202;
+            --tech-red: #ff3333;
+            --tech-green: #00ff00;
+            --gold: #ffd700;
+            --font-main: 'Montserrat', sans-serif;
+            --font-tech: 'Share Tech Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: white;
+            font-family: var(--font-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        #particles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none; opacity: 0.5;
+        }
+
+        .container {
+            z-index: 10;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .lock-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            transition: all 0.5s ease;
+            display: inline-block;
+        }
+        .locked { color: var(--tech-red); animation: pulseRed 2s infinite; }
+        .unlocked { color: var(--tech-green); transform: scale(1.1); text-shadow: 0 0 20px var(--tech-green); }
+
+        h1 {
+            font-family: var(--font-tech);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        /* NOUVEAU STYLE POUR LA DATE CIBLE */
+        .target-date {
+            font-family: var(--font-tech);
+            color: var(--tech-red);
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            border: 1px solid var(--tech-red);
+            padding: 10px 15px;
+            display: inline-block;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.2);
+            background: rgba(20, 0, 0, 0.5);
+        }
+
+        p {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .timer-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+        }
+        
+        .timer-display {
+            font-family: var(--font-tech);
+            font-size: 2.5rem;
+            color: var(--tech-red);
+            letter-spacing: 3px;
+        }
+        .timer-display.active { color: var(--tech-green); }
+
+        .timer-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #666;
+            margin-top: 5px;
+            letter-spacing: 2px;
+        }
+
+        .btn-access {
+            background: transparent;
+            border: 2px solid var(--tech-red);
+            color: var(--tech-red);
+            padding: 15px 40px;
+            font-family: var(--font-tech);
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: not-allowed;
+            opacity: 0.5;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 5px;
+        }
+
+        .btn-access.open {
+            border-color: var(--tech-green);
+            color: var(--bg-color);
+            background: var(--tech-green);
+            cursor: pointer;
+            opacity: 1;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+            font-weight: bold;
+        }
+
+        @keyframes pulseRed { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <div id="particles"></div>
+
+    <div class="container">
+        <div id="icon" class="lock-icon locked">🔒</div>
+        
+        <h1 id="status-title">ACCÈS RESTREINT</h1>
+        
+        <div id="target-display" class="target-date">CALCUL DE LA DATE...</div>
+
+        <p id="status-desc">Le protocole final est verrouillé temporellement. Veuillez patienter jusqu'à la date indiquée.</p>
+
+        <div class="timer-box">
+            <div id="timer" class="timer-display">--J --:--:--</div>
+            <div class="timer-label">TEMPS RESTANT</div>
+        </div>
+
+        <a id="btn" href="#" class="btn-access" onclick="return false;">ATTENTE SYNCHRONISATION...</a>
+    </div>
+
+    <script>
+        // ================= CONFIGURATION =================
+        // MODIFIE ICI : DATE DU DEBLOCAGE
+        const TARGET_YEAR = 2026;  
+        const TARGET_MONTH = 0;    // 0 = Janvier
+        const TARGET_DAY = 30;     // Le 30
+        const TARGET_HOUR = 20;    // 20h00
+        const TARGET_MINUTE = 0;   
+        
+        const NEXT_PAGE = "final.html"; 
+
+        // ================= MOTEUR =================
+        const timerEl = document.getElementById('timer');
+        const btnEl = document.getElementById('btn');
+        const iconEl = document.getElementById('icon');
+        const titleEl = document.getElementById('status-title');
+        const descEl = document.getElementById('status-desc');
+        const targetDisplayEl = document.getElementById('target-display');
+
+        // 1. AFFICHER LA DATE CIBLE (Automatique)
+        function showTargetDate() {
+            // Création de la date cible
+            const target = new Date(TARGET_YEAR, TARGET_MONTH, TARGET_DAY, TARGET_HOUR, TARGET_MINUTE, 0);
+            
+            // Formatage en Français (ex: JEUDI 30 JANVIER 2025)
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = target.toLocaleDateString('fr-FR', options);
+            
+            // Affichage dans la case rouge
+            targetDisplayEl.innerText = `CIBLE : ${dateStr.toUpperCase()} - ${TARGET_HOUR}H00`;
+        }
+
+        // 2. GESTION DU TIMER
+        function updateTimer() {
+            const now = new Date();
+            const target = new Date(TARGET_YEAR, TARGET_MONTH, TARGET_DAY, TARGET_HOUR, TARGET_MINUTE, 0);
+            const diff = target - now;
+
+            if (diff <= 0) {
+                unlock();
+            } else {
+                lock(diff);
+            }
+        }
+
+        function lock(diffMs) {
+            const d = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+            let timeStr = "";
+            if (d > 0) timeStr += d + "J ";
+            
+            timeStr += (h < 10 ? "0" + h : h) + ":" + 
+                       (m < 10 ? "0" + m : m) + ":" + 
+                       (s < 10 ? "0" + s : s);
+
+            timerEl.innerText = timeStr;
+            btnEl.onclick = function() { return false; };
+            btnEl.style.pointerEvents = "none";
+        }
+
+        function unlock() {
+            timerEl.innerText = "ACCÈS AUTORISÉ";
+            timerEl.style.fontSize = "1.5rem"; 
+            timerEl.classList.add('active');
+            
+            iconEl.innerText = "🔓";
+            iconEl.classList.remove('locked');
+            iconEl.classList.add('unlocked');
+
+            titleEl.innerText = "PROTOCOLE ACTIVÉ";
+            titleEl.style.color = "var(--tech-green)";
+            
+            // On change aussi la couleur de la date cible pour montrer que c'est bon
+            targetDisplayEl.style.borderColor = "var(--tech-green)";
+            targetDisplayEl.style.color = "var(--tech-green)";
+            
+            descEl.innerText = "Le fichier final est disponible. Prête ?";
+
+            btnEl.innerText = "ACCÉDER À LA PHASE 5";
+            btnEl.classList.add('open');
+            btnEl.href = NEXT_PAGE;
+            
+            btnEl.onclick = null; 
+            btnEl.style.pointerEvents = "auto";
+            
+            if (interval) clearInterval(interval);
+        }
+
+        // Particules
+        const pContainer = document.getElementById('particles');
+        for(let i=0; i<50; i++) {
+            let p = document.createElement('div');
+            p.style.position = 'absolute';
+            p.style.width = Math.random() * 2 + 'px';
+            p.style.height = p.style.width;
+            p.style.background = '#333';
+            p.style.borderRadius = '50%';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.top = Math.random() * 100 + '%';
+            pContainer.appendChild(p);
+        }
+
+        // Lancement
+        showTargetDate();
+        const interval = setInterval(updateTimer, 1000);
+        updateTimer();
+
+    </script>
+</body>
+</html>
