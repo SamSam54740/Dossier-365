@@ -277,7 +277,7 @@
             { text: "Tu te souviens du tout début ?", type: 'text' },
             { text: "Cette première fois à <span class='keyword'>CLUNY</span>.", type: 'text', bg: 'Photos/cluny.jpg' },
             { text: "Je ne savais pas encore que tu allais être...", type: 'text' },
-            { text: "Mon Bibi Chat d'Amour ❤️", type: 'love' },
+            { text: "Mon Bibi Chat d'Amour", type: 'love' },
 
             // CINÉMA
             { 
@@ -303,7 +303,7 @@
             { text: "On s'est vraiment bien rempli la pense ensemble...", type: 'text' },
 
             // POTES
-            { text: "LES COPAINS & SOIRÉES", type: 'title', bg: 'Photos/potes.jpg' },
+            { text: "LES SOIRÉES", type: 'title', bg: 'Photos/potes.jpg' },
             { text: "Nos soirées inoubliables.", type: 'text' },
             { text: "Ces moments de fête, de rire et de partage.", type: 'text' },
             { text: "Ces souvenirs collectifs qu'on s'est créés.", type: 'text' },
@@ -453,7 +453,7 @@
                         <div class="map-line-fill"></div>
                         <div class="map-dot"><span class="map-label">DUBLIN</span></div>
                     </div>`;
-                setTimeout(() => { const fill = newEl.querySelector('.map-line-fill'); if(fill) fill.style.width = '100%'; }, 200);
+                setTimeout(() => { const fill = newEl.querySelector('.map-line-fill'); if(fill) fill.style.width = '240px'; }, 200);
             } else {
                 newEl = document.createElement('div');
                 newEl.innerHTML = data.text;
@@ -523,4 +523,5 @@
 
     </script>
 </body>
+
 </html>
