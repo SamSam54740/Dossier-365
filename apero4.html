@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
-    <title>PHASE 4 : LE LABO</title>
+    <title>TAGE MAGE PUZZLE</title>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
     <style>
@@ -37,17 +37,17 @@
             padding: 30px; max-width: 90%; width: 400px; text-align: center;
             box-shadow: 0 0 40px rgba(102, 252, 241, 0.15); border-radius: 4px;
         }
-        .intro-title { font-family: var(--font-tech); font-size: 2.5rem; color: var(--highlight); margin-bottom: 10px; letter-spacing: 4px; }
+        .intro-title { font-family: var(--font-tech); font-size: 2.5rem; color: var(--highlight); margin-bottom: 10px; letter-spacing: 2px; }
         .intro-subtitle { color: #888; font-size: 1rem; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; }
         .rules-list { text-align: left; color: #ccc; font-size: 0.95rem; margin-bottom: 30px; line-height: 1.6; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 4px; }
         .rules-list span { color: var(--beer-glow); font-weight: bold; }
 
         /* FINAL STYLE */
         #final-screen { background: radial-gradient(circle, #221a00 0%, #000000 90%); }
-        .final-content { text-align: center; position: relative; z-index: 2; animation: float 6s ease-in-out infinite; }
+        .final-content { text-align: center; position: relative; z-index: 2; animation: float 6s ease-in-out infinite; max-width: 90%; }
         .final-icon { font-size: 5rem; margin-bottom: 10px; filter: drop-shadow(0 0 30px var(--beer-glow)); animation: pulse-gold 3s infinite; }
-        .final-title { font-family: var(--font-tech); font-size: 3rem; color: var(--beer-glow); text-transform: uppercase; margin: 0; letter-spacing: 3px; }
-        .final-text { font-size: 1.2rem; color: #fff; margin-top: 10px; opacity: 0.8; }
+        .final-title { font-family: var(--font-tech); font-size: 2.5rem; color: var(--beer-glow); text-transform: uppercase; margin: 0; letter-spacing: 2px; line-height: 1.2; }
+        .final-text { font-size: 1.2rem; color: #fff; margin-top: 15px; opacity: 0.9; }
         
         .bg-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; z-index: 1; }
         
@@ -152,7 +152,7 @@
 
     <div id="intro-screen" class="full-screen-overlay">
         <div class="intro-card">
-            <div class="intro-title">PHASE 4</div>
+            <div class="intro-title">TAGE MAGE PUZZLE</div>
             <div class="intro-subtitle">LE LABO DU BRASSEUR</div>
             
             <div class="rules-list">
@@ -162,7 +162,7 @@
                 4. Obtenez le <span>MONTANT EXACT</span>.
             </div>
 
-            <button class="btn-start" onclick="Game.start()">LANCER LA SÉQUENCE</button>
+            <button class="btn-start" onclick="Game.start()">Go go go !</button>
         </div>
     </div>
 
@@ -170,9 +170,9 @@
         <div class="bg-particles" id="final-particles"></div>
         <div class="final-content">
             <div class="final-icon">🍺👑</div>
-            <h1 class="final-title">MAÎTRE<br>BRASSEUR</h1>
-            <p class="final-text">L'ÉPREUVE ULTIME EST VAINCUE.</p>
-            <button class="btn-final" onclick="window.location.href='index.html'">RETOURNER AU BAR</button>
+            <h1 class="final-title">BIEN JOUÉ<br>MON BIBI CHAT !</h1>
+            <p class="final-text">Le foy's est sauvé.</p>
+            <button class="btn-final" onclick="alert('Lancement de la phase 5...')">INITIALISATION PHASE 5...</button>
         </div>
     </div>
 
@@ -209,7 +209,7 @@
         <div class="modal-card">
             <div class="modal-title">SUCCÈS !</div>
             <div class="modal-msg">Dosage validé.</div>
-            <button class="btn-main" onclick="Game.nextLevel()">NIVEAU SUIVANT >></button>
+            <button class="btn-main" onclick="Game.nextLevel()">Suivant -></button>
         </div>
     </div>
 
@@ -242,8 +242,14 @@
                 document.getElementById('lvl-badge').innerText = `NIVEAU ${idx + 1} / 3`;
                 document.getElementById('target-val').innerText = `${this.target} LITRES`;
                 
+                // GESTION AFFICHAGE TIREUSE/EVIER
                 const tools = document.getElementById('tools');
-                config.toolsActive ? tools.classList.add('active') : tools.classList.remove('active');
+                if (config.toolsActive) {
+                    tools.style.display = 'flex'; // On affiche
+                    tools.classList.add('active'); // On active l'opacité
+                } else {
+                    tools.style.display = 'none'; // ON RETIRE TOTALEMENT DE L'AFFICHAGE
+                }
 
                 const rack = document.getElementById('rack');
                 rack.innerHTML = '';
@@ -293,6 +299,7 @@
 
             handleClick: function(idx) {
                 if (this.selectedIdx === null) {
+                    // Si outil actif, on peut sélectionner un verre vide
                     if (this.current[idx] > 0 || this.levels[this.currentLevelIndex].toolsActive) {
                         this.select(idx);
                     } else {
