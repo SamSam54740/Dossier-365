@@ -46,8 +46,22 @@
         #final-screen { background: radial-gradient(circle, #221a00 0%, #000000 90%); }
         .final-content { text-align: center; position: relative; z-index: 2; animation: float 6s ease-in-out infinite; max-width: 90%; }
         .final-icon { font-size: 5rem; margin-bottom: 10px; filter: drop-shadow(0 0 30px var(--beer-glow)); animation: pulse-gold 3s infinite; }
-        .final-title { font-family: var(--font-tech); font-size: 2.5rem; color: var(--beer-glow); text-transform: uppercase; margin: 0; letter-spacing: 2px; line-height: 1.2; }
-        .final-text { font-size: 1.2rem; color: #fff; margin-top: 15px; opacity: 0.9; }
+        .final-title { 
+            font-family: var(--font-tech); 
+            font-size: 1.8rem; /* Réduit (était 2.5rem) */
+            color: var(--beer-glow); 
+            text-transform: uppercase; 
+            margin: 0; 
+            letter-spacing: 2px; 
+            line-height: 1.2; 
+        }
+        
+        .final-text { 
+            font-size: 0.9rem; /* Réduit (était 1.2rem) */
+            color: #fff; 
+            margin-top: 10px; 
+            opacity: 0.9; 
+        }
         
         .bg-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; z-index: 1; }
         
@@ -172,7 +186,7 @@
             <div class="final-icon">🍺👑</div>
             <h1 class="final-title">BIEN JOUÉ<br>MON BIBI CHAT !</h1>
             <p class="final-text">Le foy's est sauvé.</p>
-            <button class="btn-final" onclick="alert('Lancement de la phase 5...')">INITIALISATION PHASE 5...</button>
+            <button class="btn-final" onclick="window.location.href='final.html'">INITIALISATION PHASE 5...</button>
         </div>
     </div>
 
