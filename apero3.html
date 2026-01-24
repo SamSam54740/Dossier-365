@@ -289,8 +289,8 @@
 
     <div id="intro-screen" class="screen-overlay">
         <div class="intro-folder">
-            <div class="intro-title">ÉTAPE 3</div>
-            <p style="color:var(--accent-gold); letter-spacing:3px; margin-bottom:20px;">L'ENQUÊTE</p>
+            <div class="intro-title">ENQUÊTE BOX (version wish)</div>
+            <p style="color:var(--accent-gold); letter-spacing:3px; margin-bottom:20px;">L'ÉNIGME DU PATRON</p>
             <div class="intro-text">
                 MISSION :<br>
                 La bouteille de "Comme d'hab" est verrouillée dans un coffre.<br>
@@ -306,7 +306,7 @@
         <div class="success-content">
             <div class="success-title">OUVERTURE</div>
             <div class="success-text" style="text-align:center;">BIEN JOUÉ LES PILIERS.<br>LA BOUTEILLE EST À VOUS.</div>
-            <button class="btn-next" onclick="goToNext()">ÉTAPE 4 : LE DÉFI LOGIQUE >></button>
+            <button class="btn-next" onclick="goToNext()">SUITE : LE DÉFI LOGIQUE >></button>
         </div>
     </div>
 
@@ -372,7 +372,7 @@
             </div>
         </div>
 
-        <div class="table-item" id="item-safe" style="top:75%; left:25%; transform: translate(-50%, -50%);">
+        <div class="table-item" id="item-safe" style="top:80%; left:25%; transform: translate(-50%, -50%);">
             <div class="safe-body">
                 <div class="safe-interior"><div class="safe-bottle">🍺</div></div>
                 <div class="safe-door">
@@ -382,7 +382,7 @@
             </div>
         </div>
 
-        <div class="table-item" id="item-flashlight" style="top:75%; left:25%; transform: translate(-50%, -50%) rotate(10deg);" onclick="Engine.pickupFlashlight(event)">
+        <div class="table-item" id="item-flashlight" style="top:80%; left:25%; transform: translate(-50%, -50%) rotate(10deg);" onclick="Engine.pickupFlashlight(event)">
             <div class="flash-head"></div><div class="flash-body"></div>
         </div>
     </div>
@@ -422,47 +422,79 @@
             init: function() {
                 ['mousemove', 'touchmove'].forEach(e => document.addEventListener(e, this.trackLight.bind(this), {passive:false}));
                 const safe = document.getElementById('item-safe');
+
+            
+            const startDrag = (e) => {
+                const t = e.target.closest('#item-safe'); 
+                if(!t) return;
                 
-                // DRAG LOGIC FIXEE
-                const startDrag = (e) => {
-                    const t = e.target.closest('#item-safe'); if(!t)return;
-                    this.state.dragging = t;
-                    this.state.isActuallyDragging = false; 
-                    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-                    const cy = e.touches ? e.touches[0].clientY : e.clientY;
-                    const r = t.getBoundingClientRect();
-                    this.state.dragOffset = {x: cx-r.left, y: cy-r.top};
-                    this.state.dragStart = {x: cx, y: cy};
-                    t.style.zIndex = 500;
+                this.state.dragging = t;
+                this.state.hasMoved = false; // On reset le statut de mouvement
+                
+                // Récupération des coordonnées (Souris ou Touch)
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                // 1. CALCUL DE LA POSITION ACTUELLE PRÉCISE
+                // On récupère le rectangle visuel de l'objet
+                const rect = t.getBoundingClientRect();
+                
+                // On calcule son centre actuel en pixels par rapport à la page
+                const centerX = rect.left + (rect.width / 2);
+                const centerY = rect.top + (rect.height / 2);
+                
+                // 2. FIGER LA POSITION
+                // On remplace les % du CSS par des pixels fixes pour éviter le saut
+                t.style.left = centerX + 'px';
+                t.style.top = centerY + 'px';
+                // IMPORTANT : On laisse le CSS transform: translate(-50%, -50%) faire son travail de centrage
+                
+                // 3. ENREGISTRER LE DÉCALAGE (Où a-t-on cliqué par rapport au centre ?)
+                this.state.dragOffset = {
+                    x: cx - centerX,
+                    y: cy - centerY
                 };
+                
+                // Sauvegarde de la position de départ pour calculer la distance parcourue
+                this.state.dragStart = { x: cx, y: cy };
+                
+                t.style.zIndex = 500; // Passe au premier plan
+            }
 
-                const moveDrag = (e) => {
-                    if(!this.state.dragging) return;
-                    e.preventDefault(); 
-                    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-                    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            const moveDrag = (e) => {
+                if(!this.state.dragging) return;
+                e.preventDefault(); // Empêche le scroll
+                
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                // Calcul de la distance parcourue depuis le clic
+                const dist = Math.hypot(cx - this.state.dragStart.x, cy - this.state.dragStart.y);
+                
+                // Si on a bougé de plus de 10 pixels, on considère que c'est un déplacement volontaire
+                if (dist > 10) {
+                    this.state.hasMoved = true;
+                }
+
+                // Application du mouvement (Centre = Position Souris - Décalage initial)
+                this.state.dragging.style.left = (cx - this.state.dragOffset.x) + 'px';
+                this.state.dragging.style.top = (cy - this.state.dragOffset.y) + 'px';
+            }
+
+            const endDrag = (e) => {
+                if(this.state.dragging) {
+                    this.state.dragging.style.zIndex = 100; // Restaure le z-index
                     
-                    if (Math.abs(cx - this.state.dragStart.x) > 5 || Math.abs(cy - this.state.dragStart.y) > 5) {
-                        this.state.isActuallyDragging = true;
+                    // Si on a à peine bougé (< 10px), c'est considéré comme un CLIC -> On ouvre le code
+                    if (!this.state.hasMoved) {
+                        this.openKeypad();
                     }
-
-                    if (this.state.isActuallyDragging) {
-                        this.state.dragging.style.left = (cx - this.state.dragOffset.x) + 'px';
-                        this.state.dragging.style.top = (cy - this.state.dragOffset.y) + 'px';
-                        this.state.dragging.style.transform = 'none';
-                    }
-                };
-
-                const endDrag = () => {
-                    if (this.state.dragging) {
-                        this.state.dragging.style.zIndex = 100;
-                        if (!this.state.isActuallyDragging) {
-                            this.openKeypad();
-                        }
-                        this.state.dragging = null;
-                        setTimeout(() => { this.state.isActuallyDragging = false; }, 50);
-                    }
-                };
+                    // Sinon, c'était un déplacement -> On ne fait rien (le coffre reste là où il est)
+                    
+                    this.state.dragging = null;
+                    this.state.hasMoved = false;
+                }
+            }
 
                 safe.addEventListener('mousedown', startDrag); safe.addEventListener('touchstart', startDrag, {passive:false});
                 document.addEventListener('mousemove', moveDrag, {passive:false}); document.addEventListener('touchmove', moveDrag, {passive:false});
