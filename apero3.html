@@ -417,86 +417,113 @@
         function goToNext() { window.location.href = "apero4.html"; }
 
         const Engine = {
-            state: { hasFlashlight: false, isFlashOn: false, isUV: false, dragging: null, dragStart: {x:0, y:0}, dragOffset: {x:0, y:0}, isActuallyDragging: false },
+            state: { 
+                hasFlashlight: false, 
+                isFlashOn: false, 
+                isUV: false, 
+                // Variables de Drag précises
+                draggingItem: null,
+                startX: 0,
+                startY: 0,
+                initialItemX: 0,
+                initialItemY: 0,
+                isMoving: false
+            },
             
             init: function() {
+                // Tracking lumière
                 ['mousemove', 'touchmove'].forEach(e => document.addEventListener(e, this.trackLight.bind(this), {passive:false}));
+                
                 const safe = document.getElementById('item-safe');
 
-                // --- NOUVELLE LOGIQUE DRAG & DROP STABLE ---
-                
-                const startDrag = (e) => {
-                    const t = e.target.closest('#item-safe'); 
-                    if(!t) return;
-                    
-                    this.state.dragging = t;
-                    this.state.hasMoved = false; 
-                    
-                    // Coordonnées souris/doigt
-                    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-                    const cy = e.touches ? e.touches[0].clientY : e.clientY;
-                    
-                    // 1. FIGER LA POSITION VISUELLE ACTUELLE
-                    // On récupère le rectangle actuel de l'objet
+                // --- NOUVEAU MOTEUR DRAG & DROP (TYPE APP MOBILE) ---
+
+                const handleStart = (e) => {
+                    // On ne cible que le coffre
+                    const t = e.target.closest('#item-safe');
+                    if (!t) return;
+
+                    // On empêche le comportement par défaut (scroll, sélection)
+                    // e.preventDefault(); // Retiré pour laisser le clic passer, géré dans move
+
+                    this.state.draggingItem = t;
+                    this.state.isMoving = false; // Par défaut, on considère que c'est un clic
+
+                    // Coordonnées du pointeur (Souris ou Doigt)
+                    const point = e.touches ? e.touches[0] : e;
+                    this.state.startX = point.clientX;
+                    this.state.startY = point.clientY;
+
+                    // On fige la position actuelle de l'objet en pixels pour éviter le "saut"
+                    // On récupère sa position visuelle exacte
                     const rect = t.getBoundingClientRect();
-                    const centerX = rect.left + (rect.width / 2);
-                    const centerY = rect.top + (rect.height / 2);
                     
-                    // On remplace les % CSS par des pixels fixes pour éviter le "saut"
-                    t.style.left = centerX + 'px';
-                    t.style.top = centerY + 'px';
-                    // Le transform translate(-50%, -50%) du CSS continue de gérer le centrage
-                    
-                    // 2. CALCULER LE DÉCALAGE (Où on tient l'objet par rapport à son centre)
-                    this.state.dragOffset = {
-                        x: cx - centerX,
-                        y: cy - centerY
-                    };
-                    
-                    // 3. POINT DE DÉPART (Pour calculer le seuil de mouvement)
-                    this.state.dragStart = { x: cx, y: cy };
-                    
+                    // On calcule son centre par rapport au conteneur parent (body/game-stage)
+                    // Le centre X = position gauche + moitié largeur
+                    this.state.initialItemX = rect.left + (rect.width / 2);
+                    this.state.initialItemY = rect.top + (rect.height / 2);
+
+                    // On passe l'élément au premier plan visuel
                     t.style.zIndex = 500;
-                }
+                };
 
-                const moveDrag = (e) => {
-                    if(!this.state.dragging) return;
-                    e.preventDefault(); 
-                    
-                    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-                    const cy = e.touches ? e.touches[0].clientY : e.clientY;
-                    
-                    // Calcul de la distance parcourue
-                    const dist = Math.hypot(cx - this.state.dragStart.x, cy - this.state.dragStart.y);
-                    
-                    // Si on dépasse 10px, c'est un vrai déplacement
-                    if (dist > 10) {
-                        this.state.hasMoved = true;
-                        
-                        // ON APPLIQUE LE MOUVEMENT SEULEMENT ICI
-                        this.state.dragging.style.left = (cx - this.state.dragOffset.x) + 'px';
-                        this.state.dragging.style.top = (cy - this.state.dragOffset.y) + 'px';
+                const handleMove = (e) => {
+                    if (!this.state.draggingItem) return;
+
+                    // Coordonnées du pointeur
+                    const point = e.touches ? e.touches[0] : e;
+                    const dx = point.clientX - this.state.startX;
+                    const dy = point.clientY - this.state.startY;
+
+                    // SEUIL DE TOLÉRANCE (15px)
+                    // Si on a bougé de moins de 15px, on ne fait RIEN. C'est toujours un clic potentiel.
+                    if (!this.state.isMoving && Math.sqrt(dx*dx + dy*dy) < 15) {
+                        return;
                     }
-                }
 
-                const endDrag = (e) => {
-                    if(this.state.dragging) {
-                        this.state.dragging.style.zIndex = 100;
-                        
-                        // Si on n'a pas bougé (ou moins de 10px), c'est un CLIC -> On ouvre
-                        if (!this.state.hasMoved) {
-                            this.openKeypad();
-                        }
-                        
-                        this.state.dragging = null;
-                        this.state.hasMoved = false;
+                    // Si on dépasse 15px, on active le mode déplacement
+                    this.state.isMoving = true;
+                    e.preventDefault(); // On empêche le scroll de la page maintenant qu'on drag
+
+                    // On applique le mouvement
+                    // Nouvelle position = Position initiale figée + Déplacement du doigt
+                    this.state.draggingItem.style.left = (this.state.initialItemX + dx) + 'px';
+                    this.state.draggingItem.style.top = (this.state.initialItemY + dy) + 'px';
+                    
+                    // IMPORTANT : On enlève le transform CSS pour que le left/top pixels prenne le relais sans conflit
+                    // On garde le translate(-50%, -50%) via le style inline si besoin, ou on le gère ici
+                    // Ici, comme on a calculé par rapport au centre, on doit s'assurer que le CSS translate(-50%, -50%) est toujours actif
+                    // ou alors on l'a désactivé. Le plus simple est de ne rien toucher au transform car le CSS le gère.
+                };
+
+                const handleEnd = (e) => {
+                    if (!this.state.draggingItem) return;
+
+                    this.state.draggingItem.style.zIndex = 100;
+
+                    // VERDICT : Clic ou Drag ?
+                    if (!this.state.isMoving) {
+                        // C'était un mouvement minime (<15px), donc c'est un CLIC
+                        this.openKeypad();
                     }
-                }
+                    // Sinon, c'était un déplacement, l'objet reste là où il est.
 
-                safe.addEventListener('mousedown', startDrag); safe.addEventListener('touchstart', startDrag, {passive:false});
-                document.addEventListener('mousemove', moveDrag, {passive:false}); document.addEventListener('touchmove', moveDrag, {passive:false});
-                document.addEventListener('mouseup', endDrag); document.addEventListener('touchend', endDrag);
+                    // Reset
+                    this.state.draggingItem = null;
+                    this.state.isMoving = false;
+                };
 
+                // Écouteurs d'événements
+                safe.addEventListener('mousedown', handleStart);
+                safe.addEventListener('touchstart', handleStart, {passive: false});
+
+                window.addEventListener('mousemove', handleMove, {passive: false});
+                window.addEventListener('touchmove', handleMove, {passive: false});
+
+                window.addEventListener('mouseup', handleEnd);
+                window.addEventListener('touchend', handleEnd);
+
+                // Boucle pour l'UV
                 setInterval(this.checkUV.bind(this), 100);
             },
 
@@ -546,7 +573,8 @@
             },
 
             inspect: function(id) {
-                if(this.state.isActuallyDragging) return;
+                // Si on déplace le coffre, on interdit d'inspecter quoi que ce soit d'autre en même temps
+                if(this.state.isMoving) return;
                 
                 const modal = document.getElementById('modal-inspect');
                 const flipper = document.getElementById('zoom-flipper');
@@ -558,7 +586,17 @@
 
                 switch(id) {
                     case 'letter':
-                        front.innerHTML = `<div class="modal-content-centered"><div class="zoom-letter-container"><p><b>Salut les Piliers,</b></p><p>Comme promis, j'ai mis votre bouteille dans le coffre pour pas qu'on vous la pique.</p><p>Le code ? C'est simple logique. C'est une histoire de <b>prix</b> et de <b>dates</b>...</p><p><i>PS: N'oubliez pas votre privilège...</i></p><p style="text-align:right; margin-top:30px;">- Le Patron</p></div></div>`; break;
+                        front.innerHTML = `
+                        <div class="modal-content-centered">
+                            <div class="zoom-letter-container">
+                                <p><b>Salut les Piliers,</b></p>
+                                <p>Comme promis, j'ai mis votre bouteille dans le coffre pour pas qu'on vous la pique.</p>
+                                <p>Le code ? C'est simple logique. C'est une histoire de <b>prix</b> et de <b>dates</b>...</p>
+                                <p><i>PS: N'oubliez pas votre privilège...</i></p>
+                                <p style="text-align:right; margin-top:30px;">- Le Patron</p>
+                            </div>
+                        </div>`; 
+                        break;
                     case 'receipt':
                         const r = document.querySelector('.item-receipt').cloneNode(true);
                         r.classList.add('modal-cloned-item'); 
@@ -611,7 +649,7 @@
                 }
             }
         };
-        Engine.init();
+        // L'init est appelé par le bouton startGame
     </script>
 </body>
 </html>
